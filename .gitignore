@@ -1,0 +1,53 @@
+# Environment and credentials
+.env
+*.env
+*.pem
+ib_test.pem
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Temporary and test files
+_temp/
+_trash/
+*.log
+logs/*.log
+
+# Keep logs folder structure but not log files
+!logs/.gitkeep
+!logs/sessions/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MT5 specific
+*.ex5
+*.mq5~
+
+# Data files (too large for git)
+data/*
+!data/news/
+!data/optimized/
+backtest/output/
+params_optimizer/output/
+params_optimizer/comparison_charts/
+vm_optimizer_key
+
+# Large database files
+*.db
+*.db.bak
+*.parquet
+
+# Claude temp files
+tmpclaude-*
+nul

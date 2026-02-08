@@ -1,0 +1,7731 @@
+{
+  "version": "1.0",
+  "source": "forexfactory",
+  "last_updated": "2026-01-12T12:27:58.283456Z",
+  "year": 2025,
+  "event_count": 858,
+  "events": [
+    {
+      "title": "German Prelim CPI m/m",
+      "country": "EUR",
+      "datetime_utc": "2025-01-06T07:29:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-01-07T07:30:00",
+      "impact": "High",
+      "forecast": "0.8%",
+      "previous": "1.3%",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-01-07T15:00:00",
+      "impact": "High",
+      "forecast": "55.4",
+      "previous": "52.3",
+      "actual": "54.1"
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-01-07T15:00:00",
+      "impact": "High",
+      "forecast": "7.73M",
+      "previous": "7.74M",
+      "actual": "8.10M"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-01-08T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.9%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-01-08T13:15:00",
+      "impact": "High",
+      "forecast": "139K",
+      "previous": "146K",
+      "actual": "122K"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-01-08T13:30:00",
+      "impact": "High",
+      "forecast": "214K",
+      "previous": "211K",
+      "actual": "201K"
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-01-08T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-01-10T13:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.5%",
+      "actual": "90.9K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-01-10T13:30:00",
+      "impact": "High",
+      "forecast": "6.9%",
+      "previous": "6.8%",
+      "actual": "6.7%"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-10T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.4%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-01-10T13:30:00",
+      "impact": "High",
+      "forecast": "164K",
+      "previous": "227K",
+      "actual": "256K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-01-10T13:30:00",
+      "impact": "High",
+      "forecast": "4.2%",
+      "previous": "4.2%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-14T13:30:00",
+      "impact": "High",
+      "forecast": "101.3",
+      "previous": "101.7",
+      "actual": "0.0%"
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-14T13:30:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": "0.4%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-01-15T07:00:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.0%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-15T13:30:00",
+      "impact": "High",
+      "forecast": "-0.6%",
+      "previous": "1.0%",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-15T13:30:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": "0.3%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-01-15T13:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "2.7%",
+      "actual": "2.9%"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-01-16T00:30:00",
+      "impact": "High",
+      "forecast": "28%",
+      "previous": "35.6K",
+      "actual": "56.3K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-01-16T00:30:00",
+      "impact": "High",
+      "forecast": "4.0%",
+      "previous": "3.9%",
+      "actual": "4.0%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-01-16T07:00:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": "0.4%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-16T13:30:00",
+      "impact": "High",
+      "forecast": "252K",
+      "previous": "0.2%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-16T13:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "0.7%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-01-16T13:30:00",
+      "impact": "High",
+      "forecast": "210K",
+      "previous": "201K",
+      "actual": "217K"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-01-17T07:00:00",
+      "impact": "High",
+      "forecast": "5.0%",
+      "previous": "0.2%",
+      "actual": "-0.3%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-01-20T17:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Claimant Count Change",
+      "country": "GBP",
+      "datetime_utc": "2025-01-21T07:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.3K",
+      "actual": "0.7K"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-01-21T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-01-21T13:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "2.6%",
+      "actual": "2.4%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-01-21T13:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "2.7%",
+      "actual": "2.5%"
+    },
+    {
+      "title": "CPI q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-01-21T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.6%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-01-23T13:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.1%",
+      "actual": "-0.7%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-01-23T13:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.6%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-01-23T13:30:00",
+      "impact": "High",
+      "forecast": "221K",
+      "previous": "217K",
+      "actual": "223K"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-01-23T16:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Outlook Report",
+      "country": "JPY",
+      "datetime_utc": "2025-01-24T03:23:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-01-24T03:23:00",
+      "impact": "High",
+      "forecast": "<0.50%",
+      "previous": "<0.25%",
+      "actual": "<0.50%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-01-24T03:23:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-01-24T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "French Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-01-24T08:15:00",
+      "impact": "High",
+      "forecast": "42.4",
+      "previous": "41.9",
+      "actual": "45.3"
+    },
+    {
+      "title": "French Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-01-24T08:15:00",
+      "impact": "High",
+      "forecast": "49.3",
+      "previous": "48.2",
+      "actual": "48.9"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-01-24T08:30:00",
+      "impact": "High",
+      "forecast": "42.7",
+      "previous": "42.5",
+      "actual": "44.1"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-01-24T08:30:00",
+      "impact": "High",
+      "forecast": "51.1",
+      "previous": "51.0",
+      "actual": "52.5"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-01-24T09:30:00",
+      "impact": "High",
+      "forecast": "46.9",
+      "previous": "47.3",
+      "actual": "48.2"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-01-24T09:30:00",
+      "impact": "High",
+      "forecast": "50.8",
+      "previous": "51.4",
+      "actual": "51.2"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-01-24T14:45:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "48.3",
+      "actual": "50.1"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-01-24T14:45:00",
+      "impact": "High",
+      "forecast": "56.4",
+      "previous": "58.5",
+      "actual": "52.8"
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-01-27T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "49.1"
+    },
+    {
+      "title": "SNB Chairman Schlegel Speaks",
+      "country": "CHF",
+      "datetime_utc": "2025-01-27T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CB Consumer Confidence",
+      "country": "USD",
+      "datetime_utc": "2025-01-28T15:00:00",
+      "impact": "High",
+      "forecast": "105.7",
+      "previous": "104.7",
+      "actual": "104.1"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-01-29T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-01-29T00:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "2.3%",
+      "actual": "2.5%"
+    },
+    {
+      "title": "Trimmed Mean CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-01-29T00:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "0.8%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-01-29T14:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Monetary Policy Report",
+      "country": "CAD",
+      "datetime_utc": "2025-01-29T14:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-01-29T14:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-01-29T14:45:00",
+      "impact": "High",
+      "forecast": "3.00%",
+      "previous": "3.25%",
+      "actual": "3.00%"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-01-29T15:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-01-29T19:00:00",
+      "impact": "High",
+      "forecast": "4.50%",
+      "previous": "4.50%",
+      "actual": "4.50%"
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-01-29T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-01-29T19:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-01-30T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "3.15%",
+      "actual": "2.90%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-01-30T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Advance GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-01-30T13:30:00",
+      "impact": "High",
+      "forecast": "2.7%",
+      "previous": "2.8%",
+      "actual": "2.3%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-01-30T13:30:00",
+      "impact": "High",
+      "forecast": "224K",
+      "previous": "223K",
+      "actual": "207K"
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-01-30T13:45:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "German Prelim CPI m/m",
+      "country": "EUR",
+      "datetime_utc": "2025-01-31T07:29:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.7%",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-01-31T13:30:00",
+      "impact": "High",
+      "forecast": "14K",
+      "previous": "10K",
+      "actual": "11K"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-01-31T13:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.1%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Employment Cost Index q/q",
+      "country": "USD",
+      "datetime_utc": "2025-01-31T13:30:00",
+      "impact": "High",
+      "forecast": "0.9%",
+      "previous": "0.8%",
+      "actual": "0.9%"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-02-03T15:00:00",
+      "impact": "High",
+      "forecast": "50.1",
+      "previous": "49.3",
+      "actual": "50.9"
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-02-04T15:00:00",
+      "impact": "High",
+      "forecast": "55.4K",
+      "previous": "8.10M",
+      "actual": "7.60M"
+    },
+    {
+      "title": "Employment Change q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-02-04T21:45:00",
+      "impact": "High",
+      "forecast": "-0.2%",
+      "previous": "-0.5%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-02-04T21:45:00",
+      "impact": "High",
+      "forecast": "5.1%",
+      "previous": "4.8%",
+      "actual": "5.1%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-04T22:10:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-02-05T13:15:00",
+      "impact": "High",
+      "forecast": "148K",
+      "previous": "122K",
+      "actual": "183K"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-02-05T15:00:00",
+      "impact": "High",
+      "forecast": "52.9",
+      "previous": "52.8",
+      "actual": "52.8"
+    },
+    {
+      "title": "BOE Monetary Policy Report",
+      "country": "GBP",
+      "datetime_utc": "2025-02-06T12:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-02-06T12:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-02-06T12:00:00",
+      "impact": "High",
+      "forecast": "0-8-1",
+      "previous": "0-3-6",
+      "actual": "0-9-0"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-02-06T12:00:00",
+      "impact": "High",
+      "forecast": "4.50%",
+      "previous": "4.75%",
+      "actual": "4.50%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-02-06T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-02-06T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "207K",
+      "actual": "219K"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-02-06T21:05:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-02-07T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "76.0K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-02-07T13:30:00",
+      "impact": "High",
+      "forecast": "6.8%",
+      "previous": "6.7%",
+      "actual": "6.6%"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-07T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-02-07T13:30:00",
+      "impact": "High",
+      "forecast": "169K",
+      "previous": "256K",
+      "actual": "143K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-02-07T13:30:00",
+      "impact": "High",
+      "forecast": "4.1%",
+      "previous": "4.1%",
+      "actual": "4.0%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-10T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-02-11T12:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Fed Chair Powell Testifies",
+      "country": "USD",
+      "datetime_utc": "2025-02-11T15:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-11T20:40:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Greek Presidential Elections",
+      "country": "EUR",
+      "datetime_utc": "2025-02-12T08:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-12T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.84|2.8",
+      "actual": "2.70|2.5"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-12T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.4%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-02-12T13:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "2.9%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "Fed Chair Powell Testifies",
+      "country": "USD",
+      "datetime_utc": "2025-02-12T15:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-12T20:48:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Inflation Expectations q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-02-13T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.12%",
+      "actual": "2.06%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-02-13T07:00:00",
+      "impact": "High",
+      "forecast": "-0.2%",
+      "previous": "-0.2%",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-02-13T07:30:00",
+      "impact": "High",
+      "forecast": "-0.4%",
+      "previous": "1.2%",
+      "actual": "-3.2%"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-13T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.0%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-13T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-02-13T13:30:00",
+      "impact": "High",
+      "forecast": "217K",
+      "previous": "219K",
+      "actual": "213K"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-13T18:36:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-14T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.4%",
+      "actual": "-0.4%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-14T13:30:00",
+      "impact": "High",
+      "forecast": "-0.2%",
+      "previous": "0.4%",
+      "actual": "-0.9%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-14T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-02-18T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Monetary Policy Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-02-18T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-02-18T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Claimant Count Change",
+      "country": "GBP",
+      "datetime_utc": "2025-02-18T07:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.7K",
+      "actual": "22.0K"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-02-18T09:30:00",
+      "impact": "High",
+      "forecast": "-0.1%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-02-18T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-02-18T13:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "2.4%",
+      "actual": "2.7%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-02-18T13:30:00",
+      "impact": "High",
+      "forecast": "2.6%",
+      "previous": "2.5%",
+      "actual": "2.7%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-18T21:13:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Wage Price Index q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-02-19T00:30:00",
+      "impact": "High",
+      "forecast": "-0.26T",
+      "previous": "0.8%",
+      "actual": "0.7%"
+    },
+    {
+      "title": "Official Cash Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-02-19T01:00:00",
+      "impact": "High",
+      "forecast": "3.75%",
+      "previous": "4.25%",
+      "actual": "3.75%"
+    },
+    {
+      "title": "RBNZ Monetary Policy Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-02-19T01:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Rate Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-02-19T01:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Press Conference",
+      "country": "NZD",
+      "datetime_utc": "2025-02-19T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-19T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-02-19T07:00:00",
+      "impact": "High",
+      "forecast": "2.8%",
+      "previous": "2.5%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-02-19T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-19T22:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-02-20T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "56.3K",
+      "actual": "44.0K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-02-20T00:30:00",
+      "impact": "High",
+      "forecast": "4.1%",
+      "previous": "4.0%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-02-20T13:30:00",
+      "impact": "High",
+      "forecast": "2.4%",
+      "previous": "213K",
+      "actual": "219K"
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-02-20T22:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-21T00:20:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-02-21T07:00:00",
+      "impact": "High",
+      "forecast": "49.0",
+      "previous": "-0.3%",
+      "actual": "1.7%"
+    },
+    {
+      "title": "French Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-02-21T08:15:00",
+      "impact": "High",
+      "forecast": "45.3",
+      "previous": "45.3",
+      "actual": "45.5"
+    },
+    {
+      "title": "French Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-02-21T08:15:00",
+      "impact": "High",
+      "forecast": "48.8",
+      "previous": "48.9",
+      "actual": "44.5"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-02-21T08:30:00",
+      "impact": "High",
+      "forecast": "45.4",
+      "previous": "44.1",
+      "actual": "46.1"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-02-21T08:30:00",
+      "impact": "High",
+      "forecast": "52.4",
+      "previous": "52.5",
+      "actual": "52.2"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-02-21T09:30:00",
+      "impact": "High",
+      "forecast": "48.5",
+      "previous": "48.2",
+      "actual": "46.4"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-02-21T09:30:00",
+      "impact": "High",
+      "forecast": "50.8",
+      "previous": "51.2",
+      "actual": "51.1"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-02-21T13:30:00",
+      "impact": "High",
+      "forecast": "1.7%",
+      "previous": "-0.7%",
+      "actual": "2.7%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-02-21T13:30:00",
+      "impact": "High",
+      "forecast": "1.5%",
+      "previous": "0.0%",
+      "actual": "2.5%"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-02-21T14:45:00",
+      "impact": "High",
+      "forecast": "51.3",
+      "previous": "50.1",
+      "actual": "51.6"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-02-21T14:45:00",
+      "impact": "High",
+      "forecast": "53.0",
+      "previous": "52.8",
+      "actual": "49.7"
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-02-21T17:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-21T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "German Federal Elections",
+      "country": "EUR",
+      "datetime_utc": "2025-02-22T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-24T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-25T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-02-26T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Prelim GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-02-27T13:30:00",
+      "impact": "High",
+      "forecast": "-3.2B",
+      "previous": "-3.2B",
+      "actual": "2.3%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-02-27T13:30:00",
+      "impact": "High",
+      "forecast": "222K",
+      "previous": "219K",
+      "actual": "242K"
+    },
+    {
+      "title": "German Prelim CPI m/m",
+      "country": "EUR",
+      "datetime_utc": "2025-02-28T07:29:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.1%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-02-28T13:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.6%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-02-28T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-02-28T17:15:00",
+      "impact": "High",
+      "forecast": "40.5",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-02-28T19:00:00",
+      "impact": "High",
+      "forecast": "49.9",
+      "previous": "49.1",
+      "actual": "50.2"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-03-03T15:00:00",
+      "impact": "High",
+      "forecast": "51.6",
+      "previous": "50.9",
+      "actual": "50.3"
+    },
+    {
+      "title": "GDP q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-03-05T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "1.8%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-03-05T02:10:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-03-05T07:30:00",
+      "impact": "High",
+      "forecast": "0.5%",
+      "previous": "-0.1%",
+      "actual": "0.6%"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-03-05T13:15:00",
+      "impact": "High",
+      "forecast": "141K",
+      "previous": "183K",
+      "actual": "77K"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-03-05T15:00:00",
+      "impact": "High",
+      "forecast": "49.7",
+      "previous": "49.7",
+      "actual": "53.5"
+    },
+    {
+      "title": "Euro Summit",
+      "country": "EUR",
+      "datetime_utc": "2025-03-06T11:15:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "-0.2%",
+      "actual": "-0.3%"
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-03-06T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.90%",
+      "actual": "2.65%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-03-06T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-03-06T13:30:00",
+      "impact": "High",
+      "forecast": "1.4B",
+      "previous": "242K",
+      "actual": "221K"
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-03-06T13:45:00",
+      "impact": "High",
+      "forecast": "-128.3B",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-03-07T13:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.1%",
+      "actual": "1.1K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-03-07T13:30:00",
+      "impact": "High",
+      "forecast": "6.7%",
+      "previous": "6.6%",
+      "actual": "6.6%"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-07T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.5%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-03-07T13:30:00",
+      "impact": "High",
+      "forecast": "159K",
+      "previous": "143K",
+      "actual": "151K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-03-07T13:30:00",
+      "impact": "High",
+      "forecast": "4.0%",
+      "previous": "4.0%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-03-07T17:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-03-11T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "7.60M",
+      "actual": "7.74M"
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-12T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.52|2.8",
+      "actual": "2.92|2.1"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-12T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.5%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-03-12T12:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "3.0%",
+      "actual": "2.8%"
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-03-12T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-03-12T13:45:00",
+      "impact": "High",
+      "forecast": "2.75%",
+      "previous": "3.00%",
+      "actual": "2.75%"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-03-12T14:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-13T12:30:00",
+      "impact": "High",
+      "forecast": "-5.3%",
+      "previous": "11.0%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-13T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.4%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-03-13T12:30:00",
+      "impact": "High",
+      "forecast": "226K",
+      "previous": "221K",
+      "actual": "220K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-03-14T07:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.9%",
+      "actual": "0.6%"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-03-14T14:00:00",
+      "impact": "High",
+      "forecast": "63.1",
+      "previous": "67.8",
+      "actual": "57.9"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-03-14T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.3%",
+      "actual": "4.9%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-17T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "-0.4%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-17T12:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "-0.9%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-03-18T12:30:00",
+      "impact": "High",
+      "forecast": "43.6",
+      "previous": "24.2",
+      "actual": "39.8"
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-03-18T12:30:00",
+      "impact": "High",
+      "forecast": "2.7%",
+      "previous": "2.7%",
+      "actual": "2.9%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-03-18T12:30:00",
+      "impact": "High",
+      "forecast": "2.8%",
+      "previous": "2.7%",
+      "actual": "2.9%"
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-03-19T02:25:00",
+      "impact": "High",
+      "forecast": "0.50T",
+      "previous": "-0.86T",
+      "actual": "<0.50%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-03-19T02:25:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-03-19T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-03-19T18:00:00",
+      "impact": "High",
+      "forecast": "4.50%",
+      "previous": "4.50%",
+      "actual": "4.50%"
+    },
+    {
+      "title": "FOMC Economic Projections",
+      "country": "USD",
+      "datetime_utc": "2025-03-19T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-03-19T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-03-19T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "GDP q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-03-19T21:45:00",
+      "impact": "High",
+      "forecast": "101.1B",
+      "previous": "72.0B",
+      "actual": "-45.2B"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-03-20T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-03-20T00:30:00",
+      "impact": "High",
+      "forecast": "4.1%",
+      "previous": "4.1%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "Claimant Count Change",
+      "country": "GBP",
+      "datetime_utc": "2025-03-20T07:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "22.0K",
+      "actual": "44.2K"
+    },
+    {
+      "title": "SNB Monetary Policy Assessment",
+      "country": "CHF",
+      "datetime_utc": "2025-03-20T08:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "SNB Policy Rate",
+      "country": "CHF",
+      "datetime_utc": "2025-03-20T08:30:00",
+      "impact": "High",
+      "forecast": "0.25%",
+      "previous": "0.50%",
+      "actual": "0.25%"
+    },
+    {
+      "title": "SNB Press Conference",
+      "country": "CHF",
+      "datetime_utc": "2025-03-20T09:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-03-20T12:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-03-20T12:00:00",
+      "impact": "High",
+      "forecast": "0-2-7",
+      "previous": "0-9-0",
+      "actual": "0-1-8"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-03-20T12:00:00",
+      "impact": "High",
+      "forecast": "4.50%",
+      "previous": "4.50%",
+      "actual": "4.50%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-03-20T12:30:00",
+      "impact": "High",
+      "forecast": "-0.3%",
+      "previous": "220K",
+      "actual": "223K"
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-03-20T16:50:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-03-21T12:30:00",
+      "impact": "High",
+      "forecast": "-0.1%",
+      "previous": "2.7%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-03-21T12:30:00",
+      "impact": "High",
+      "forecast": "-0.4%",
+      "previous": "2.5%",
+      "actual": "-0.6%"
+    },
+    {
+      "title": "French Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-03-24T08:15:00",
+      "impact": "High",
+      "forecast": "46.2",
+      "previous": "45.5",
+      "actual": "48.9"
+    },
+    {
+      "title": "French Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-03-24T08:15:00",
+      "impact": "High",
+      "forecast": "46.3",
+      "previous": "44.5",
+      "actual": "46.6"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-03-24T08:30:00",
+      "impact": "High",
+      "forecast": "47.1",
+      "previous": "46.1",
+      "actual": "48.3"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-03-24T08:30:00",
+      "impact": "High",
+      "forecast": "52.3",
+      "previous": "52.2",
+      "actual": "50.2"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-03-24T09:30:00",
+      "impact": "High",
+      "forecast": "47.3",
+      "previous": "46.4",
+      "actual": "44.6"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-03-24T09:30:00",
+      "impact": "High",
+      "forecast": "51.2",
+      "previous": "51.1",
+      "actual": "53.2"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-03-24T13:45:00",
+      "impact": "High",
+      "forecast": "51.9",
+      "previous": "51.6",
+      "actual": "49.8"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-03-24T13:45:00",
+      "impact": "High",
+      "forecast": "51.2",
+      "previous": "49.7",
+      "actual": "54.3"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-03-24T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-03-26T00:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "3.1%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-03-26T07:00:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.0%",
+      "actual": "2.8%"
+    },
+    {
+      "title": "Annual Budget Release",
+      "country": "GBP",
+      "datetime_utc": "2025-03-26T12:30:00",
+      "impact": "High",
+      "forecast": "4.4%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-03-26T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Final GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-03-27T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-03-27T12:30:00",
+      "impact": "High",
+      "forecast": "225K",
+      "previous": "223K",
+      "actual": "224K"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-03-28T07:00:00",
+      "impact": "High",
+      "forecast": "-22.6",
+      "previous": "1.7%",
+      "actual": "1.0%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-03-28T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "3.55|1.6",
+      "actual": "3.83|1.7"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-03-28T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-03-31T01:30:00",
+      "impact": "High",
+      "forecast": "0.5%",
+      "previous": "50.2",
+      "actual": "50.5"
+    },
+    {
+      "title": "German Prelim CPI m/m",
+      "country": "EUR",
+      "datetime_utc": "2025-03-31T06:29:00",
+      "impact": "High",
+      "forecast": "0.0%",
+      "previous": "0.2%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-04-01T03:30:00",
+      "impact": "High",
+      "forecast": "50.6",
+      "previous": "50.8",
+      "actual": "51.2"
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-04-01T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-04-01T14:00:00",
+      "impact": "High",
+      "forecast": "49.8",
+      "previous": "50.3",
+      "actual": "49.0"
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-04-01T14:00:00",
+      "impact": "High",
+      "forecast": "7.69M",
+      "previous": "7.74M",
+      "actual": "7.57M"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-04-02T12:15:00",
+      "impact": "High",
+      "forecast": "118K",
+      "previous": "77K",
+      "actual": "155K"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-04-02T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-04-03T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "1.40|2.7",
+      "actual": "1.41|3.1"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-04-03T12:30:00",
+      "impact": "High",
+      "forecast": "3.4B",
+      "previous": "224K",
+      "actual": "219K"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-04-03T14:00:00",
+      "impact": "High",
+      "forecast": "54.1",
+      "previous": "54.3",
+      "actual": "50.8"
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-04-04T12:30:00",
+      "impact": "High",
+      "forecast": "-10.8B",
+      "previous": "1.1K",
+      "actual": "-32.6K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-04-04T12:30:00",
+      "impact": "High",
+      "forecast": "6.7%",
+      "previous": "6.6%",
+      "actual": "6.7%"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-04T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-04-04T12:30:00",
+      "impact": "High",
+      "forecast": "137K",
+      "previous": "151K",
+      "actual": "228K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-04-04T12:30:00",
+      "impact": "High",
+      "forecast": "4.1%",
+      "previous": "4.1%",
+      "actual": "4.2%"
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-04-04T15:25:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Official Cash Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-04-09T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "3.75%",
+      "actual": "3.50%"
+    },
+    {
+      "title": "RBNZ Rate Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-04-09T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-04-09T06:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-04-09T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-04-10T10:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-10T12:30:00",
+      "impact": "High",
+      "forecast": "-0.4%",
+      "previous": "-3.2%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-10T12:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.2%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-04-10T12:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "2.8%",
+      "actual": "2.4%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-04-10T12:30:00",
+      "impact": "High",
+      "forecast": "223K",
+      "previous": "219K",
+      "actual": "223K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-04-11T06:00:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-11T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-11T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.0%",
+      "actual": "-0.4%"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-04-11T14:00:00",
+      "impact": "High",
+      "forecast": "54.0",
+      "previous": "57.9",
+      "actual": "50.8"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-04-11T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.9%",
+      "actual": "6.7%"
+    },
+    {
+      "title": "Claimant Count Change",
+      "country": "GBP",
+      "datetime_utc": "2025-04-15T06:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "44.2K",
+      "actual": "18.7K"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-04-15T12:30:00",
+      "impact": "High",
+      "forecast": "239K",
+      "previous": "229K",
+      "actual": "214K"
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-04-15T12:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "2.9%",
+      "actual": "2.9%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-04-15T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "2.9%",
+      "actual": "2.8%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-04-16T06:00:00",
+      "impact": "High",
+      "forecast": "5.3%",
+      "previous": "5.4%",
+      "actual": "5.2%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-16T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.3%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-16T12:30:00",
+      "impact": "High",
+      "forecast": "1.3%",
+      "previous": "0.2%",
+      "actual": "1.4%"
+    },
+    {
+      "title": "BOC Monetary Policy Report",
+      "country": "CAD",
+      "datetime_utc": "2025-04-16T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-04-16T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-04-16T13:45:00",
+      "impact": "High",
+      "forecast": "2.75%",
+      "previous": "2.75%",
+      "actual": "2.75%"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-04-16T14:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-04-16T17:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-04-16T22:45:00",
+      "impact": "High",
+      "forecast": "35.2B",
+      "previous": "-45.2B",
+      "actual": "112.0B"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-04-17T01:30:00",
+      "impact": "High",
+      "forecast": "-0.25T",
+      "previous": "-52.8K",
+      "actual": "32.2K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-04-17T01:30:00",
+      "impact": "High",
+      "forecast": "4.2%",
+      "previous": "4.1%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-04-17T12:15:00",
+      "impact": "High",
+      "forecast": "2.40%",
+      "previous": "2.65%",
+      "actual": "2.40%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-04-17T12:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-04-17T12:30:00",
+      "impact": "High",
+      "forecast": "225K",
+      "previous": "223K",
+      "actual": "215K"
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-04-17T12:45:00",
+      "impact": "High",
+      "forecast": "1.42M",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "French Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-04-23T07:15:00",
+      "impact": "High",
+      "forecast": "47.9",
+      "previous": "48.9",
+      "actual": "48.2"
+    },
+    {
+      "title": "French Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-04-23T07:15:00",
+      "impact": "High",
+      "forecast": "47.7",
+      "previous": "46.6",
+      "actual": "46.8"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-04-23T07:30:00",
+      "impact": "High",
+      "forecast": "47.5",
+      "previous": "48.3",
+      "actual": "48.0"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-04-23T07:30:00",
+      "impact": "High",
+      "forecast": "50.3",
+      "previous": "50.2",
+      "actual": "48.8"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-04-23T08:30:00",
+      "impact": "High",
+      "forecast": "44.0",
+      "previous": "44.6",
+      "actual": "44.0"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-04-23T08:30:00",
+      "impact": "High",
+      "forecast": "51.5",
+      "previous": "53.2",
+      "actual": "48.9"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-04-23T13:45:00",
+      "impact": "High",
+      "forecast": "49.0",
+      "previous": "49.8",
+      "actual": "50.7"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-04-23T13:45:00",
+      "impact": "High",
+      "forecast": "52.8",
+      "previous": "54.3",
+      "actual": "51.4"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-04-23T17:15:00",
+      "impact": "High",
+      "forecast": "1.6M",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-04-24T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "215K",
+      "actual": "222K"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-04-25T06:00:00",
+      "impact": "High",
+      "forecast": "3.2%",
+      "previous": "1.0%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "SNB Chairman Schlegel Speaks",
+      "country": "CHF",
+      "datetime_utc": "2025-04-25T08:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-04-25T12:30:00",
+      "impact": "High",
+      "forecast": "-0.1%",
+      "previous": "0.2%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-04-25T12:30:00",
+      "impact": "High",
+      "forecast": "-0.4%",
+      "previous": "-0.6%",
+      "actual": "-0.4%"
+    },
+    {
+      "title": "Federal Election",
+      "country": "CAD",
+      "datetime_utc": "2025-04-28T14:15:00",
+      "impact": "High",
+      "forecast": "-21",
+      "previous": "-41",
+      "actual": null
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-04-29T14:00:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "actual": "7.19M"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-04-30T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "57.5",
+      "actual": "49.3"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-04-30T01:30:00",
+      "impact": "High",
+      "forecast": "2.3%",
+      "previous": "2.4%",
+      "actual": "2.4%"
+    },
+    {
+      "title": "Trimmed Mean CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-04-30T01:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "0.5%",
+      "actual": "0.7%"
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-04-30T01:30:00",
+      "impact": "High",
+      "forecast": "0.5%",
+      "previous": "50.5",
+      "actual": "49.0"
+    },
+    {
+      "title": "German Prelim CPI m/m",
+      "country": "EUR",
+      "datetime_utc": "2025-04-30T06:29:00",
+      "impact": "High",
+      "forecast": "-0.1%",
+      "previous": "0.0%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-04-30T12:15:00",
+      "impact": "High",
+      "forecast": "114K",
+      "previous": "155K",
+      "actual": "62K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-04-30T12:30:00",
+      "impact": "High",
+      "forecast": "0.0%",
+      "previous": "0.4%",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "Advance GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-04-30T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "2.3%",
+      "actual": "-0.3%"
+    },
+    {
+      "title": "Employment Cost Index q/q",
+      "country": "USD",
+      "datetime_utc": "2025-04-30T12:30:00",
+      "impact": "High",
+      "forecast": "0.9%",
+      "previous": "0.9%",
+      "actual": "0.9%"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-04-30T14:00:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.4%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "BOJ Outlook Report",
+      "country": "JPY",
+      "datetime_utc": "2025-05-01T03:03:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-05-01T03:03:00",
+      "impact": "High",
+      "forecast": "<0.50%",
+      "previous": "<0.50%",
+      "actual": "<0.50%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-05-01T03:03:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-05-01T06:30:00",
+      "impact": "High",
+      "forecast": "1.9%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-05-01T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "222K",
+      "actual": "241K"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-05-01T14:00:00",
+      "impact": "High",
+      "forecast": "50.5",
+      "previous": "49.0",
+      "actual": "48.7"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-02T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-05-02T12:30:00",
+      "impact": "High",
+      "forecast": "138K",
+      "previous": "228K",
+      "actual": "177K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-05-02T12:30:00",
+      "impact": "High",
+      "forecast": "4.2%",
+      "previous": "4.2%",
+      "actual": "4.2%"
+    },
+    {
+      "title": "Parliamentary Elections",
+      "country": "AUD",
+      "datetime_utc": "2025-05-02T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-05-05T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.4%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-05-05T14:00:00",
+      "impact": "High",
+      "forecast": "51.4",
+      "previous": "51.4",
+      "actual": "51.6"
+    },
+    {
+      "title": "Employment Change q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-05-06T22:45:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "-0.1%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-05-06T22:45:00",
+      "impact": "High",
+      "forecast": "5.3%",
+      "previous": "5.1%",
+      "actual": "5.1%"
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-05-07T18:00:00",
+      "impact": "High",
+      "forecast": "4.50%",
+      "previous": "4.50%",
+      "actual": "4.50%"
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-05-07T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-05-07T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Monetary Policy Report",
+      "country": "GBP",
+      "datetime_utc": "2025-05-08T11:02:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-05-08T11:02:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-05-08T11:02:00",
+      "impact": "High",
+      "forecast": "0-9-0",
+      "previous": "0-1-8",
+      "actual": "0-7-2"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-05-08T11:02:00",
+      "impact": "High",
+      "forecast": "4.25%",
+      "previous": "4.50%",
+      "actual": "4.25%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-05-08T11:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-05-08T12:30:00",
+      "impact": "High",
+      "forecast": "231K",
+      "previous": "241K",
+      "actual": "228K"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-05-08T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-05-08T15:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-05-09T08:40:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-05-09T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "7.4K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-05-09T12:30:00",
+      "impact": "High",
+      "forecast": "6.8%",
+      "previous": "6.7%",
+      "actual": "6.9%"
+    },
+    {
+      "title": "Claimant Count Change",
+      "country": "GBP",
+      "datetime_utc": "2025-05-13T06:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "18.7K",
+      "actual": "5.2K"
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-13T12:30:00",
+      "impact": "High",
+      "forecast": "94.9",
+      "previous": "97.4",
+      "actual": "95.8"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-13T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "-0.1%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-05-13T12:30:00",
+      "impact": "High",
+      "forecast": "2.4%",
+      "previous": "2.4%",
+      "actual": "2.3%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-05-13T15:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Wage Price Index q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-05-14T01:30:00",
+      "impact": "High",
+      "forecast": "4.0%",
+      "previous": "0.7%",
+      "actual": "0.9%"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-05-15T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "32.2K",
+      "actual": "89.0K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-05-15T01:30:00",
+      "impact": "High",
+      "forecast": "4.1%",
+      "previous": "4.1%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-05-15T06:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.2%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-15T12:30:00",
+      "impact": "High",
+      "forecast": "-0.4%",
+      "previous": "0.3%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-15T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.5%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-15T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.4%",
+      "actual": "-0.5%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-15T12:30:00",
+      "impact": "High",
+      "forecast": "0.0%",
+      "previous": "1.4%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-05-15T12:30:00",
+      "impact": "High",
+      "forecast": "229K",
+      "previous": "228K",
+      "actual": "229K"
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-05-15T12:40:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-05-16T14:00:00",
+      "impact": "High",
+      "forecast": "53.1",
+      "previous": "50.8",
+      "actual": "50.8"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-05-16T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "6.7%",
+      "actual": "7.3%"
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-05-20T04:30:00",
+      "impact": "High",
+      "forecast": "3.50%",
+      "previous": "3.60%",
+      "actual": "3.50%"
+    },
+    {
+      "title": "RBA Monetary Policy Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-05-20T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-05-20T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-05-20T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-05-20T12:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "2.9%",
+      "actual": "3.2%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-05-20T12:30:00",
+      "impact": "High",
+      "forecast": "2.8%",
+      "previous": "2.8%",
+      "actual": "3.1%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-05-21T06:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.8%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "French Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-05-22T07:15:00",
+      "impact": "High",
+      "forecast": "48.9",
+      "previous": "48.2",
+      "actual": "49.5"
+    },
+    {
+      "title": "French Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-05-22T07:15:00",
+      "impact": "High",
+      "forecast": "47.7",
+      "previous": "46.8",
+      "actual": "47.4"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-05-22T07:30:00",
+      "impact": "High",
+      "forecast": "48.8",
+      "previous": "48.0",
+      "actual": "48.8"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-05-22T07:30:00",
+      "impact": "High",
+      "forecast": "49.6",
+      "previous": "48.8",
+      "actual": "47.2"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-05-22T08:30:00",
+      "impact": "High",
+      "forecast": "46.2",
+      "previous": "44.0",
+      "actual": "45.1"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-05-22T08:30:00",
+      "impact": "High",
+      "forecast": "50.0",
+      "previous": "48.9",
+      "actual": "50.2"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-05-22T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "229K",
+      "actual": "227K"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-05-22T13:45:00",
+      "impact": "High",
+      "forecast": "49.9",
+      "previous": "50.7",
+      "actual": "52.3"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-05-22T13:45:00",
+      "impact": "High",
+      "forecast": "51.0",
+      "previous": "51.4",
+      "actual": "52.3"
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-05-22T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-05-23T06:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.2%",
+      "actual": "1.2%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-05-23T12:30:00",
+      "impact": "High",
+      "forecast": "-0.1%",
+      "previous": "0.5%",
+      "actual": "-0.7%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-05-23T12:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "-0.4%",
+      "actual": "0.8%"
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-05-27T00:00:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-05-28T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Official Cash Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-05-28T02:00:00",
+      "impact": "High",
+      "forecast": "0.5%",
+      "previous": "3.50%",
+      "actual": "3.25%"
+    },
+    {
+      "title": "RBNZ Monetary Policy Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-05-28T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Rate Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-05-28T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Press Conference",
+      "country": "NZD",
+      "datetime_utc": "2025-05-28T03:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-05-28T18:00:00",
+      "impact": "High",
+      "forecast": "-9",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Prelim GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-05-29T12:30:00",
+      "impact": "High",
+      "forecast": "-3.4B",
+      "previous": "-5.0B",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-05-29T12:30:00",
+      "impact": "High",
+      "forecast": "229K",
+      "previous": "227K",
+      "actual": "240K"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-05-29T15:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "German Prelim CPI m/m",
+      "country": "EUR",
+      "datetime_utc": "2025-05-30T06:29:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.2%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-05-30T12:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.2%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-05-30T12:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.0%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-05-31T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "49.0",
+      "actual": "49.5"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-06-02T14:00:00",
+      "impact": "High",
+      "forecast": "52.3",
+      "previous": "48.7",
+      "actual": "48.5"
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-06-02T17:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-06-03T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "1.27|2.5",
+      "actual": "1.51|3.7"
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-06-03T07:50:00",
+      "impact": "High",
+      "forecast": "-68.5K",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-06-03T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "7.19M",
+      "actual": "7.39M"
+    },
+    {
+      "title": "GDP q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-06-04T01:30:00",
+      "impact": "High",
+      "forecast": "16.0M",
+      "previous": "17.3M",
+      "actual": "15.7M"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-06-04T12:15:00",
+      "impact": "High",
+      "forecast": "111K",
+      "previous": "62K",
+      "actual": "37K"
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-06-04T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-06-04T13:45:00",
+      "impact": "High",
+      "forecast": "2.75%",
+      "previous": "2.75%",
+      "actual": "2.75%"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-06-04T14:00:00",
+      "impact": "High",
+      "forecast": "52.3",
+      "previous": "52.3",
+      "actual": "49.9"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-06-04T14:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-06-05T12:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.40%",
+      "actual": "2.15%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-06-05T12:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-06-05T12:30:00",
+      "impact": "High",
+      "forecast": "-1.4B",
+      "previous": "240K",
+      "actual": "247K"
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-06-05T12:45:00",
+      "impact": "High",
+      "forecast": "-67.6B",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-06-06T12:30:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": "0.3%",
+      "actual": "8.8K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-06-06T12:30:00",
+      "impact": "High",
+      "forecast": "7.0%",
+      "previous": "6.9%",
+      "actual": "7.0%"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-06T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-06-06T12:30:00",
+      "impact": "High",
+      "forecast": "126K",
+      "previous": "177K",
+      "actual": "139K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-06-06T12:30:00",
+      "impact": "High",
+      "forecast": "4.2%",
+      "previous": "4.2%",
+      "actual": "4.2%"
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-11T12:30:00",
+      "impact": "High",
+      "forecast": "1.9%",
+      "previous": "-4.1%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-11T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.2%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-06-11T12:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "2.3%",
+      "actual": "2.4%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-06-12T06:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.1%",
+      "actual": "5.0%"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-12T12:30:00",
+      "impact": "High",
+      "forecast": "6.0%",
+      "previous": "6.1%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-12T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.5%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-06-12T12:30:00",
+      "impact": "High",
+      "forecast": "242K",
+      "previous": "247K",
+      "actual": "248K"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-06-13T14:00:00",
+      "impact": "High",
+      "forecast": "53.5",
+      "previous": "50.8",
+      "actual": "60.5"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-06-13T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "7.3%",
+      "actual": "5.1%"
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-06-17T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.8%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-06-17T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-06-17T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-17T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.1%",
+      "actual": "-0.3%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-17T12:30:00",
+      "impact": "High",
+      "forecast": "-0.5%",
+      "previous": "0.1%",
+      "actual": "-0.9%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-06-18T06:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.0%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-06-18T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "248K",
+      "actual": "245K"
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-06-18T15:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-06-18T18:00:00",
+      "impact": "High",
+      "forecast": "4.50%",
+      "previous": "4.50%",
+      "actual": "4.50%"
+    },
+    {
+      "title": "FOMC Economic Projections",
+      "country": "USD",
+      "datetime_utc": "2025-06-18T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-06-18T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-06-18T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "GDP q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-06-18T22:45:00",
+      "impact": "High",
+      "forecast": "142.4B",
+      "previous": "161.8B",
+      "actual": "-7.8B"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-06-19T01:30:00",
+      "impact": "High",
+      "forecast": "20.6K",
+      "previous": "89.0K",
+      "actual": "-2.5K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-06-19T01:30:00",
+      "impact": "High",
+      "forecast": "4.1%",
+      "previous": "4.1%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "SNB Monetary Policy Assessment",
+      "country": "CHF",
+      "datetime_utc": "2025-06-19T07:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "SNB Policy Rate",
+      "country": "CHF",
+      "datetime_utc": "2025-06-19T07:30:00",
+      "impact": "High",
+      "forecast": "0.00%",
+      "previous": "0.25%",
+      "actual": "0.00%"
+    },
+    {
+      "title": "SNB Press Conference",
+      "country": "CHF",
+      "datetime_utc": "2025-06-19T08:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-06-19T11:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-06-19T11:00:00",
+      "impact": "High",
+      "forecast": "0-2-7",
+      "previous": "0-7-2",
+      "actual": "0-3-6"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-06-19T11:00:00",
+      "impact": "High",
+      "forecast": "4.25%",
+      "previous": "4.25%",
+      "actual": "4.25%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-06-20T06:00:00",
+      "impact": "High",
+      "forecast": "-0.3%",
+      "previous": "-0.6%",
+      "actual": "-2.7%"
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-06-20T06:40:00",
+      "impact": "High",
+      "forecast": "17.9B",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-06-20T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "French Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-06-23T07:15:00",
+      "impact": "High",
+      "forecast": "49.8",
+      "previous": "49.5",
+      "actual": "47.8"
+    },
+    {
+      "title": "French Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-06-23T07:15:00",
+      "impact": "High",
+      "forecast": "49.2",
+      "previous": "47.4",
+      "actual": "48.7"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-06-23T07:30:00",
+      "impact": "High",
+      "forecast": "48.9",
+      "previous": "48.8",
+      "actual": "49.0"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-06-23T07:30:00",
+      "impact": "High",
+      "forecast": "47.8",
+      "previous": "47.2",
+      "actual": "49.4"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-06-23T08:30:00",
+      "impact": "High",
+      "forecast": "46.9",
+      "previous": "45.1",
+      "actual": "47.7"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-06-23T08:30:00",
+      "impact": "High",
+      "forecast": "51.2",
+      "previous": "50.2",
+      "actual": "51.3"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-06-23T13:45:00",
+      "impact": "High",
+      "forecast": "51.1",
+      "previous": "52.3",
+      "actual": "52.0"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-06-23T13:45:00",
+      "impact": "High",
+      "forecast": "52.9",
+      "previous": "52.3",
+      "actual": "53.1"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-06-24T08:00:00",
+      "impact": "High",
+      "forecast": "88.1",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-06-24T12:30:00",
+      "impact": "High",
+      "forecast": "-28",
+      "previous": "-30",
+      "actual": "-33"
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-06-24T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.2%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-06-24T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.1%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-06-24T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Fed Chair Powell Testifies",
+      "country": "USD",
+      "datetime_utc": "2025-06-24T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-06-25T01:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "3.1%",
+      "actual": "3.3%"
+    },
+    {
+      "title": "Fed Chair Powell Testifies",
+      "country": "USD",
+      "datetime_utc": "2025-06-25T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-06-26T11:00:00",
+      "impact": "High",
+      "forecast": "-24",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Final GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-06-26T12:30:00",
+      "impact": "High",
+      "forecast": "-0.2%",
+      "previous": "-0.2%",
+      "actual": "-0.5%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-06-26T12:30:00",
+      "impact": "High",
+      "forecast": "244K",
+      "previous": "245K",
+      "actual": "236K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-06-27T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "3.57|1.5",
+      "actual": "3.48|1.5"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-06-27T12:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.1%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-06-30T01:30:00",
+      "impact": "High",
+      "forecast": "0.7%",
+      "previous": "49.5",
+      "actual": "49.7"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-07-01T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-07-01T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-07-01T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-07-01T14:00:00",
+      "impact": "High",
+      "forecast": "52.0",
+      "previous": "48.5",
+      "actual": "49.0"
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-07-01T14:00:00",
+      "impact": "High",
+      "forecast": "7.32M",
+      "previous": "7.39M",
+      "actual": "7.77M"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-07-02T12:15:00",
+      "impact": "High",
+      "forecast": "99K",
+      "previous": "37K",
+      "actual": "-33K"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-07-03T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.90|2.9",
+      "actual": "2.81|3.6"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-07-03T12:20:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-03T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.4%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-07-03T12:30:00",
+      "impact": "High",
+      "forecast": "111K",
+      "previous": "139K",
+      "actual": "147K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-07-03T12:30:00",
+      "impact": "High",
+      "forecast": "4.3%",
+      "previous": "4.2%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-07-03T14:00:00",
+      "impact": "High",
+      "forecast": "53.1",
+      "previous": "53.1",
+      "actual": "50.8"
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-07-08T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2",
+      "actual": "5"
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-07-08T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Press Conference",
+      "country": "AUD",
+      "datetime_utc": "2025-07-08T05:30:00",
+      "impact": "High",
+      "forecast": "45.1",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Official Cash Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-07-09T02:00:00",
+      "impact": "High",
+      "forecast": "-3.2%",
+      "previous": "-3.3%",
+      "actual": "3.25%"
+    },
+    {
+      "title": "RBNZ Rate Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-07-09T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-07-09T10:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-07-09T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-07-10T12:30:00",
+      "impact": "High",
+      "forecast": "-0.2%",
+      "previous": "233K",
+      "actual": "227K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-07-11T06:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.3%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-07-11T12:30:00",
+      "impact": "High",
+      "forecast": "-35",
+      "previous": "8.8K",
+      "actual": "83.1K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-07-11T12:30:00",
+      "impact": "High",
+      "forecast": "7.1%",
+      "previous": "7.0%",
+      "actual": "6.9%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-07-15T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-07-15T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.0%",
+      "actual": "3.1%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-07-15T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.0%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-15T12:30:00",
+      "impact": "High",
+      "forecast": "-1.2%",
+      "previous": "-2.8%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-15T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.1%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-07-15T12:30:00",
+      "impact": "High",
+      "forecast": "2.6%",
+      "previous": "2.4%",
+      "actual": "2.7%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-07-15T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-07-16T06:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-16T12:30:00",
+      "impact": "High",
+      "forecast": "262K",
+      "previous": "280K",
+      "actual": "284K"
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-16T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.1%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-07-17T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-2.5K",
+      "actual": "2.0K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-07-17T01:30:00",
+      "impact": "High",
+      "forecast": "4.1%",
+      "previous": "4.1%",
+      "actual": "4.3%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-17T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "-0.3%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-17T12:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "-0.9%",
+      "actual": "0.6%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-07-17T12:30:00",
+      "impact": "High",
+      "forecast": "233K",
+      "previous": "227K",
+      "actual": "221K"
+    },
+    {
+      "title": "Upper House Elections",
+      "country": "JPY",
+      "datetime_utc": "2025-07-18T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-07-20T19:00:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "0.9%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-07-22T09:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-07-24T03:05:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "French Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-07-24T07:15:00",
+      "impact": "High",
+      "forecast": "48.5",
+      "previous": "47.8",
+      "actual": "48.4"
+    },
+    {
+      "title": "French Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-07-24T07:15:00",
+      "impact": "High",
+      "forecast": "49.7",
+      "previous": "48.7",
+      "actual": "49.7"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-07-24T07:30:00",
+      "impact": "High",
+      "forecast": "49.4",
+      "previous": "49.0",
+      "actual": "49.2"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-07-24T07:30:00",
+      "impact": "High",
+      "forecast": "50.0",
+      "previous": "49.4",
+      "actual": "50.1"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-07-24T08:30:00",
+      "impact": "High",
+      "forecast": "47.9",
+      "previous": "47.7",
+      "actual": "48.2"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-07-24T08:30:00",
+      "impact": "High",
+      "forecast": "52.8",
+      "previous": "51.3",
+      "actual": "51.2"
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-07-24T12:15:00",
+      "impact": "High",
+      "forecast": "2.15%",
+      "previous": "2.15%",
+      "actual": "2.15%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-07-24T12:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-07-24T12:30:00",
+      "impact": "High",
+      "forecast": "-0.9%",
+      "previous": "221K",
+      "actual": "217K"
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-07-24T12:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-07-24T13:45:00",
+      "impact": "High",
+      "forecast": "52.7",
+      "previous": "52.0",
+      "actual": "49.5"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-07-24T13:45:00",
+      "impact": "High",
+      "forecast": "53.0",
+      "previous": "53.1",
+      "actual": "55.2"
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-07-29T14:00:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "7.77M",
+      "actual": "7.44M"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-07-30T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "46.3",
+      "actual": "47.8"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-07-30T01:30:00",
+      "impact": "High",
+      "forecast": "2.1%",
+      "previous": "2.1%",
+      "actual": "1.9%"
+    },
+    {
+      "title": "Trimmed Mean CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-07-30T01:30:00",
+      "impact": "High",
+      "forecast": "0.7%",
+      "previous": "0.7%",
+      "actual": "0.6%"
+    },
+    {
+      "title": "German Prelim GDP q/q",
+      "country": "EUR",
+      "datetime_utc": "2025-07-30T08:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-2.1",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-07-30T12:15:00",
+      "impact": "High",
+      "forecast": "77K",
+      "previous": "-33K",
+      "actual": "104K"
+    },
+    {
+      "title": "Advance GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-07-30T12:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "-0.3%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "BOC Monetary Policy Report",
+      "country": "CAD",
+      "datetime_utc": "2025-07-30T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-07-30T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-07-30T13:45:00",
+      "impact": "High",
+      "forecast": "2.75%",
+      "previous": "2.75%",
+      "actual": "2.75%"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-07-30T14:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-07-30T18:00:00",
+      "impact": "High",
+      "forecast": "4.50%",
+      "previous": "4.50%",
+      "actual": "4.50%"
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-07-30T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-07-30T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-07-31T01:30:00",
+      "impact": "High",
+      "forecast": "0.5%",
+      "previous": "49.7",
+      "actual": "49.3"
+    },
+    {
+      "title": "BOJ Outlook Report",
+      "country": "JPY",
+      "datetime_utc": "2025-07-31T02:57:00",
+      "impact": "High",
+      "forecast": "50.3",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-07-31T02:57:00",
+      "impact": "High",
+      "forecast": "<0.50%",
+      "previous": "<0.50%",
+      "actual": "<0.50%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-07-31T02:57:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-07-31T06:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-07-31T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-1.6%",
+      "actual": "139.8%"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-07-31T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Employment Cost Index q/q",
+      "country": "USD",
+      "datetime_utc": "2025-07-31T12:30:00",
+      "impact": "High",
+      "forecast": "0.8%",
+      "previous": "0.9%",
+      "actual": "0.9%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-07-31T12:30:00",
+      "impact": "High",
+      "forecast": "222K",
+      "previous": "217K",
+      "actual": "218K"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-01T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-08-01T12:30:00",
+      "impact": "High",
+      "forecast": "106K",
+      "previous": "147K",
+      "actual": "73K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-08-01T12:30:00",
+      "impact": "High",
+      "forecast": "4.2%",
+      "previous": "4.1%",
+      "actual": "4.2%"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-08-01T14:00:00",
+      "impact": "High",
+      "forecast": "49.7",
+      "previous": "49.0",
+      "actual": "48.0"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-08-04T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.1%",
+      "actual": "0.9%"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-08-05T14:00:00",
+      "impact": "High",
+      "forecast": "55.2",
+      "previous": "55.2",
+      "actual": "50.1"
+    },
+    {
+      "title": "Employment Change q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-08-05T22:45:00",
+      "impact": "High",
+      "forecast": "-0.1%",
+      "previous": "0.1%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-08-05T22:45:00",
+      "impact": "High",
+      "forecast": "5.3%",
+      "previous": "5.1%",
+      "actual": "5.2%"
+    },
+    {
+      "title": "BOE Monetary Policy Report",
+      "country": "GBP",
+      "datetime_utc": "2025-08-07T11:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-08-07T11:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-08-07T11:00:00",
+      "impact": "High",
+      "forecast": "0-8-1",
+      "previous": "0-3-6",
+      "actual": "0-5-4"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-08-07T11:00:00",
+      "impact": "High",
+      "forecast": "4.00%",
+      "previous": "4.25%",
+      "actual": "4.00%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-08-07T11:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-08-07T12:30:00",
+      "impact": "High",
+      "forecast": "221K",
+      "previous": "218K",
+      "actual": "226K"
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-08-08T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "-40.8K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-08-08T12:30:00",
+      "impact": "High",
+      "forecast": "7.0%",
+      "previous": "6.9%",
+      "actual": "6.9%"
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-08-12T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "5",
+      "actual": "7"
+    },
+    {
+      "title": "RBA Monetary Policy Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-08-12T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-08-12T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Press Conference",
+      "country": "AUD",
+      "datetime_utc": "2025-08-12T05:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-12T12:30:00",
+      "impact": "High",
+      "forecast": "-3.9%",
+      "previous": "12.0%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-12T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.3%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-08-12T12:30:00",
+      "impact": "High",
+      "forecast": "2.8%",
+      "previous": "2.7%",
+      "actual": "2.7%"
+    },
+    {
+      "title": "Wage Price Index q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-08-13T01:30:00",
+      "impact": "High",
+      "forecast": "2.5%",
+      "previous": "0.9%",
+      "actual": "0.8%"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-08-14T01:30:00",
+      "impact": "High",
+      "forecast": "-4%",
+      "previous": "2.0K",
+      "actual": "24.5K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-08-14T01:30:00",
+      "impact": "High",
+      "forecast": "4.2%",
+      "previous": "4.3%",
+      "actual": "4.2%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-08-14T06:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.1%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-14T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-14T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.0%",
+      "actual": "0.9%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-08-14T12:30:00",
+      "impact": "High",
+      "forecast": "225K",
+      "previous": "226K",
+      "actual": "224K"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-15T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.5%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-15T12:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "0.6%",
+      "actual": "0.5%"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-08-15T14:00:00",
+      "impact": "High",
+      "forecast": "61.9",
+      "previous": "61.8",
+      "actual": "58.6"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-08-15T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.4%",
+      "actual": "4.9%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-08-15T22:55:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-08-19T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-08-19T12:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "3.1%",
+      "actual": "3.1%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-08-19T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.0%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "Official Cash Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-08-20T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "3.25%",
+      "actual": "3.00%"
+    },
+    {
+      "title": "RBNZ Monetary Policy Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-08-20T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Rate Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-08-20T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Press Conference",
+      "country": "NZD",
+      "datetime_utc": "2025-08-20T03:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-08-20T06:00:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.1%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-08-20T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-08-21T07:30:00",
+      "impact": "High",
+      "forecast": "48.8",
+      "previous": "49.2",
+      "actual": "49.9"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-08-21T07:30:00",
+      "impact": "High",
+      "forecast": "50.4",
+      "previous": "50.1",
+      "actual": "50.1"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-08-21T08:30:00",
+      "impact": "High",
+      "forecast": "48.2",
+      "previous": "48.2",
+      "actual": "47.3"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-08-21T08:30:00",
+      "impact": "High",
+      "forecast": "51.8",
+      "previous": "51.2",
+      "actual": "53.6"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-08-21T12:30:00",
+      "impact": "High",
+      "forecast": "-0.5%",
+      "previous": "224K",
+      "actual": "235K"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-08-21T13:45:00",
+      "impact": "High",
+      "forecast": "49.7",
+      "previous": "49.5",
+      "actual": "53.3"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-08-21T13:45:00",
+      "impact": "High",
+      "forecast": "54.2",
+      "previous": "55.2",
+      "actual": "55.4"
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-08-22T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Jackson Hole Symposium",
+      "country": "All",
+      "datetime_utc": "2025-08-22T16:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-08-22T17:05:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ECB President Lagarde Speaks",
+      "country": "EUR",
+      "datetime_utc": "2025-08-23T16:25:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-08-23T16:25:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-08-23T16:25:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-08-26T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-08-27T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.0%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Prelim GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-08-28T12:30:00",
+      "impact": "High",
+      "forecast": "-18.8B",
+      "previous": "-2.1B",
+      "actual": "3.3%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-08-28T12:30:00",
+      "impact": "High",
+      "forecast": "231K",
+      "previous": "235K",
+      "actual": "229K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-08-29T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.4%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-08-29T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-08-29T19:00:00",
+      "impact": "High",
+      "forecast": "49.5",
+      "previous": "49.3",
+      "actual": "49.4"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-09-02T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "48.0",
+      "actual": "48.7"
+    },
+    {
+      "title": "GDP q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-09-03T01:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-1.8%",
+      "actual": "0.7%"
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-09-03T08:00:00",
+      "impact": "High",
+      "forecast": "50.1",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Monetary Policy Report Hearings",
+      "country": "GBP",
+      "datetime_utc": "2025-09-03T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-09-03T14:00:00",
+      "impact": "High",
+      "forecast": "7.38M",
+      "previous": "7.44M",
+      "actual": "7.18M"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-09-04T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "3.09|3.4",
+      "actual": "3.26|3.3"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-09-04T12:15:00",
+      "impact": "High",
+      "forecast": "73K",
+      "previous": "104K",
+      "actual": "54K"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-09-04T12:30:00",
+      "impact": "High",
+      "forecast": "-5.2B",
+      "previous": "229K",
+      "actual": "237K"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-09-04T14:00:00",
+      "impact": "High",
+      "forecast": "55.3",
+      "previous": "55.4",
+      "actual": "52.0"
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-09-05T12:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.1%",
+      "actual": "-65.5K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-09-05T12:30:00",
+      "impact": "High",
+      "forecast": "7.0%",
+      "previous": "6.9%",
+      "actual": "7.1%"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-05T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-09-05T12:30:00",
+      "impact": "High",
+      "forecast": "75K",
+      "previous": "73K",
+      "actual": "22K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-09-05T12:30:00",
+      "impact": "High",
+      "forecast": "4.3%",
+      "previous": "4.2%",
+      "actual": "4.3%"
+    },
+    {
+      "title": "Prelim Benchmark Payrolls Revision",
+      "country": "USD",
+      "datetime_utc": "2025-09-09T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-818K",
+      "actual": "-911K"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-10T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-10T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.9%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "RBNZ Gov Hawkesby Speaks",
+      "country": "NZD",
+      "datetime_utc": "2025-09-10T23:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-09-11T12:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.15%",
+      "actual": "2.15%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-09-11T12:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-11T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-11T12:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.2%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-09-11T12:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "2.7%",
+      "actual": "2.9%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-09-11T12:30:00",
+      "impact": "High",
+      "forecast": "235K",
+      "previous": "237K",
+      "actual": "263K"
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-09-11T12:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-09-12T06:00:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.1%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-09-12T14:00:00",
+      "impact": "High",
+      "forecast": "58.2",
+      "previous": "58.6",
+      "actual": "55.4"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-09-12T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.9%",
+      "actual": "4.8%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-09-16T12:30:00",
+      "impact": "High",
+      "forecast": "278K",
+      "previous": "294K",
+      "actual": "246K"
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-09-16T12:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "3.1%",
+      "actual": "3.1%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-09-16T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.0%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-16T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.3%",
+      "actual": "0.7%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-16T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.5%",
+      "actual": "0.6%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-09-17T06:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-09-17T13:45:00",
+      "impact": "High",
+      "forecast": "1.37M",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-09-17T13:45:00",
+      "impact": "High",
+      "forecast": "2.50%",
+      "previous": "2.75%",
+      "actual": "2.50%"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-09-17T14:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-09-17T18:00:00",
+      "impact": "High",
+      "forecast": "4.25%",
+      "previous": "4.50%",
+      "actual": "4.25%"
+    },
+    {
+      "title": "FOMC Economic Projections",
+      "country": "USD",
+      "datetime_utc": "2025-09-17T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-09-17T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-09-17T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "GDP q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-09-17T19:00:00",
+      "impact": "High",
+      "forecast": "-0.3%",
+      "previous": "0.8%",
+      "actual": "-0.9%"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-09-18T01:30:00",
+      "impact": "High",
+      "forecast": "-1.8%",
+      "previous": "24.5K",
+      "actual": "-5.4K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-09-18T01:30:00",
+      "impact": "High",
+      "forecast": "4.2%",
+      "previous": "4.2%",
+      "actual": "4.2%"
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-09-18T11:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-09-18T11:00:00",
+      "impact": "High",
+      "forecast": "0-1-8",
+      "previous": "0-5-4",
+      "actual": "0-2-7"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-09-18T11:00:00",
+      "impact": "High",
+      "forecast": "4.00%",
+      "previous": "4.00%",
+      "actual": "4.00%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-09-18T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "263K",
+      "actual": "231K"
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-09-19T03:47:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "1.4%",
+      "actual": "<0.50%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-09-19T03:47:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-09-19T06:30:00",
+      "impact": "High",
+      "forecast": "12.8B",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-09-21T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-09-23T07:30:00",
+      "impact": "High",
+      "forecast": "50.0",
+      "previous": "49.9",
+      "actual": "48.5"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-09-23T07:30:00",
+      "impact": "High",
+      "forecast": "49.5",
+      "previous": "50.1",
+      "actual": "52.5"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-09-23T08:30:00",
+      "impact": "High",
+      "forecast": "47.1",
+      "previous": "47.3",
+      "actual": "46.2"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-09-23T08:30:00",
+      "impact": "High",
+      "forecast": "53.4",
+      "previous": "53.6",
+      "actual": "51.9"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-09-23T13:45:00",
+      "impact": "High",
+      "forecast": "52.2",
+      "previous": "53.3",
+      "actual": "52.0"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-09-23T13:45:00",
+      "impact": "High",
+      "forecast": "54.0",
+      "previous": "55.4",
+      "actual": "53.9"
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-09-23T16:35:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-09-23T18:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-09-24T01:30:00",
+      "impact": "High",
+      "forecast": "49.5",
+      "previous": "49.9",
+      "actual": "48.4"
+    },
+    {
+      "title": "SNB Monetary Policy Assessment",
+      "country": "CHF",
+      "datetime_utc": "2025-09-25T07:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "SNB Policy Rate",
+      "country": "CHF",
+      "datetime_utc": "2025-09-25T07:30:00",
+      "impact": "High",
+      "forecast": "0.00%",
+      "previous": "0.00%",
+      "actual": "0.00%"
+    },
+    {
+      "title": "SNB Press Conference",
+      "country": "CHF",
+      "datetime_utc": "2025-09-25T08:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Final GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-09-25T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-09-25T12:30:00",
+      "impact": "High",
+      "forecast": "233K",
+      "previous": "231K",
+      "actual": "218K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-09-26T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "3.58|1.6",
+      "actual": "3.62|1.7"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-09-26T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.3%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-09-30T01:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "49.4",
+      "actual": "49.8"
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-09-30T04:30:00",
+      "impact": "High",
+      "forecast": "52.4",
+      "previous": "53.0",
+      "actual": "52.9"
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-09-30T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Press Conference",
+      "country": "AUD",
+      "datetime_utc": "2025-09-30T05:30:00",
+      "impact": "High",
+      "forecast": "-5.2%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-09-30T14:00:00",
+      "impact": "High",
+      "forecast": "43.4",
+      "previous": "7.18M",
+      "actual": "7.23M"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-10-01T12:15:00",
+      "impact": "High",
+      "forecast": "52K",
+      "previous": "54K",
+      "actual": "-32K"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-10-01T14:00:00",
+      "impact": "High",
+      "forecast": "52.0",
+      "previous": "48.7",
+      "actual": "49.1"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-10-02T06:30:00",
+      "impact": "High",
+      "forecast": "35.1",
+      "previous": "34.9",
+      "actual": "35.3"
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-10-03T01:05:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-10-03T13:20:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-10-03T14:00:00",
+      "impact": "High",
+      "forecast": "53.9",
+      "previous": "53.9",
+      "actual": "50.0"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-10-06T15:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ECB President Lagarde Speaks",
+      "country": "EUR",
+      "datetime_utc": "2025-10-06T17:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Official Cash Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-10-08T01:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "2.50%"
+    },
+    {
+      "title": "RBNZ Rate Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-10-08T01:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-10-08T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-10-09T22:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-10-10T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "60.4K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-10-10T12:30:00",
+      "impact": "High",
+      "forecast": "7.2%",
+      "previous": "7.1%",
+      "actual": "7.1%"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-10-10T14:00:00",
+      "impact": "High",
+      "forecast": "54.1",
+      "previous": "55.4",
+      "actual": "55.0"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-10-10T14:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.8%",
+      "actual": "4.6%"
+    },
+    {
+      "title": "Fed Chair Powell Speaks",
+      "country": "USD",
+      "datetime_utc": "2025-10-14T16:20:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-10-14T17:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-10-15T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-10-16T00:30:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": "-5.4K",
+      "actual": "14.9K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-10-16T00:30:00",
+      "impact": "High",
+      "forecast": "4.3%",
+      "previous": "4.2%",
+      "actual": "4.5%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-10-16T06:00:00",
+      "impact": "High",
+      "forecast": "-0.2%",
+      "previous": "0.5%",
+      "actual": "-0.4%"
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-10-16T17:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-10-18T13:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-10-19T19:00:00",
+      "impact": "High",
+      "forecast": "0.8%",
+      "previous": "0.5%",
+      "actual": "1.0%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-10-21T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-10-21T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.1%",
+      "actual": "3.2%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-10-21T12:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.0%",
+      "actual": "3.1%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-10-22T06:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.6%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-10-24T07:30:00",
+      "impact": "High",
+      "forecast": "49.5",
+      "previous": "48.5",
+      "actual": "49.6"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-10-24T07:30:00",
+      "impact": "High",
+      "forecast": "51.1",
+      "previous": "52.5",
+      "actual": "54.5"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-10-24T08:30:00",
+      "impact": "High",
+      "forecast": "46.6",
+      "previous": "46.2",
+      "actual": "49.6"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-10-24T08:30:00",
+      "impact": "High",
+      "forecast": "51.0",
+      "previous": "51.9",
+      "actual": "51.1"
+    },
+    {
+      "title": "Core CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-10-24T12:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.3%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-10-24T12:30:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": "0.4%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-10-24T12:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "2.9%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-10-24T13:45:00",
+      "impact": "High",
+      "forecast": "51.9",
+      "previous": "52.0",
+      "actual": "52.2"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-10-24T13:45:00",
+      "impact": "High",
+      "forecast": "53.5",
+      "previous": "53.9",
+      "actual": "55.2"
+    },
+    {
+      "title": "RBA Gov Bullock Speaks",
+      "country": "AUD",
+      "datetime_utc": "2025-10-27T08:15:00",
+      "impact": "High",
+      "forecast": "2.8%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-10-29T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-10-29T00:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "3.0%",
+      "actual": "3.5%"
+    },
+    {
+      "title": "Trimmed Mean CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-10-29T00:30:00",
+      "impact": "High",
+      "forecast": "0.8%",
+      "previous": "0.6%",
+      "actual": "1.0%"
+    },
+    {
+      "title": "BOC Monetary Policy Report",
+      "country": "CAD",
+      "datetime_utc": "2025-10-29T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-10-29T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-10-29T13:45:00",
+      "impact": "High",
+      "forecast": "2.25%",
+      "previous": "2.50%",
+      "actual": "2.25%"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-10-29T14:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-10-29T18:00:00",
+      "impact": "High",
+      "forecast": "4.00%",
+      "previous": "4.25%",
+      "actual": "4.00%"
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-10-29T18:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-10-29T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Outlook Report",
+      "country": "JPY",
+      "datetime_utc": "2025-10-30T03:15:00",
+      "impact": "High",
+      "forecast": "-0.3%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-10-30T03:15:00",
+      "impact": "High",
+      "forecast": "<0.50%",
+      "previous": "<0.50%",
+      "actual": "<0.50%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-10-30T03:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-10-30T06:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-10-30T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.15%",
+      "actual": "2.15%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-10-30T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-10-30T13:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Manufacturing PMI",
+      "country": "CNY",
+      "datetime_utc": "2025-10-31T01:30:00",
+      "impact": "High",
+      "forecast": "0.6%",
+      "previous": "49.8",
+      "actual": "49.0"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-10-31T12:30:00",
+      "impact": "High",
+      "forecast": "0.0%",
+      "previous": "-0.2%",
+      "actual": "-0.3%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-11-03T07:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.0%",
+      "actual": "-1.3%"
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-11-03T15:00:00",
+      "impact": "High",
+      "forecast": "52.2",
+      "previous": "49.1",
+      "actual": "48.7"
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-11-03T18:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-11-04T03:30:00",
+      "impact": "High",
+      "forecast": "48.3",
+      "previous": "48.3",
+      "actual": "48.2"
+    },
+    {
+      "title": "RBA Monetary Policy Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-11-04T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-11-04T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Press Conference",
+      "country": "AUD",
+      "datetime_utc": "2025-11-04T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-11-04T21:45:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "-0.1%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-11-04T21:45:00",
+      "impact": "High",
+      "forecast": "5.3%",
+      "previous": "5.2%",
+      "actual": "5.3%"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-11-05T13:15:00",
+      "impact": "High",
+      "forecast": "32K",
+      "previous": "-32K",
+      "actual": "42K"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-11-05T15:00:00",
+      "impact": "High",
+      "forecast": "55.2",
+      "previous": "55.2",
+      "actual": "52.4"
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-11-05T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOE Monetary Policy Report",
+      "country": "GBP",
+      "datetime_utc": "2025-11-06T12:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-11-06T12:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-11-06T12:00:00",
+      "impact": "High",
+      "forecast": "0-3-6",
+      "previous": "0-2-7",
+      "actual": "0-4-5"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-11-06T12:00:00",
+      "impact": "High",
+      "forecast": "4.00%",
+      "previous": "4.00%",
+      "actual": "4.00%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-11-06T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOC Gov Macklem Speaks",
+      "country": "CAD",
+      "datetime_utc": "2025-11-06T15:30:00",
+      "impact": "High",
+      "forecast": "55.2",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-11-07T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "60.4K",
+      "actual": "66.6K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-11-07T13:30:00",
+      "impact": "High",
+      "forecast": "7.1%",
+      "previous": "7.1%",
+      "actual": "6.9%"
+    },
+    {
+      "title": "Claimant Count Change",
+      "country": "GBP",
+      "datetime_utc": "2025-11-11T07:00:00",
+      "impact": "High",
+      "forecast": "17.6K",
+      "previous": "25.8K",
+      "actual": "29.0K"
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-11-13T00:30:00",
+      "impact": "High",
+      "forecast": "-14%",
+      "previous": "14.9K",
+      "actual": "42.2K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-11-13T00:30:00",
+      "impact": "High",
+      "forecast": "4.4%",
+      "previous": "4.5%",
+      "actual": "4.3%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-11-13T07:00:00",
+      "impact": "High",
+      "forecast": "0.0%",
+      "previous": "0.1%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-11-17T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-11-17T13:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "3.2%",
+      "actual": "2.9%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-11-17T13:30:00",
+      "impact": "High",
+      "forecast": "3.0%",
+      "previous": "3.1%",
+      "actual": "3.0%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-11-18T08:10:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "220K",
+      "actual": "232K"
+    },
+    {
+      "title": "Wage Price Index q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-11-19T00:30:00",
+      "impact": "High",
+      "forecast": "2.2%",
+      "previous": "0.8%",
+      "actual": "0.8%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-11-19T07:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-11-19T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-11-20T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.3%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-11-20T13:30:00",
+      "impact": "High",
+      "forecast": "53K",
+      "previous": "22K",
+      "actual": "119K"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-11-20T13:30:00",
+      "impact": "High",
+      "forecast": "227K",
+      "previous": "228K",
+      "actual": "220K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-11-20T13:30:00",
+      "impact": "High",
+      "forecast": "4.3%",
+      "previous": "4.3%",
+      "actual": "4.4%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-11-21T07:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.5%",
+      "actual": "-1.1%"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-11-21T08:30:00",
+      "impact": "High",
+      "forecast": "49.8",
+      "previous": "49.6",
+      "actual": "48.4"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-11-21T08:30:00",
+      "impact": "High",
+      "forecast": "54.0",
+      "previous": "54.5",
+      "actual": "52.7"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-11-21T09:30:00",
+      "impact": "High",
+      "forecast": "49.3",
+      "previous": "49.6",
+      "actual": "50.2"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-11-21T09:30:00",
+      "impact": "High",
+      "forecast": "51.9",
+      "previous": "51.1",
+      "actual": "50.5"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-11-21T14:45:00",
+      "impact": "High",
+      "forecast": "52.0",
+      "previous": "52.2",
+      "actual": "51.9"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-11-21T14:45:00",
+      "impact": "High",
+      "forecast": "54.6",
+      "previous": "55.2",
+      "actual": "55.0"
+    },
+    {
+      "title": "Core PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-11-25T13:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "-0.1%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-11-25T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.7%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "PPI m/m",
+      "country": "USD",
+      "datetime_utc": "2025-11-25T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "-0.1%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-11-25T13:30:00",
+      "impact": "High",
+      "forecast": "0.4%",
+      "previous": "0.6%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-11-26T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "0.5%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "AUD",
+      "datetime_utc": "2025-11-26T00:30:00",
+      "impact": "High",
+      "forecast": "3.6%",
+      "previous": "3.5%",
+      "actual": "3.8%"
+    },
+    {
+      "title": "Trimmed Mean CPI m/m",
+      "country": "AUD",
+      "datetime_utc": "2025-11-26T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "1.0%",
+      "actual": "0.3%"
+    },
+    {
+      "title": "Official Cash Rate",
+      "country": "NZD",
+      "datetime_utc": "2025-11-26T01:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "2.50%",
+      "actual": "2.25%"
+    },
+    {
+      "title": "RBNZ Monetary Policy Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-11-26T01:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Rate Statement",
+      "country": "NZD",
+      "datetime_utc": "2025-11-26T01:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBNZ Press Conference",
+      "country": "NZD",
+      "datetime_utc": "2025-11-26T02:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Autumn Forecast Statement",
+      "country": "GBP",
+      "datetime_utc": "2025-11-26T12:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-11-26T13:30:00",
+      "impact": "High",
+      "forecast": "226K",
+      "previous": "220K",
+      "actual": "216K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-11-28T13:30:00",
+      "impact": "High",
+      "forecast": "-0.1%",
+      "previous": "-0.3%",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-12-01T01:05:00",
+      "impact": "High",
+      "forecast": "48.8",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ISM Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-12-01T15:00:00",
+      "impact": "High",
+      "forecast": "51.9",
+      "previous": "48.7",
+      "actual": "48.2"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "datetime_utc": "2025-12-02T10:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "GDP q/q",
+      "country": "AUD",
+      "datetime_utc": "2025-12-03T00:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-0.3%",
+      "actual": "-1.6%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CHF",
+      "datetime_utc": "2025-12-03T07:30:00",
+      "impact": "High",
+      "forecast": "52.1",
+      "previous": "52.6",
+      "actual": "52.1"
+    },
+    {
+      "title": "ADP Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-12-03T13:15:00",
+      "impact": "High",
+      "forecast": "5K",
+      "previous": "42K",
+      "actual": "-32K"
+    },
+    {
+      "title": "ISM Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-12-03T15:00:00",
+      "impact": "High",
+      "forecast": "55.0",
+      "previous": "55.0",
+      "actual": "52.6"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-12-04T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "216K",
+      "actual": "191K"
+    },
+    {
+      "title": "Employment Change",
+      "country": "CAD",
+      "datetime_utc": "2025-12-05T13:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.2%",
+      "actual": "53.6K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-12-05T13:30:00",
+      "impact": "High",
+      "forecast": "7.0%",
+      "previous": "6.9%",
+      "actual": "6.5%"
+    },
+    {
+      "title": "Core PCE Price Index m/m",
+      "country": "USD",
+      "datetime_utc": "2025-12-05T15:00:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.2%",
+      "actual": "0.2%"
+    },
+    {
+      "title": "Prelim UoM Consumer Sentiment",
+      "country": "USD",
+      "datetime_utc": "2025-12-05T15:00:00",
+      "impact": "High",
+      "forecast": "52.0",
+      "previous": "50.3",
+      "actual": "53.3"
+    },
+    {
+      "title": "Prelim UoM Inflation Expectations",
+      "country": "USD",
+      "datetime_utc": "2025-12-05T15:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.7%",
+      "actual": "4.1%"
+    },
+    {
+      "title": "Cash Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-12-09T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "6",
+      "actual": "1"
+    },
+    {
+      "title": "RBA Rate Statement",
+      "country": "AUD",
+      "datetime_utc": "2025-12-09T03:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "RBA Press Conference",
+      "country": "AUD",
+      "datetime_utc": "2025-12-09T04:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Gov Ueda Speaks",
+      "country": "JPY",
+      "datetime_utc": "2025-12-09T09:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "ADP Weekly Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-12-09T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-13.5K",
+      "actual": "4.8K"
+    },
+    {
+      "title": "JOLTS Job Openings",
+      "country": "USD",
+      "datetime_utc": "2025-12-09T15:00:00",
+      "impact": "High",
+      "forecast": "7.14M",
+      "previous": "7.66M",
+      "actual": "7.67M"
+    },
+    {
+      "title": "Employment Cost Index q/q",
+      "country": "USD",
+      "datetime_utc": "2025-12-10T13:30:00",
+      "impact": "High",
+      "forecast": "0.9%",
+      "previous": "0.9%",
+      "actual": "0.8%"
+    },
+    {
+      "title": "BOC Rate Statement",
+      "country": "CAD",
+      "datetime_utc": "2025-12-10T14:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Overnight Rate",
+      "country": "CAD",
+      "datetime_utc": "2025-12-10T14:45:00",
+      "impact": "High",
+      "forecast": "2.25%",
+      "previous": "2.25%",
+      "actual": "2.25%"
+    },
+    {
+      "title": "BOC Press Conference",
+      "country": "CAD",
+      "datetime_utc": "2025-12-10T15:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Federal Funds Rate",
+      "country": "USD",
+      "datetime_utc": "2025-12-10T19:00:00",
+      "impact": "High",
+      "forecast": "3.75%",
+      "previous": "4.00%",
+      "actual": "3.75%"
+    },
+    {
+      "title": "FOMC Economic Projections",
+      "country": "USD",
+      "datetime_utc": "2025-12-10T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Statement",
+      "country": "USD",
+      "datetime_utc": "2025-12-10T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "FOMC Press Conference",
+      "country": "USD",
+      "datetime_utc": "2025-12-10T19:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Employment Change",
+      "country": "AUD",
+      "datetime_utc": "2025-12-11T00:30:00",
+      "impact": "High",
+      "forecast": "-21%",
+      "previous": "42.2K",
+      "actual": "-21.3K"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "AUD",
+      "datetime_utc": "2025-12-11T00:30:00",
+      "impact": "High",
+      "forecast": "4.4%",
+      "previous": "4.3%",
+      "actual": "4.3%"
+    },
+    {
+      "title": "SNB Monetary Policy Assessment",
+      "country": "CHF",
+      "datetime_utc": "2025-12-11T08:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "SNB Policy Rate",
+      "country": "CHF",
+      "datetime_utc": "2025-12-11T08:30:00",
+      "impact": "High",
+      "forecast": "0.00%",
+      "previous": "0.00%",
+      "actual": "0.00%"
+    },
+    {
+      "title": "SNB Press Conference",
+      "country": "CHF",
+      "datetime_utc": "2025-12-11T09:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-12-11T13:30:00",
+      "impact": "High",
+      "forecast": "-4.4B",
+      "previous": "191K",
+      "actual": "236K"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-12-12T07:00:00",
+      "impact": "High",
+      "forecast": "-0.2%",
+      "previous": "-0.2%",
+      "actual": "-0.2%"
+    },
+    {
+      "title": "CPI m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-12-15T13:30:00",
+      "impact": "High",
+      "forecast": "248K",
+      "previous": "233K",
+      "actual": "254K"
+    },
+    {
+      "title": "Median CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-12-15T13:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "2.9%",
+      "actual": "2.8%"
+    },
+    {
+      "title": "Trimmed CPI y/y",
+      "country": "CAD",
+      "datetime_utc": "2025-12-15T13:30:00",
+      "impact": "High",
+      "forecast": "2.9%",
+      "previous": "3.0%",
+      "actual": "2.8%"
+    },
+    {
+      "title": "Claimant Count Change",
+      "country": "GBP",
+      "datetime_utc": "2025-12-16T07:00:00",
+      "impact": "High",
+      "forecast": "49.0",
+      "previous": "29.0K",
+      "actual": "20.1K"
+    },
+    {
+      "title": "German Flash Manufacturing PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-12-16T08:30:00",
+      "impact": "High",
+      "forecast": "48.6",
+      "previous": "48.4",
+      "actual": "47.7"
+    },
+    {
+      "title": "German Flash Services PMI",
+      "country": "EUR",
+      "datetime_utc": "2025-12-16T08:30:00",
+      "impact": "High",
+      "forecast": "53.0",
+      "previous": "52.7",
+      "actual": "52.6"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-12-16T09:30:00",
+      "impact": "High",
+      "forecast": "50.3",
+      "previous": "50.2",
+      "actual": "51.2"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "GBP",
+      "datetime_utc": "2025-12-16T09:30:00",
+      "impact": "High",
+      "forecast": "51.6",
+      "previous": "50.5",
+      "actual": "52.1"
+    },
+    {
+      "title": "ADP Weekly Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "4.8K",
+      "actual": "16.3K"
+    },
+    {
+      "title": "Average Hourly Earnings m/m",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T13:30:00",
+      "impact": "High",
+      "forecast": "0.3%",
+      "previous": "0.4%",
+      "actual": "0.1%"
+    },
+    {
+      "title": "Core Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T13:30:00",
+      "impact": "High",
+      "forecast": "0.2%",
+      "previous": "0.3%",
+      "actual": "0.4%"
+    },
+    {
+      "title": "Non-Farm Employment Change",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T13:30:00",
+      "impact": "High",
+      "forecast": "51K",
+      "previous": "-105K",
+      "actual": "64K"
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T13:30:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.2%",
+      "actual": "0.0%"
+    },
+    {
+      "title": "Unemployment Rate",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T13:30:00",
+      "impact": "High",
+      "forecast": "4.5%",
+      "previous": "4.4%",
+      "actual": "4.6%"
+    },
+    {
+      "title": "Flash Manufacturing PMI",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T14:45:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "51.9",
+      "actual": "51.8"
+    },
+    {
+      "title": "Flash Services PMI",
+      "country": "USD",
+      "datetime_utc": "2025-12-16T14:45:00",
+      "impact": "High",
+      "forecast": "54.0",
+      "previous": "55.0",
+      "actual": "52.9"
+    },
+    {
+      "title": "CPI y/y",
+      "country": "GBP",
+      "datetime_utc": "2025-12-17T07:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "GDP q/q",
+      "country": "NZD",
+      "datetime_utc": "2025-12-17T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "-0.9%",
+      "actual": "1.1%"
+    },
+    {
+      "title": "Monetary Policy Summary",
+      "country": "GBP",
+      "datetime_utc": "2025-12-18T12:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "MPC Official Bank Rate Votes",
+      "country": "GBP",
+      "datetime_utc": "2025-12-18T12:00:00",
+      "impact": "High",
+      "forecast": "0-5-4",
+      "previous": "0-4-5",
+      "actual": "0-5-4"
+    },
+    {
+      "title": "Official Bank Rate",
+      "country": "GBP",
+      "datetime_utc": "2025-12-18T12:00:00",
+      "impact": "High",
+      "forecast": "3.75%",
+      "previous": "4.00%",
+      "actual": "3.75%"
+    },
+    {
+      "title": "Main Refinancing Rate",
+      "country": "EUR",
+      "datetime_utc": "2025-12-18T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "2.15%",
+      "actual": "2.15%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "EUR",
+      "datetime_utc": "2025-12-18T13:15:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "CPI y/y",
+      "country": "USD",
+      "datetime_utc": "2025-12-18T13:30:00",
+      "impact": "High",
+      "forecast": "3.1%",
+      "previous": "3.0%",
+      "actual": "2.7%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-12-18T13:30:00",
+      "impact": "High",
+      "forecast": "224K",
+      "previous": "236K",
+      "actual": "224K"
+    },
+    {
+      "title": "ECB Press Conference",
+      "country": "EUR",
+      "datetime_utc": "2025-12-18T13:45:00",
+      "impact": "High",
+      "forecast": "2.5",
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Policy Rate",
+      "country": "JPY",
+      "datetime_utc": "2025-12-19T03:19:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "1.4%",
+      "actual": "<0.75%"
+    },
+    {
+      "title": "Monetary Policy Statement",
+      "country": "JPY",
+      "datetime_utc": "2025-12-19T03:19:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "BOJ Press Conference",
+      "country": "JPY",
+      "datetime_utc": "2025-12-19T06:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Retail Sales m/m",
+      "country": "GBP",
+      "datetime_utc": "2025-12-19T07:00:00",
+      "impact": "High",
+      "forecast": "0.1%",
+      "previous": "0.1%",
+      "actual": "-0.1%"
+    },
+    {
+      "title": "GDP m/m",
+      "country": "CAD",
+      "datetime_utc": "2025-12-23T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": "16.3K",
+      "actual": "11.5K"
+    },
+    {
+      "title": "Prelim GDP q/q",
+      "country": "USD",
+      "datetime_utc": "2025-12-23T13:30:00",
+      "impact": "High",
+      "forecast": "3.3%",
+      "previous": "3.8%",
+      "actual": "4.3%"
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-12-24T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "214K"
+    },
+    {
+      "title": "FOMC Meeting Minutes",
+      "country": "USD",
+      "datetime_utc": "2025-12-30T19:00:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": null
+    },
+    {
+      "title": "Unemployment Claims",
+      "country": "USD",
+      "datetime_utc": "2025-12-31T13:30:00",
+      "impact": "High",
+      "forecast": null,
+      "previous": null,
+      "actual": "199K"
+    }
+  ]
+}
