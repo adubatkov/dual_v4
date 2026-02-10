@@ -657,6 +657,9 @@ def run_backtest(
                         "ibh": strategy.ibh,
                         "ibl": strategy.ibl,
                         "eq": strategy.eq,
+                        "ib_start": strategy.ib_start,
+                        "ib_end": strategy.ib_end,
+                        "ib_tz": str(strategy.ib_tz),
                     }
 
                 lots = risk_manager.calculate_position_size(

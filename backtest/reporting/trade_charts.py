@@ -253,10 +253,22 @@ class TradeChartGenerator:
         if ibh is None or ibl is None or ibh <= ibl:
             return
 
-        # IB time window (08:00-08:30 for GER40)
+        # IB time window from actual params (fallback to 08:00-09:00)
         trade_date = chart_start.date()
-        ib_start = datetime.combine(trade_date, datetime_time(8, 0))
-        ib_end = datetime.combine(trade_date, datetime_time(8, 30))
+        ib_start_str = ib_data.get("ib_start", "08:00")
+        ib_end_str = ib_data.get("ib_end", "09:00")
+        ib_tz_str = ib_data.get("ib_tz")
+
+        ib_start_time = datetime_time.fromisoformat(ib_start_str)
+        ib_end_time = datetime_time.fromisoformat(ib_end_str)
+
+        if ib_tz_str:
+            ib_tz = pytz.timezone(ib_tz_str)
+            ib_start = ib_tz.localize(datetime.combine(trade_date, ib_start_time)).replace(tzinfo=None)
+            ib_end = ib_tz.localize(datetime.combine(trade_date, ib_end_time)).replace(tzinfo=None)
+        else:
+            ib_start = datetime.combine(trade_date, ib_start_time)
+            ib_end = datetime.combine(trade_date, ib_end_time)
 
         # Clip to chart window
         start_naive = chart_start.replace(tzinfo=None)
