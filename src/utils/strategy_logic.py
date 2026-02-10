@@ -45,7 +45,7 @@ GER40_PARAMS_PROD = {
         "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
-        "MAX_DISTANCE_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
     },
     "TCWE": {
         "IB_START": "08:00",
@@ -61,7 +61,7 @@ GER40_PARAMS_PROD = {
         "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
-        "MAX_DISTANCE_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
     },
     "Reverse": {
         "IB_START": "08:00",
@@ -77,7 +77,7 @@ GER40_PARAMS_PROD = {
         "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
-        "MAX_DISTANCE_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
     },
     "REV_RB": {
         "IB_START": "08:00",
@@ -93,7 +93,7 @@ GER40_PARAMS_PROD = {
         "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
-        "MAX_DISTANCE_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
     },
 }
 
