@@ -32,6 +32,8 @@ from .models import (
     ConfluenceScore,
     Fractal,
     MarketStructure,
+    OrderFlow,
+    SMCDayContext,
     SMCDecision,
 )
 from .registry import SMCRegistry
@@ -677,3 +679,465 @@ class SMCEngine:
             modified_signal.stop_loss = float(conf_candle["high"])
 
         return modified_signal
+
+    # ================================
+    # Phase 5: Validation Methods
+    # ================================
+
+    def validate_fvg_status(
+        self,
+        fvg: FVG,
+        current_bar: pd.Series,
+        recent_bos: Optional[List[BOS]] = None,
+    ) -> Tuple[str, Optional[str]]:
+        """
+        Validate FVG status according to 6 invalidation rules.
+
+        Implements 4 of 6 variants (inducement and zone_to_lq deferred to Phase 6).
+
+        Returns:
+            (new_status, invalidation_reason) tuple
+        """
+        if fvg.status != "active":
+            return (fvg.status, fvg.invalidation_reason)
+
+        # Variant 1: Structural Update (BOS/CHoCH after FVG)
+        if recent_bos:
+            for bos in recent_bos:
+                if bos.break_time > fvg.formation_time:
+                    if (fvg.direction == "bullish" and bos.direction == "bullish") or \
+                       (fvg.direction == "bearish" and bos.direction == "bearish"):
+                        return ("structural_update", f"Led to {bos.bos_type} at {bos.break_time}")
+
+        # Variant 3: Zone-to-Zone Mitigation (pass-through)
+        bar_in_fvg = (current_bar["low"] <= fvg.high and current_bar["high"] >= fvg.low)
+        if bar_in_fvg:
+            body_range = abs(current_bar["close"] - current_bar["open"])
+            fvg_size = fvg.high - fvg.low
+            if fvg_size > 0 and body_range > fvg_size * 1.5:
+                if fvg.direction == "bullish" and current_bar["close"] > fvg.high:
+                    return ("zone_to_zone", f"Pass-through at {current_bar.get('time', 'unknown')}")
+                elif fvg.direction == "bearish" and current_bar["close"] < fvg.low:
+                    return ("zone_to_zone", f"Pass-through at {current_bar.get('time', 'unknown')}")
+
+        # Variant 6: Inversion (checked before full_fill - more specific condition)
+        fvg_size = fvg.high - fvg.low
+        if fvg_size > 0:
+            if fvg.direction == "bullish" and current_bar["close"] < fvg.low:
+                if current_bar["open"] > current_bar["close"]:
+                    body = current_bar["open"] - current_bar["close"]
+                    if body > fvg_size * 0.8:
+                        return ("inverted", f"Inverted at {current_bar.get('time', 'unknown')}")
+            elif fvg.direction == "bearish" and current_bar["close"] > fvg.high:
+                if current_bar["close"] > current_bar["open"]:
+                    body = current_bar["close"] - current_bar["open"]
+                    if body > fvg_size * 0.8:
+                        return ("inverted", f"Inverted at {current_bar.get('time', 'unknown')}")
+
+        # Variant 5: Full Fill
+        fill_pct = self._calculate_fvg_fill(fvg, current_bar)
+        if fill_pct >= 1.0:
+            return ("full_fill", f"Completely filled at {current_bar.get('time', 'unknown')}")
+        fvg.fill_pct = max(fvg.fill_pct, fill_pct)
+
+        return ("active", None)
+
+    def _calculate_fvg_fill(self, fvg: FVG, current_bar: pd.Series) -> float:
+        """Calculate how much of FVG has been filled (0.0 to 1.0)."""
+        gap_size = fvg.high - fvg.low
+        if gap_size <= 0:
+            return 0.0
+
+        if fvg.direction == "bullish":
+            if current_bar["low"] <= fvg.high:
+                fill_depth = fvg.high - current_bar["low"]
+                return min(fill_depth / gap_size, 1.0)
+        else:
+            if current_bar["high"] >= fvg.low:
+                fill_depth = current_bar["high"] - fvg.low
+                return min(fill_depth / gap_size, 1.0)
+
+        return 0.0
+
+    def validate_bos(
+        self,
+        bos: BOS,
+        smc_context: SMCDayContext,
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Validate if BOS is a true structure break.
+
+        Rule: BOS invalid if zone exists below (bullish) or above (bearish)
+        that could continue movement.
+        """
+        proximity_pct = 0.02
+
+        if bos.direction == "bullish":
+            for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+                if fvg.status == "active" and fvg.direction == "bearish":
+                    if fvg.midpoint < bos.broken_level and fvg.midpoint > bos.broken_level * (1 - proximity_pct):
+                        return (False, f"Bearish FVG below BOS at {fvg.midpoint:.2f}")
+
+            for f_low in smc_context.active_fractal_lows:
+                if f_low < bos.broken_level and f_low > bos.broken_level * (1 - proximity_pct):
+                    return (False, f"Unswept low fractal below BOS at {f_low:.2f}")
+
+        else:  # bearish
+            for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+                if fvg.status == "active" and fvg.direction == "bullish":
+                    if fvg.midpoint > bos.broken_level and fvg.midpoint < bos.broken_level * (1 + proximity_pct):
+                        return (False, f"Bullish FVG above BOS at {fvg.midpoint:.2f}")
+
+            for f_high in smc_context.active_fractal_highs:
+                if f_high > bos.broken_level and f_high < bos.broken_level * (1 + proximity_pct):
+                    return (False, f"Unswept high fractal above BOS at {f_high:.2f}")
+
+        return (True, None)
+
+    def validate_cisd(
+        self,
+        cisd: CISD,
+        smc_context: SMCDayContext,
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Validate if CISD is a true state change.
+
+        Rule: CISD invalid if zone exists that could continue movement against direction.
+        """
+        proximity_pct = 0.02
+        ref_price = cisd.confirmation_close
+
+        if cisd.direction == "long":
+            for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+                if fvg.status == "active" and fvg.direction == "bearish":
+                    if fvg.midpoint < ref_price and fvg.midpoint > ref_price * (1 - proximity_pct):
+                        return (False, f"Bearish FVG below CISD at {fvg.midpoint:.2f}")
+
+            for f_low in smc_context.active_fractal_lows:
+                if f_low < ref_price and f_low > ref_price * (1 - proximity_pct):
+                    return (False, f"Unswept low fractal below CISD at {f_low:.2f}")
+
+        else:  # short
+            for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+                if fvg.status == "active" and fvg.direction == "bullish":
+                    if fvg.midpoint > ref_price and fvg.midpoint < ref_price * (1 + proximity_pct):
+                        return (False, f"Bullish FVG above CISD at {fvg.midpoint:.2f}")
+
+            for f_high in smc_context.active_fractal_highs:
+                if f_high > ref_price and f_high < ref_price * (1 + proximity_pct):
+                    return (False, f"Unswept high fractal above CISD at {f_high:.2f}")
+
+        return (True, None)
+
+    def validate_order_flow(
+        self,
+        order_flow: OrderFlow,
+        current_bar: pd.Series,
+    ) -> Tuple[str, Optional[str]]:
+        """
+        Validate order flow status.
+
+        Rules:
+            - Needs 2 confirmations (steps) to be validated
+            - Invalidated by close below/above last confirmed step
+        """
+        if order_flow.status == "invalidated":
+            return (order_flow.status, order_flow.invalidation_reason)
+
+        bar_close = current_bar["close"]
+
+        if order_flow.direction == "long":
+            if order_flow.step2_price is not None:
+                if bar_close < order_flow.step2_price:
+                    return ("invalidated", f"Close below step2 at {current_bar.get('time', 'unknown')}")
+            elif order_flow.step1_price is not None:
+                if bar_close < order_flow.step1_price:
+                    return ("invalidated", f"Close below step1 at {current_bar.get('time', 'unknown')}")
+        else:  # short
+            if order_flow.step2_price is not None:
+                if bar_close > order_flow.step2_price:
+                    return ("invalidated", f"Close above step2 at {current_bar.get('time', 'unknown')}")
+            elif order_flow.step1_price is not None:
+                if bar_close > order_flow.step1_price:
+                    return ("invalidated", f"Close above step1 at {current_bar.get('time', 'unknown')}")
+
+        if order_flow.status == "pending" and order_flow.step1_price is not None:
+            return ("step1_confirmed", None)
+
+        if order_flow.status == "step1_confirmed" and order_flow.step2_price is not None:
+            return ("validated", "Two steps confirmed")
+
+        return (order_flow.status, None)
+
+    def validate_entry(
+        self,
+        signal: Any,
+        smc_context: SMCDayContext,
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Validate entry conditions (Model 1 or Model 2).
+
+        Model 1: Full conviction (continuation) - needs 2+ confirmations, no opposing zones
+        Model 2: Lower conviction (reversal) - needs 1+ confirmation, allows some opposing
+        """
+        signal_type = getattr(signal, "signal_type", "")
+        is_reversal = signal_type in ("Reverse", "REV_RB")
+
+        opposing_zones = self._find_opposing_zones(signal, smc_context)
+        confirmations = self._count_confirmations(signal, smc_context)
+
+        if not is_reversal:
+            if len(opposing_zones) > 0:
+                return (False, f"Opposing zones: {', '.join(opposing_zones)}")
+            if confirmations < 2:
+                return (False, f"Insufficient confirmations ({confirmations}/2)")
+            return (True, None)
+        else:
+            if confirmations < 1:
+                return (False, "No confirmations for reversal")
+            if len(opposing_zones) > 2:
+                return (False, f"Too many opposing zones ({len(opposing_zones)})")
+            return (True, "Model 2 (reversal entry)")
+
+    def _find_opposing_zones(
+        self,
+        signal: Any,
+        smc_context: SMCDayContext,
+    ) -> List[str]:
+        """Find zones that oppose signal direction."""
+        opposing = []
+        entry_price = getattr(signal, "entry_price", 0)
+        direction = getattr(signal, "direction", "long")
+        proximity_pct = 0.02
+
+        if direction == "long":
+            for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+                if fvg.status == "active" and fvg.direction == "bearish":
+                    if fvg.low > entry_price and fvg.low < entry_price * (1 + proximity_pct):
+                        opposing.append(f"Bearish FVG at {fvg.midpoint:.2f}")
+
+            for f_high in smc_context.active_fractal_highs:
+                if f_high < entry_price and f_high > entry_price * (1 - proximity_pct):
+                    opposing.append(f"High fractal at {f_high:.2f}")
+        else:
+            for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+                if fvg.status == "active" and fvg.direction == "bullish":
+                    if fvg.high < entry_price and fvg.high > entry_price * (1 - proximity_pct):
+                        opposing.append(f"Bullish FVG at {fvg.midpoint:.2f}")
+
+            for f_low in smc_context.active_fractal_lows:
+                if f_low > entry_price and f_low < entry_price * (1 + proximity_pct):
+                    opposing.append(f"Low fractal at {f_low:.2f}")
+
+        return opposing
+
+    def _count_confirmations(
+        self,
+        signal: Any,
+        smc_context: SMCDayContext,
+    ) -> int:
+        """Count confirmations for signal."""
+        count = 0
+        entry_price = getattr(signal, "entry_price", 0)
+        direction = getattr(signal, "direction", "long")
+        proximity_pct = 0.01
+
+        # Confirmation 1: Supporting FVG
+        for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+            if fvg.status == "active":
+                if direction == "long" and fvg.direction == "bullish":
+                    if entry_price > 0 and abs(fvg.midpoint - entry_price) / entry_price < proximity_pct:
+                        count += 1
+                        break
+                elif direction == "short" and fvg.direction == "bearish":
+                    if entry_price > 0 and abs(fvg.midpoint - entry_price) / entry_price < proximity_pct:
+                        count += 1
+                        break
+
+        # Confirmation 2: CISD in signal direction
+        for cisd in smc_context.cisd_events:
+            if cisd.direction == direction:
+                if entry_price > 0 and abs(cisd.confirmation_close - entry_price) / entry_price < proximity_pct:
+                    count += 1
+                    break
+
+        # Confirmation 3: BOS in signal direction
+        bos_dir = "bullish" if direction == "long" else "bearish"
+        for bos in smc_context.bos_events:
+            if bos.direction == bos_dir:
+                if entry_price > 0 and abs(bos.broken_level - entry_price) / entry_price < 0.02:
+                    count += 1
+                    break
+
+        return count
+
+    def validate_tp_target(
+        self,
+        tp_price: float,
+        direction: str,
+        smc_context: SMCDayContext,
+    ) -> bool:
+        """
+        Validate if TP target is a valid open zone.
+
+        Valid targets: active FVG (opposite direction), unswept fractal.
+        """
+        proximity_pct = 0.005
+
+        for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+            if fvg.status != "active":
+                continue
+            if direction == "long" and fvg.direction == "bearish":
+                if tp_price > 0 and abs(fvg.midpoint - tp_price) / tp_price < proximity_pct:
+                    return True
+            elif direction == "short" and fvg.direction == "bullish":
+                if tp_price > 0 and abs(fvg.midpoint - tp_price) / tp_price < proximity_pct:
+                    return True
+
+        if direction == "long":
+            for f_high in smc_context.active_fractal_highs:
+                if tp_price > 0 and abs(f_high - tp_price) / tp_price < proximity_pct:
+                    return True
+        else:
+            for f_low in smc_context.active_fractal_lows:
+                if tp_price > 0 and abs(f_low - tp_price) / tp_price < proximity_pct:
+                    return True
+
+        return False
+
+    def find_nearest_valid_tp(
+        self,
+        entry_price: float,
+        direction: str,
+        smc_context: SMCDayContext,
+    ) -> Optional[float]:
+        """Find nearest valid TP target (open zone beyond entry)."""
+        candidates = []
+
+        for fvg in smc_context.fvgs_h1 + smc_context.fvgs_m2:
+            if fvg.status != "active":
+                continue
+            if direction == "long" and fvg.direction == "bearish" and fvg.midpoint > entry_price:
+                candidates.append(fvg.midpoint)
+            elif direction == "short" and fvg.direction == "bullish" and fvg.midpoint < entry_price:
+                candidates.append(fvg.midpoint)
+
+        if direction == "long":
+            for f_high in smc_context.active_fractal_highs:
+                if f_high > entry_price:
+                    candidates.append(f_high)
+        else:
+            for f_low in smc_context.active_fractal_lows:
+                if f_low < entry_price:
+                    candidates.append(f_low)
+
+        if not candidates:
+            return None
+
+        if direction == "long":
+            candidates.sort()
+        else:
+            candidates.sort(reverse=True)
+
+        return candidates[0]
+
+    def validate_sl_placement(
+        self,
+        sl_price: float,
+        entry_price: float,
+        direction: str,
+        smc_context: SMCDayContext,
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Validate SL placement behind idea invalidation.
+
+        Returns warning (not rejection) - SL placement is advisory.
+        """
+        if direction == "long":
+            for fvg in smc_context.fvgs_m2 + smc_context.fvgs_h1:
+                if fvg.status == "active" and fvg.direction == "bullish":
+                    if sl_price < fvg.midpoint < entry_price:
+                        return (False, f"SL behind bullish FVG POI at {fvg.midpoint:.2f}")
+
+            for cisd in smc_context.cisd_events:
+                if cisd.direction == "long":
+                    if sl_price < cisd.confirmation_close < entry_price:
+                        return (False, f"SL behind CISD POI at {cisd.confirmation_close:.2f}")
+
+            for fvg in smc_context.fvgs_m2 + smc_context.fvgs_h1:
+                if fvg.status == "active" and fvg.direction == "bearish":
+                    if fvg.low < entry_price and sl_price < fvg.low:
+                        return (True, None)
+
+            for f_low in smc_context.active_fractal_lows:
+                if f_low < entry_price and sl_price < f_low:
+                    return (True, None)
+
+        else:  # short
+            for fvg in smc_context.fvgs_m2 + smc_context.fvgs_h1:
+                if fvg.status == "active" and fvg.direction == "bearish":
+                    if entry_price < fvg.midpoint < sl_price:
+                        return (False, f"SL behind bearish FVG POI at {fvg.midpoint:.2f}")
+
+            for cisd in smc_context.cisd_events:
+                if cisd.direction == "short":
+                    if entry_price < cisd.confirmation_close < sl_price:
+                        return (False, f"SL behind CISD POI at {cisd.confirmation_close:.2f}")
+
+            for fvg in smc_context.fvgs_m2 + smc_context.fvgs_h1:
+                if fvg.status == "active" and fvg.direction == "bullish":
+                    if fvg.high > entry_price and sl_price > fvg.high:
+                        return (True, None)
+
+            for f_high in smc_context.active_fractal_highs:
+                if f_high > entry_price and sl_price > f_high:
+                    return (True, None)
+
+        return (True, "SL placement unclear (no invalidation zone identified)")
+
+    def validate_be_move(
+        self,
+        current_bar: pd.Series,
+        entry_time: datetime,
+        entry_price: float,
+        direction: str,
+        smc_context: SMCDayContext,
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Validate if moving to breakeven is appropriate.
+
+        7 conditions (5 implemented, 2 deferred to Phase 6: LQ zone, SMT).
+        """
+        # Check 7 first: NEVER if BE point (entry price) is in potential POI
+        for fvg in smc_context.fvgs_m2 + smc_context.fvgs_h1:
+            if fvg.status == "active":
+                if fvg.low <= entry_price <= fvg.high:
+                    return (False, "BE point is inside active FVG (potential POI)")
+
+        # Check 1: Strong FTA reaction (large wick relative to body)
+        body_size = abs(current_bar["close"] - current_bar["open"])
+        upper_wick = current_bar["high"] - max(current_bar["open"], current_bar["close"])
+        lower_wick = min(current_bar["open"], current_bar["close"]) - current_bar["low"]
+        wick_size = max(upper_wick, lower_wick)
+
+        if body_size > 0 and wick_size / body_size > 2.0:
+            return (True, "Strong FTA reaction (large wick)")
+
+        # Check 3: Idea invalidation (price tested opposing zone)
+        if direction == "long":
+            for fvg in smc_context.fvgs_m2 + smc_context.fvgs_h1:
+                if fvg.status == "active" and fvg.direction == "bearish":
+                    if current_bar["high"] >= fvg.low and current_bar["high"] <= fvg.high:
+                        return (True, "Idea invalidation: tested opposing FVG")
+        else:
+            for fvg in smc_context.fvgs_m2 + smc_context.fvgs_h1:
+                if fvg.status == "active" and fvg.direction == "bullish":
+                    if current_bar["low"] <= fvg.high and current_bar["low"] >= fvg.low:
+                        return (True, "Idea invalidation: tested opposing FVG")
+
+        # Check 6: Structural BE via LTF structure close (BOS after entry)
+        for bos in smc_context.bos_events:
+            if bos.break_time > entry_time:
+                return (True, f"LTF structure close at {bos.break_time}")
+
+        return (False, None)

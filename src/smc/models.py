@@ -90,6 +90,34 @@ class BOS:
 
 
 @dataclass
+class OrderFlow:
+    """Order flow from trigger point (A) to target (B).
+
+    Requires 2 confirmations (steps) to be valid.
+    Invalidated by close below/above last confirmed step.
+    """
+    id: str
+    instrument: str
+    timeframe: str
+    direction: str                        # "long" / "short"
+    trigger_price: float                  # Point A
+    trigger_time: datetime
+    target_price: float                   # Point B (estimated)
+
+    step1_price: Optional[float] = None
+    step1_time: Optional[datetime] = None
+    step1_type: Optional[str] = None      # "liquidity_sweep" / "zone_test" / "cisd"
+
+    step2_price: Optional[float] = None
+    step2_time: Optional[datetime] = None
+    step2_type: Optional[str] = None
+
+    status: str = "pending"               # pending / step1_confirmed / validated / invalidated
+    invalidation_time: Optional[datetime] = None
+    invalidation_reason: Optional[str] = None
+
+
+@dataclass
 class StructurePoint:
     """Single swing point in market structure."""
     time: datetime
