@@ -82,7 +82,7 @@ class TradeChartGenerator:
         output_path: Path,
         ib_data: Optional[Dict[str, float]] = None,
         plot_window_hours: float = 5.0,
-        fractal_data: Optional[Dict] = None,
+        fractal_lists: Optional[Dict] = None,
     ) -> Optional[Path]:
         """
         Generate chart for a single trade.
@@ -93,7 +93,7 @@ class TradeChartGenerator:
             output_path: Path to save chart
             ib_data: Dict with ibh, ibl, eq values
             plot_window_hours: Hours to show on chart
-            fractal_data: Dict with h1/h4 fractal lists for overlay
+            fractal_lists: Dict with all_h1/all_h4 raw fractal lists
 
         Returns:
             Path to saved chart or None if failed
@@ -128,8 +128,9 @@ class TradeChartGenerator:
             # Configure axes first so y-limits are set
             self._configure_axes(ax, df_chart, chart_start, chart_end)
 
-            # Draw fractals after axes configured (filters to visible range)
-            self._draw_fractals(ax, fractal_data, chart_start, chart_end)
+            # Prepare and draw fractals (per-trade sweep computation)
+            fractal_draw_data = self._prepare_fractal_data(fractal_lists, m1_data, chart_start, chart_end)
+            self._draw_fractals(ax, fractal_draw_data, chart_start, chart_end)
 
             # Title
             self._add_title(ax, trade, ib_data)
@@ -346,54 +347,121 @@ class TradeChartGenerator:
             )
             ax.text(end_naive, eq, f" EQ: {eq:.2f}", va="center", fontsize=8, color=COLORS["eq"])
 
+    def _prepare_fractal_data(
+        self,
+        fractal_lists: Optional[Dict],
+        m1_data: pd.DataFrame,
+        chart_start: datetime,
+        chart_end: datetime,
+    ) -> List[Dict]:
+        """Find unswept fractals at chart_start and compute sweep times within window.
+
+        Returns flat list of dicts ready for drawing:
+        {price, type, timeframe, frac_time, sweep_time}
+        """
+        if not fractal_lists:
+            return []
+
+        from src.smc.detectors.fractal_detector import find_unswept_fractals, check_fractal_sweep
+
+        start_utc = chart_start.astimezone(pytz.UTC)
+        end_utc = chart_end.astimezone(pytz.UTC)
+
+        result = []
+        for tf_key, lookback in [("all_h1", 48), ("all_h4", 96)]:
+            all_fracs = fractal_lists.get(tf_key, [])
+            unswept = find_unswept_fractals(all_fracs, m1_data, start_utc, lookback_hours=lookback)
+            for frac in unswept:
+                sweep_time = check_fractal_sweep(frac, m1_data, start_utc, end_utc)
+                result.append({
+                    "price": frac.price,
+                    "type": frac.type,
+                    "timeframe": frac.timeframe,
+                    "frac_time": frac.time,
+                    "sweep_time": sweep_time,
+                })
+
+        # Deduplicate: if H1 and H4 at same (type, price) -> keep only H4
+        h4_keys = {(r["type"], round(r["price"], 2)) for r in result if r["timeframe"] == "H4"}
+        result = [
+            r for r in result
+            if r["timeframe"] == "H4" or (r["type"], round(r["price"], 2)) not in h4_keys
+        ]
+
+        return result
+
     def _draw_fractals(
         self,
         ax,
-        fractal_data: Optional[Dict] = None,
-        chart_start: datetime = None,
-        chart_end: datetime = None,
+        fractal_draw_data: List[Dict],
+        chart_start: datetime,
+        chart_end: datetime,
     ) -> None:
-        """Draw H1 and H4 fractal levels as horizontal lines.
+        """Draw fractal lines ending at sweep point (or dashed to chart edge if unswept).
 
         H1 fractals: thin black lines.
         H4 fractals: thicker red lines.
-        Only draws fractals within the visible y-axis range.
+        Swept: solid line ending at sweep point.
+        Unswept: dashed line extending to chart right edge.
         """
-        if fractal_data is None:
+        if not fractal_draw_data:
             return
 
         start_naive = chart_start.replace(tzinfo=None)
         end_naive = chart_end.replace(tzinfo=None)
-
-        # Get visible price range from already-configured axes
         ymin, ymax = ax.get_ylim()
 
-        # H1 fractals -- thin black solid lines
-        for frac in fractal_data.get("h1", []):
-            if frac.price < ymin or frac.price > ymax:
+        for frac in fractal_draw_data:
+            price = frac["price"]
+            if price < ymin or price > ymax:
                 continue
+
+            # Convert fractal formation time to local naive
+            frac_time = frac["frac_time"]
+            if frac_time.tzinfo is None:
+                frac_time = pytz.utc.localize(frac_time)
+            frac_local = frac_time.astimezone(self.tz).replace(tzinfo=None)
+
+            # Line start: max(chart left edge, fractal formation time)
+            line_start = max(start_naive, frac_local)
+
+            # Line end: sweep time or chart right edge
+            swept = frac["sweep_time"] is not None
+            if swept:
+                sweep_time = frac["sweep_time"]
+                if sweep_time.tzinfo is None:
+                    sweep_time = pytz.utc.localize(sweep_time)
+                line_end = sweep_time.astimezone(self.tz).replace(tzinfo=None)
+            else:
+                line_end = end_naive
+
+            if line_end <= line_start:
+                continue
+
+            # Style: H4=red, H1=black; swept=solid, unswept=dashed
+            is_h4 = frac["timeframe"] == "H4"
+            color = "#d32f2f" if is_h4 else "black"
+            linewidth = 1.5 if is_h4 else 0.8
+            linestyle = "-" if swept else "--"
+            alpha = 0.8 if is_h4 else 0.6
+
             ax.hlines(
-                [frac.price], xmin=start_naive, xmax=end_naive,
-                colors="black", linewidth=0.8, linestyles="-", zorder=1, alpha=0.6,
-            )
-            label = "H" if frac.type == "high" else "L"
-            ax.text(
-                end_naive, frac.price, f" 1h {label}",
-                va="center", fontsize=6, color="black", alpha=0.7,
+                y=[price], xmin=line_start, xmax=line_end,
+                colors=color, linewidth=linewidth, linestyles=linestyle,
+                zorder=1, alpha=alpha,
             )
 
-        # H4 fractals -- thicker red solid lines
-        for frac in fractal_data.get("h4", []):
-            if frac.price < ymin or frac.price > ymax:
-                continue
-            ax.hlines(
-                [frac.price], xmin=start_naive, xmax=end_naive,
-                colors="#d32f2f", linewidth=1.5, linestyles="-", zorder=1, alpha=0.8,
-            )
-            label = "H" if frac.type == "high" else "L"
+            # Label: "4h H 05:00" or "1h L 12:00" at line_start
+            tf_label = "4h" if is_h4 else "1h"
+            type_label = "H" if frac["type"] == "high" else "L"
+            va = "bottom" if frac["type"] == "high" else "top"
+            label_utc = frac_time.strftime("%H:%M")
+
             ax.text(
-                end_naive, frac.price, f" 4h {label}",
-                va="center", fontsize=7, color="#d32f2f", fontweight="bold",
+                line_start, price, f" {tf_label} {type_label} {label_utc}",
+                fontsize=7 if is_h4 else 6, va=va, ha="left",
+                color=color, alpha=alpha,
+                fontweight="bold" if is_h4 else "normal",
             )
 
         # Re-apply y-limits to prevent hlines/text from expanding axes
@@ -584,7 +652,7 @@ def generate_all_trade_charts(
     output_dir: Path,
     timezone: str,
     ib_data_by_date: Optional[Dict[str, Dict[str, float]]] = None,
-    fractal_data_by_date: Optional[Dict[str, Dict]] = None,
+    fractal_lists: Optional[Dict] = None,
 ) -> int:
     """
     Generate charts for all trades.
@@ -595,7 +663,7 @@ def generate_all_trade_charts(
         output_dir: Directory to save charts
         timezone: Timezone for display
         ib_data_by_date: Dict of date_str -> {ibh, ibl, eq}
-        fractal_data_by_date: Dict of date_str -> {h1: List[Fractal], h4: List[Fractal]}
+        fractal_lists: Dict with all_h1/all_h4 raw fractal lists
 
     Returns:
         Number of charts generated
@@ -613,13 +681,10 @@ def generate_all_trade_charts(
 
         # Get IB data for this trade's date
         ib_data = None
-        fractal_data = None
         if trade.entry_time:
             date_key = trade.entry_time.strftime("%Y-%m-%d")
             if ib_data_by_date:
                 ib_data = ib_data_by_date.get(date_key)
-            if fractal_data_by_date:
-                fractal_data = fractal_data_by_date.get(date_key)
 
         # Generate output path
         output_path = output_dir / _get_chart_filename(trade, i)
@@ -630,7 +695,7 @@ def generate_all_trade_charts(
             m1_data=m1_data,
             output_path=output_path,
             ib_data=ib_data,
-            fractal_data=fractal_data,
+            fractal_lists=fractal_lists,
         )
 
         if result:

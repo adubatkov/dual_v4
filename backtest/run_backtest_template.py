@@ -48,7 +48,7 @@ from backtest.reporting.trade_charts import generate_all_trade_charts
 
 # Import PROD parameters from strategy_logic
 from src.utils.strategy_logic import GER40_PARAMS_PROD, XAUUSD_PARAMS_PROD
-from src.smc.detectors.fractal_detector import detect_fractals, find_unswept_fractals
+from src.smc.detectors.fractal_detector import detect_fractals
 
 # Configure logging
 logging.basicConfig(
@@ -805,35 +805,15 @@ def run_backtest(
         )
 
         if generate_charts:
-            # Compute H1/H4 fractals for chart overlay
-            fractal_data_by_date = {}
-            if ib_data_by_date:
-                logger.info("Computing H1/H4 fractals for chart overlay...")
-                h1_data = _resample_m1(m1_data, "1h")
-                h4_data = _resample_m1(m1_data, "4h")
-
-                all_h1 = detect_fractals(h1_data, symbol, "H1", candle_duration_hours=1.0)
-                all_h4 = detect_fractals(h4_data, symbol, "H4", candle_duration_hours=4.0)
-                logger.info(f"Detected {len(all_h1)} H1 and {len(all_h4)} H4 fractals")
-
-                for date_key, ib_info in ib_data_by_date.items():
-                    ib_start_str = ib_info.get("ib_start", "08:00")
-                    ib_tz_str = ib_info.get("ib_tz", "Europe/Berlin")
-                    trade_date = datetime.strptime(date_key, "%Y-%m-%d").date()
-                    ib_tz = pytz.timezone(ib_tz_str)
-                    ib_start_local = ib_tz.localize(
-                        datetime.combine(trade_date, datetime.strptime(ib_start_str, "%H:%M").time())
-                    )
-                    ib_start_utc = ib_start_local.astimezone(pytz.UTC)
-
-                    unswept_h1 = find_unswept_fractals(all_h1, m1_data, ib_start_utc, lookback_hours=48)
-                    unswept_h4 = find_unswept_fractals(all_h4, m1_data, ib_start_utc, lookback_hours=96)
-
-                    # Deduplicate: remove H1 fractals that overlap with H4 at same price+type
-                    h4_prices = {(f.type, round(f.price, 2)) for f in unswept_h4}
-                    filtered_h1 = [f for f in unswept_h1 if (f.type, round(f.price, 2)) not in h4_prices]
-
-                    fractal_data_by_date[date_key] = {"h1": filtered_h1, "h4": unswept_h4}
+            # Compute H1/H4 fractals for chart overlay (detect once, filter per-trade in chart gen)
+            fractal_lists = None
+            logger.info("Computing H1/H4 fractals for chart overlay...")
+            h1_data = _resample_m1(m1_data, "1h")
+            h4_data = _resample_m1(m1_data, "4h")
+            all_h1 = detect_fractals(h1_data, symbol, "H1", candle_duration_hours=1.0)
+            all_h4 = detect_fractals(h4_data, symbol, "H4", candle_duration_hours=4.0)
+            logger.info(f"Detected {len(all_h1)} H1 and {len(all_h4)} H4 fractals")
+            fractal_lists = {"all_h1": all_h1, "all_h4": all_h4}
 
             logger.info("Generating trade charts...")
             charts_count = generate_all_trade_charts(
@@ -842,7 +822,7 @@ def run_backtest(
                 output_dir=report_manager.get_trades_dir(),
                 timezone=local_tz_name,
                 ib_data_by_date=ib_data_by_date,
-                fractal_data_by_date=fractal_data_by_date,
+                fractal_lists=fractal_lists,
             )
             logger.info(f"Generated {charts_count} trade charts")
         else:
