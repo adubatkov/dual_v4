@@ -142,6 +142,46 @@ class ConfluenceScore:
 
 
 # ================================
+# Fast Backtest Context
+# ================================
+
+@dataclass
+class SMCDayContext:
+    """
+    Pre-computed SMC structures for a single trading day.
+
+    Built once per day in fast backtest. Used by SMC filter for signal
+    evaluation without redundant re-computation.
+    """
+    instrument: str
+    day_date: Any                         # datetime.date
+    build_time: Optional[datetime] = None
+
+    # Fractals
+    fractals_high: List[Fractal] = field(default_factory=list)
+    fractals_low: List[Fractal] = field(default_factory=list)
+
+    # FVGs by timeframe
+    fvgs_m2: List[FVG] = field(default_factory=list)
+    fvgs_h1: List[FVG] = field(default_factory=list)
+
+    # BOS and CISD events
+    bos_events: List[BOS] = field(default_factory=list)
+    cisd_events: List[CISD] = field(default_factory=list)
+
+    # Cached price levels (sorted, for fast lookup)
+    active_fractal_highs: List[float] = field(default_factory=list)
+    active_fractal_lows: List[float] = field(default_factory=list)
+    active_fvg_zones: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Counts
+    num_fractals: int = 0
+    num_fvgs: int = 0
+    num_bos: int = 0
+    num_cisds: int = 0
+
+
+# ================================
 # Event Log
 # ================================
 

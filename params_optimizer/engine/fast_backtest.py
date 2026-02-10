@@ -294,8 +294,52 @@ class FastBacktest:
             else:
                 return None
 
-        # 6. Simulate trade execution on M1 data for precise SL/TP
+        # 6. Apply SMC filter (if enabled)
+        if params.get("smc_enabled", False):
+            signal = self._apply_smc_filter(signal, day_df, day_date, df_trade_m1, params)
+            if signal is None:
+                return None
+
+        # 7. Simulate trade execution on M1 data for precise SL/TP
         return self._simulate_trade_on_m1(df_trade_m1, signal, ib, day_date, params)
+
+    def _apply_smc_filter(
+        self, signal, day_df: pd.DataFrame, day_date, df_trade_m1: pd.DataFrame, params: Dict
+    ) -> Optional[Any]:
+        """Apply SMC filter to detected signal. Returns modified signal or None."""
+        try:
+            from src.smc.fast_filter import build_smc_day_context, apply_smc_filter
+
+            lookback_df = self._get_lookback_data(day_date, hours=params.get("smc_lookback_hours", 48))
+            smc_params = {
+                "enable_fractals": params.get("smc_fractals", True),
+                "enable_fvg": params.get("smc_fvg", True),
+                "enable_bos": params.get("smc_bos", False),
+                "enable_cisd": params.get("smc_cisd", False),
+                "fvg_min_size_points": params.get("smc_fvg_min_size", 0.0),
+                "smc_confirmation_max_bars": params.get("smc_confirmation_max_bars", 30),
+            }
+
+            ctx = build_smc_day_context(day_df, lookback_df, self.symbol, smc_params)
+            return apply_smc_filter(signal, ctx, df_trade_m1, smc_params)
+        except Exception:
+            # SMC filter failure should not block trade execution
+            return signal
+
+    def _get_lookback_data(self, day_date, hours: int = 48) -> pd.DataFrame:
+        """Get M1 data for lookback period (prior days) for cross-day SMC context."""
+        import pytz
+        day_start = datetime.combine(day_date, time(0, 0))
+        # Handle timezone-aware data
+        first_time = self.m1_data["time"].iloc[0]
+        if hasattr(first_time, 'tzinfo') and first_time.tzinfo is not None:
+            day_start = pd.Timestamp(day_start, tz="UTC")
+
+        lookback_start = day_start - timedelta(hours=hours)
+        return self.m1_data[
+            (self.m1_data["time"] >= lookback_start) &
+            (self.m1_data["time"] < day_start)
+        ].copy()
 
     # ========================================
     # IB and Trade Window Functions
