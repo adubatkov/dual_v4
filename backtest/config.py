@@ -90,11 +90,16 @@ class BacktestConfig:
 DEFAULT_CONFIG = BacktestConfig()
 
 
-# Data folder mapping
-DATA_FOLDERS = {
-    "GER40": "GER40 1m 01_01_2023-04_11_2025",
-    "XAUUSD": "XAUUSD 1m 01_01_2023-04_11_2025",
-    # Control period (Nov 2025 - Jan 2026) for out-of-sample validation
-    "GER40_CONTROL": "ger40+pepperstone_0411-2001",
-    "XAUUSD_CONTROL": "xauusd_oanda_0411-2001",
+# Unified parquet data files (training + control merged, deduplicated)
+DATA_FILES = {
+    "GER40": Path("C:/Trading/ib_trading_bot/dual_v4/data/optimized/GER40_m1.parquet"),
+    "XAUUSD": Path("C:/Trading/ib_trading_bot/dual_v4/data/optimized/XAUUSD_m1.parquet"),
 }
+
+# Legacy CSV folder mapping (kept for reference)
+# DATA_FOLDERS = {
+#     "GER40": "GER40 1m 01_01_2023-04_11_2025",
+#     "XAUUSD": "XAUUSD 1m 01_01_2023-04_11_2025",
+#     "GER40_CONTROL": "ger40+pepperstone_0411-2001",
+#     "XAUUSD_CONTROL": "xauusd_oanda_0411-2001",
+# }

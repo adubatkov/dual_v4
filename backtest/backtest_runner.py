@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 import numpy as np
 
-from .config import BacktestConfig, DATA_FOLDERS, DEFAULT_CONFIG
+from .config import BacktestConfig, DATA_FILES, DEFAULT_CONFIG
 from .data_processor.data_ingestor import DataIngestor
 from .data_processor.tick_generator import TickGenerator, build_tick_data
 from .emulator.mt5_emulator import MT5Emulator
@@ -136,22 +136,18 @@ class BacktestRunner:
         logger.info(f"Preparing data for symbols: {symbols}")
 
         for symbol in symbols:
-            # Determine data folder
-            folder_name = DATA_FOLDERS.get(symbol)
-            if not folder_name:
-                logger.warning(f"No data folder mapping for {symbol}")
+            # Load from unified parquet file
+            data_file = DATA_FILES.get(symbol)
+            if not data_file:
+                logger.warning(f"No data file mapping for {symbol}")
                 continue
 
-            data_path = self.config.data_base_path / folder_name
-
-            if not data_path.exists():
-                logger.error(f"Data path not found: {data_path}")
+            if not data_file.exists():
+                logger.error(f"Data file not found: {data_file}")
                 continue
 
-            # Load M1 data
-            logger.info(f"Loading M1 data for {symbol} from {data_path}")
-            ingestor = DataIngestor(data_path)
-            m1_df = ingestor.load_all()
+            logger.info(f"Loading M1 data for {symbol} from {data_file}")
+            m1_df = pd.read_parquet(data_file)
 
             # Filter date range
             if start_date:
