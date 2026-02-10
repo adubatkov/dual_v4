@@ -608,6 +608,247 @@ class SingleDayBacktest:
         return fig
 
 
+class SingleDayBacktestSMC(SingleDayBacktest):
+    """
+    Single-day backtest with SMC (Smart Money Concepts) overlay.
+
+    Extends SingleDayBacktest to use IBStrategySMC and capture
+    SMC decision data (confluence score, event log, registry snapshot).
+    """
+
+    def __init__(
+        self,
+        symbol: str = "GER40",
+        initial_balance: float = 50000.0,
+        risk_pct: Optional[float] = None,
+        risk_amount: Optional[float] = None,
+        max_margin_pct: float = 40.0,
+        data_path: Optional[str] = None,
+        timezone: Optional[str] = None,
+        smc_config: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Args:
+            symbol: Trading symbol
+            initial_balance: Starting balance
+            risk_pct: Risk percentage
+            risk_amount: Fixed risk amount
+            max_margin_pct: Max margin percentage
+            data_path: Path to M1 data folder
+            timezone: Instrument timezone
+            smc_config: Dict of SMC config overrides (keys match SMCConfig fields)
+        """
+        super().__init__(
+            symbol=symbol,
+            initial_balance=initial_balance,
+            risk_pct=risk_pct,
+            risk_amount=risk_amount,
+            max_margin_pct=max_margin_pct,
+            data_path=data_path,
+            timezone=timezone,
+        )
+        self.smc_config_dict = smc_config or {}
+
+    def _setup(self):
+        """Initialize emulator and load data with SMC-aware strategy."""
+        # Call parent setup first (creates emulator, loads data, executor, risk manager)
+        super()._setup()
+
+        # Replace strategy with SMC version
+        import importlib
+        import src.strategies.ib_strategy_smc as ib_strategy_smc_module
+        importlib.reload(ib_strategy_smc_module)
+        from src.strategies.ib_strategy_smc import IBStrategySMC
+        from src.smc.config import SMCConfig
+        from src.utils.strategy_logic import GER40_PARAMS_PROD, XAUUSD_PARAMS_PROD
+
+        params = GER40_PARAMS_PROD if self.symbol == "GER40" else XAUUSD_PARAMS_PROD
+
+        # Build SMCConfig from dict overrides
+        smc_cfg = SMCConfig(instrument=self.symbol, **self.smc_config_dict)
+
+        # Create SMC strategy with real M1 data
+        self.strategy = IBStrategySMC(
+            symbol=self.symbol,
+            params=params,
+            executor=self.executor,
+            magic_number=1001,
+            strategy_label="Debug_SMC",
+            smc_config=smc_cfg,
+            m1_data=self.m1_data,
+        )
+
+    def run_day(self, date: datetime) -> Dict[str, Any]:
+        """
+        Run backtest for a single day with SMC overlay.
+
+        Returns dict with standard fields plus:
+        - smc_decision: Last SMCDecision instance
+        - smc_event_log: List of SMCEvent
+        - smc_state: Dict from get_smc_state()
+        """
+        result = super().run_day(date)
+
+        # Add SMC-specific data
+        if hasattr(self.strategy, "smc_engine") and self.strategy.smc_engine is not None:
+            result["smc_decision"] = self.strategy.last_decision
+            result["smc_event_log"] = list(self.strategy.smc_engine.event_log.events)
+            result["smc_state"] = self.strategy.get_smc_state()
+        else:
+            result["smc_decision"] = self.strategy.last_decision if hasattr(self.strategy, "last_decision") else None
+            result["smc_event_log"] = []
+            result["smc_state"] = None
+
+        return result
+
+    def generate_chart_with_smc(
+        self,
+        result: Dict[str, Any],
+        figsize: Tuple[int, int] = (16, 10),
+        show_levels: bool = True,
+        hours_after_ib: float = 4.0,
+    ):
+        """
+        Generate chart with SMC overlays (FVGs, fractals, BOS/CISD).
+
+        Extends base chart with:
+        - FVG rectangles (green=bullish, red=bearish)
+        - Fractal markers (triangles)
+        - SMC decision box at signal time
+        """
+        import matplotlib.pyplot as plt
+        import matplotlib.dates as mdates
+        from matplotlib.patches import Rectangle
+
+        # Generate base chart
+        fig = self.generate_chart(result, figsize=figsize, show_levels=show_levels,
+                                   hours_after_ib=hours_after_ib)
+        if fig is None:
+            return None
+
+        ax = fig.axes[0]
+        tz = pytz.timezone(self.timezone)
+
+        # Get SMC data
+        smc_engine = getattr(self.strategy, "smc_engine", None)
+        if smc_engine is None:
+            return fig
+
+        registry = smc_engine.registry
+
+        # 1. Draw FVGs (shaded rectangles)
+        fvgs = registry.get_active("fvg")
+        chart_end = ax.get_xlim()[1]
+
+        for fvg in fvgs:
+            x_start = mdates.date2num(fvg.formation_time)
+            y_bottom = fvg.low
+            y_height = fvg.high - fvg.low
+
+            color = "green" if fvg.direction == "bullish" else "red"
+
+            rect = Rectangle(
+                (x_start, y_bottom),
+                chart_end - x_start,
+                y_height,
+                alpha=0.12,
+                facecolor=color,
+                edgecolor=color,
+                linewidth=0.5,
+                linestyle="--",
+            )
+            ax.add_patch(rect)
+
+            # Midpoint line (FVL)
+            ax.axhline(
+                y=fvg.midpoint,
+                color=color,
+                linestyle=":",
+                linewidth=0.7,
+                alpha=0.4,
+            )
+
+        # 2. Draw Fractals (triangle markers)
+        fractals = list(registry._store.get("fractal", {}).values())
+        for frac in fractals:
+            marker = "^" if frac.type == "low" else "v"
+            color = "blue" if frac.type == "low" else "purple"
+
+            ax.plot(
+                mdates.date2num(frac.time),
+                frac.price,
+                marker=marker,
+                color=color,
+                markersize=7,
+                markeredgecolor="black",
+                markeredgewidth=0.5,
+                alpha=0.7,
+            )
+
+        # 3. Draw BOS/CISD lines
+        bos_list = list(registry._store.get("bos", {}).values())
+        for bos in bos_list:
+            color = "darkorange" if bos.bos_type == "bos" else "magenta"
+            ax.axvline(
+                x=mdates.date2num(bos.break_time),
+                color=color,
+                linestyle="--",
+                linewidth=1.0,
+                alpha=0.6,
+            )
+            ax.text(
+                mdates.date2num(bos.break_time),
+                bos.broken_level,
+                f" {bos.bos_type.upper()} {bos.direction[0].upper()}",
+                fontsize=7,
+                color=color,
+                weight="bold",
+                rotation=90,
+                verticalalignment="bottom",
+            )
+
+        # 4. Draw SMC Decision Box
+        smc_decision = result.get("smc_decision")
+        signals = result.get("signals", [])
+
+        if smc_decision and signals:
+            sig = signals[0]
+            sig_time = mdates.date2num(sig["time"])
+            sig_price = sig["entry_price"]
+
+            decision_text = (
+                f"SMC: {smc_decision.action}\n"
+                f"{smc_decision.reason[:40]}\n"
+                f"Score: {smc_decision.confluence_score:.1f}"
+            )
+
+            box_colors = {"ENTER": "limegreen", "WAIT": "gold", "REJECT": "salmon"}
+            box_color = box_colors.get(smc_decision.action, "gray")
+
+            bbox_props = dict(
+                boxstyle="round,pad=0.4",
+                facecolor=box_color,
+                alpha=0.3,
+                edgecolor="black",
+                linewidth=1.0,
+            )
+
+            ax.text(
+                sig_time, sig_price, decision_text,
+                fontsize=7, weight="bold",
+                bbox=bbox_props,
+                verticalalignment="top",
+                horizontalalignment="left",
+            )
+
+        # Update title to indicate SMC overlay
+        old_title = ax.get_title()
+        ax.set_title(old_title + " [+SMC]", fontsize=12, fontweight="bold")
+
+        plt.tight_layout()
+        return fig
+
+
 def export_trades_for_debug(
     trade_log: List[TradeLog],
     output_path: str,
