@@ -25,7 +25,7 @@ import sys
 import json
 import argparse
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -634,6 +634,44 @@ def run_backtest(
     m1_data = runner._m1_data[symbol]
     local_tz = pytz.timezone(local_tz_name)
 
+    # Pre-compute H1/H4 fractals for the entire period (used for BE logic + chart overlay)
+    logger.info("Computing H1/H4 fractals...")
+    h1_data = _resample_m1(m1_data, "1h")
+    h4_data = _resample_m1(m1_data, "4h")
+    all_h1 = detect_fractals(h1_data, symbol, "H1", candle_duration_hours=1.0)
+    all_h4 = detect_fractals(h4_data, symbol, "H4", candle_duration_hours=4.0)
+    logger.info(f"Detected {len(all_h1)} H1 and {len(all_h4)} H4 fractals")
+
+    # Deduplicate: H4 overrides H1 at same (type, price)
+    h4_keys = {(f.type, round(f.price, 2)) for f in all_h4}
+    filtered_h1 = [f for f in all_h1 if (f.type, round(f.price, 2)) not in h4_keys]
+
+    # Sort all fractals by confirmed_time for incremental activation
+    all_fractals_sorted = sorted(filtered_h1 + all_h4, key=lambda f: f.confirmed_time)
+
+    # Pre-compute M2 fractals for fractal TSL
+    logger.info("Computing M2 fractals...")
+    m2_data = _resample_m1(m1_data, "2min")
+    all_m2 = detect_fractals(m2_data, symbol, "M2", candle_duration_hours=2/60)
+    logger.info(f"Detected {len(all_m2)} M2 fractals")
+    all_m2_sorted = sorted(all_m2, key=lambda f: f.confirmed_time)
+
+    # Fractal BE tracking state
+    fractal_ptr = 0
+    active_fractals = []
+    fractal_be_count = 0
+    tsl_organic_sl = {}        # ticket -> SL as computed by TSL only (no fractal BE)
+    fractal_be_active = {}     # ticket -> entry_price (once fractal BE triggered for this position)
+
+    # Fractal TSL tracking state
+    m2_fractal_ptr = 0
+    last_m2_high = None          # (price, confirmed_time) of most recent M2 high
+    last_m2_low = None           # (price, confirmed_time) of most recent M2 low
+    fractal_tsl_active = {}      # ticket -> True
+    fractal_tsl_prev_sl = {}     # ticket -> previous fractal TSL SL (for logging changes)
+    fractal_tsl_count = 0
+    fractal_tsl_updates = 0
+
     trades_executed = 0
     signals_detected = 0
     days_processed = set()
@@ -693,19 +731,184 @@ def run_backtest(
                     trades_executed += 1
                     strategy.state = "POSITION_OPEN"
 
-        # TSL update
+        # --- TSL update (must use TSL-organic SL, not fractal-BE-modified) ---
         positions = executor.get_open_positions()
-        sl_before_tsl = {p.ticket: p.sl for p in positions}
 
+        # Capture effective SL from end of previous candle (before restoring organic)
+        # Used to detect same-candle SL changes and prevent false _check_sltp_hits triggers
+        effective_sl_prev = {p.ticket: p.sl for p in positions if p.magic == magic_number}
+
+        # Restore TSL-organic SL before TSL runs (undo fractal BE overlay from prev candle)
+        for pos in positions:
+            if pos.magic == magic_number and pos.ticket in tsl_organic_sl:
+                organic = tsl_organic_sl[pos.ticket]
+                if pos.sl != organic:
+                    executor.modify_position(pos.ticket, sl=organic, tp=pos.tp)
+
+        # Re-fetch after restore
+        positions = executor.get_open_positions()
+
+        # Run TSL
         for position in positions:
             tick = executor.get_tick(symbol)
             if tick:
                 strategy.update_position_state(position, tick, current_time_utc)
 
-        _check_sltp_hits(emulator, row, config.symbols[symbol], sl_override=sl_before_tsl)
+        # Capture TSL-organic SL (TSL's own result, uncontaminated)
+        positions = executor.get_open_positions()
+        for pos in positions:
+            if pos.magic == magic_number:
+                tsl_organic_sl[pos.ticket] = pos.sl
+
+        # --- Fractal activation: add newly confirmed fractals ---
+        while (fractal_ptr < len(all_fractals_sorted) and
+               all_fractals_sorted[fractal_ptr].confirmed_time <= current_time_utc):
+            active_fractals.append(all_fractals_sorted[fractal_ptr])
+            fractal_ptr += 1
+
+        # Expire stale fractals (match chart lookback: H1=48h, H4=96h)
+        if active_fractals:
+            expiry_cutoff_h1 = current_time_utc - timedelta(hours=48)
+            expiry_cutoff_h4 = current_time_utc - timedelta(hours=96)
+            active_fractals = [
+                f for f in active_fractals
+                if (f.timeframe == "H1" and f.time >= expiry_cutoff_h1)
+                or (f.timeframe == "H4" and f.time >= expiry_cutoff_h4)
+            ]
+
+        # --- M2 fractal pointer: activate newly confirmed M2 fractals ---
+        while (m2_fractal_ptr < len(all_m2_sorted) and
+               all_m2_sorted[m2_fractal_ptr].confirmed_time <= current_time_utc):
+            m2f = all_m2_sorted[m2_fractal_ptr]
+            if m2f.type == "high":
+                last_m2_high = (m2f.price, m2f.confirmed_time)
+            else:
+                last_m2_low = (m2f.price, m2f.confirmed_time)
+            m2_fractal_ptr += 1
+
+        # --- Fractal sweep check + BE trigger ---
+        swept_indices = []
+        for i, frac in enumerate(active_fractals):
+            touched = False
+            if frac.type == "high" and row["high"] >= frac.price:
+                touched = True
+            elif frac.type == "low" and row["low"] <= frac.price:
+                touched = True
+
+            if touched:
+                swept_indices.append(i)
+
+                our_pos = next((p for p in positions if p.magic == magic_number), None)
+                if our_pos is not None:
+                    variation = strategy.tsl_state.get("variation") if strategy.tsl_state else None
+                    var_params = strategy.params.get(variation, {}) if variation else {}
+                    is_long = our_pos.type == 0
+                    direction_str = "LONG" if is_long else "SHORT"
+
+                    # --- Fractal BE: move SL to entry (if SL in negative zone) ---
+                    if our_pos.ticket not in fractal_be_active:
+                        fractal_be_enabled = var_params.get("FRACTAL_BE_ENABLED", False)
+                        if fractal_be_enabled:
+                            entry = our_pos.price_open
+                            organic_sl = tsl_organic_sl.get(our_pos.ticket, our_pos.sl)
+                            sl_negative = (is_long and organic_sl < entry) or (not is_long and organic_sl > entry)
+                            if sl_negative:
+                                fractal_be_active[our_pos.ticket] = entry
+                                logger.info(
+                                    f"[FRACTAL BE] {current_time_utc.strftime('%Y-%m-%d %H:%M')} UTC | "
+                                    f"{symbol} {direction_str} #{our_pos.ticket} | "
+                                    f"{frac.timeframe} {frac.type} {frac.price:.2f} swept | "
+                                    f"Fractal BE activated (entry={entry:.2f})"
+                                )
+                                fractal_be_count += 1
+
+                    # --- Fractal TSL: start M2 fractal trailing ---
+                    if our_pos.ticket not in fractal_tsl_active:
+                        fractal_tsl_enabled = var_params.get("FRACTAL_TSL_ENABLED", False)
+                        if fractal_tsl_enabled:
+                            m2_ref = last_m2_low if is_long else last_m2_high
+                            m2_sl = m2_ref[0] if m2_ref else None
+                            fractal_tsl_active[our_pos.ticket] = True
+                            fractal_tsl_prev_sl[our_pos.ticket] = m2_sl
+                            m2_type = "low" if is_long else "high"
+                            m2_sl_str = f"{m2_sl:.2f}" if m2_sl else "none"
+                            logger.info(
+                                f"[FRACTAL TSL] {current_time_utc.strftime('%Y-%m-%d %H:%M')} UTC | "
+                                f"{symbol} {direction_str} #{our_pos.ticket} | "
+                                f"{frac.timeframe} {frac.type} {frac.price:.2f} swept | "
+                                f"Fractal TSL activated (M2 {m2_type} SL={m2_sl_str})"
+                            )
+                            fractal_tsl_count += 1
+
+        # Remove swept fractals (reverse order to preserve indices)
+        for i in sorted(swept_indices, reverse=True):
+            active_fractals.pop(i)
+
+        # --- Apply effective SL: best of (TSL organic, fractal BE, fractal TSL) ---
+        positions = executor.get_open_positions()
+        for pos in positions:
+            if pos.magic == magic_number:
+                organic = tsl_organic_sl.get(pos.ticket, pos.sl)
+                frac_be = fractal_be_active.get(pos.ticket, None)
+                is_long = pos.type == 0
+
+                # Fractal TSL: current M2 fractal SL
+                frac_tsl_sl = None
+                if pos.ticket in fractal_tsl_active:
+                    m2_ref = last_m2_low if is_long else last_m2_high
+                    if m2_ref is not None:
+                        frac_tsl_sl = m2_ref[0]
+                        prev_frac_sl = fractal_tsl_prev_sl.get(pos.ticket)
+                        if prev_frac_sl is not None and abs(frac_tsl_sl - prev_frac_sl) > 0.001:
+                            m2_type = "low" if is_long else "high"
+                            logger.info(
+                                f"[FRACTAL TSL] {current_time_utc.strftime('%Y-%m-%d %H:%M')} UTC | "
+                                f"{symbol} #{pos.ticket} | M2 {m2_type} SL "
+                                f"{prev_frac_sl:.2f} -> {frac_tsl_sl:.2f}"
+                            )
+                            fractal_tsl_updates += 1
+                        fractal_tsl_prev_sl[pos.ticket] = frac_tsl_sl
+
+                # Effective = most favorable of all active systems
+                candidates = [organic]
+                if frac_be is not None:
+                    candidates.append(frac_be)
+                if frac_tsl_sl is not None:
+                    candidates.append(frac_tsl_sl)
+
+                effective = max(candidates) if is_long else min(candidates)
+
+                if effective != pos.sl:
+                    executor.modify_position(pos.ticket, sl=effective, tp=pos.tp)
+
+        # Build sl_override: only for tickets where SL changed THIS candle.
+        # For unchanged tickets, _check_sltp_hits uses position.sl (= effective SL).
+        # This prevents same-candle exits when BE or TSL just activated.
+        sl_override_for_check = {}
+        for pos in executor.get_open_positions():
+            if pos.magic == magic_number:
+                prev = effective_sl_prev.get(pos.ticket)
+                if prev is not None and abs(prev - pos.sl) > 0.001:
+                    # SL changed this candle (TSL and/or BE) - use previous effective
+                    sl_override_for_check[pos.ticket] = prev
+
+        _check_sltp_hits(emulator, row, config.symbols[symbol], sl_override=sl_override_for_check)
+
+        # Clean up tracking for closed positions
+        current_tickets = {p.ticket for p in executor.get_open_positions() if p.magic == magic_number}
+        for ticket in list(tsl_organic_sl.keys()):
+            if ticket not in current_tickets:
+                tsl_organic_sl.pop(ticket, None)
+                fractal_be_active.pop(ticket, None)
+                fractal_tsl_active.pop(ticket, None)
+                fractal_tsl_prev_sl.pop(ticket, None)
 
     # Close remaining positions
     emulator.force_close_all_positions(reason="backtest_end")
+    logger.info(f"[FRACTAL BE SUMMARY] {fractal_be_count} fractal BE activations "
+                f"out of {trades_executed} total trades")
+    logger.info(f"[FRACTAL TSL SUMMARY] {fractal_tsl_count} fractal TSL activations, "
+                f"{fractal_tsl_updates} M2 SL updates out of {trades_executed} total trades")
 
     # Get results
     trade_log = emulator.get_trade_log()
@@ -805,14 +1008,7 @@ def run_backtest(
         )
 
         if generate_charts:
-            # Compute H1/H4 fractals for chart overlay (detect once, filter per-trade in chart gen)
-            fractal_lists = None
-            logger.info("Computing H1/H4 fractals for chart overlay...")
-            h1_data = _resample_m1(m1_data, "1h")
-            h4_data = _resample_m1(m1_data, "4h")
-            all_h1 = detect_fractals(h1_data, symbol, "H1", candle_duration_hours=1.0)
-            all_h4 = detect_fractals(h4_data, symbol, "H4", candle_duration_hours=4.0)
-            logger.info(f"Detected {len(all_h1)} H1 and {len(all_h4)} H4 fractals")
+            # Reuse pre-computed fractal lists for chart overlay
             fractal_lists = {"all_h1": all_h1, "all_h4": all_h4}
 
             logger.info("Generating trade charts...")

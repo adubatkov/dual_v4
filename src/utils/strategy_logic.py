@@ -46,6 +46,8 @@ GER40_PARAMS_PROD = {
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
         "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
     },
     "TCWE": {
         "IB_START": "08:00",
@@ -62,6 +64,8 @@ GER40_PARAMS_PROD = {
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
         "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
     },
     "Reverse": {
         "IB_START": "08:00",
@@ -78,6 +82,8 @@ GER40_PARAMS_PROD = {
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
         "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
     },
     "REV_RB": {
         "IB_START": "08:00",
@@ -94,6 +100,8 @@ GER40_PARAMS_PROD = {
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
         "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
     },
 }
 
@@ -116,6 +124,8 @@ XAUUSD_PARAMS_PROD = {
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
         # R: 32.74, Sharpe: 2.22, WR: 54.42%, Trades: 226, MaxDD: 7.24
     },
     "TCWE": {
@@ -133,6 +143,8 @@ XAUUSD_PARAMS_PROD = {
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
         # R: 19.04, Sharpe: 1.02, WR: 61.18%, Trades: 304, MaxDD: 11.72
     },
     "Reverse": {
@@ -150,6 +162,8 @@ XAUUSD_PARAMS_PROD = {
         "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
         # R: 44.06, Sharpe: 3.53, WR: 47.62%, Trades: 97, MaxDD: 11.47
     },
     "REV_RB": {
@@ -167,6 +181,8 @@ XAUUSD_PARAMS_PROD = {
         "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
         # R: 0.0, Sharpe: 0.0, WR: 0.0%, Trades: 0, MaxDD: 0.0
     },
 }
