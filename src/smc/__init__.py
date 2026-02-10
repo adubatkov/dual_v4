@@ -6,3 +6,4 @@ Three-layer architecture:
 - Registry: in-memory state tracking for active/invalidated structures
 - Engine: orchestrator that ties detectors + registry + decision logic
 """
+from .engine import SMCEngine
