@@ -21,84 +21,79 @@ XAU_DATA_FOLDER = r"C:\Users\User\PyCharmMiscProject\Ger40 IBR Claude improve\da
 
 
 # ================================
-# PRODUCTION PARAMETERS (V9 - GER40_055 + XAUUSD_059)
-# Selected based on training + control period validation
-# Training: GER40_055 R=94.17, XAUUSD_059 R=86.29
-# Control:  GER40_055 R=16.16, XAUUSD_059 R=10.23
-# Combined: Training R=180.48, Control R=26.39
+# PRODUCTION PARAMETERS
+# GER40: Baseline (FOS 08:00-09:00, uniform params)
+# XAUUSD: V9 - XAUUSD_059
 # ================================
 
-# GER40 Production Parameters (V9 - GER40_055)
-# IB: 09:00-09:30 Europe/Berlin, IB_WAIT: 15 min
-# Source: ib_buffer_calmar, Combined R: 83.01, Trades: 673
+# GER40 Baseline Parameters
+# IB: 08:00-09:00 Europe/Berlin (Frankfurt Opening Session), IB_WAIT: 0
+# Trade window: 120 min (09:00-11:00, avoiding Lunch Hours 11:00-13:00)
+# Uniform baseline for all variations - starting point for optimization
 GER40_PARAMS_PROD = {
     "OCAE": {
-        "IB_START": "09:00",
-        "IB_END": "09:30",
+        "IB_START": "08:00",
+        "IB_END": "09:00",
         "IB_TZ": "Europe/Berlin",
-        "IB_WAIT": 15,
-        "TRADE_WINDOW": 240,
-        "RR_TARGET": 0.75,
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
         "STOP_MODE": "ib_start",
-        "TSL_TARGET": 0.75,
-        "TSL_SL": 0.5,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.0015,
         "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
-        "IB_BUFFER_PCT": 0.2,
-        "MAX_DISTANCE_PCT": 0.5,
-        # R: 43.27, Sharpe: 3.02, WR: 48.73%, Trades: 164, MaxDD: 7.07
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 0.0,
     },
     "TCWE": {
-        "IB_START": "09:00",
-        "IB_END": "09:30",
+        "IB_START": "08:00",
+        "IB_END": "09:00",
         "IB_TZ": "Europe/Berlin",
-        "IB_WAIT": 15,
-        "TRADE_WINDOW": 90,
-        "RR_TARGET": 0.75,
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
         "STOP_MODE": "ib_start",
-        "TSL_TARGET": 2.0,
-        "TSL_SL": 1.5,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.0015,
         "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
-        "IB_BUFFER_PCT": 0.2,
-        "MAX_DISTANCE_PCT": 0.75,
-        # R: 13.95, Sharpe: 0.74, WR: 54.07%, Trades: 246, MaxDD: 8.74
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 0.0,
     },
     "Reverse": {
-        "IB_START": "09:00",
-        "IB_END": "09:30",
+        "IB_START": "08:00",
+        "IB_END": "09:00",
         "IB_TZ": "Europe/Berlin",
-        "IB_WAIT": 15,
-        "TRADE_WINDOW": 180,
-        "RR_TARGET": 0.5,
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
         "STOP_MODE": "ib_start",
-        "TSL_TARGET": 1.5,
-        "TSL_SL": 0.5,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.0015,
         "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
-        "IB_BUFFER_PCT": 0.2,
-        "MAX_DISTANCE_PCT": 0.75,
-        # R: 23.48, Sharpe: 1.14, WR: 38.74%, Trades: 255, MaxDD: 11.33
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 0.0,
     },
     "REV_RB": {
-        "IB_START": "09:00",
-        "IB_END": "09:30",
+        "IB_START": "08:00",
+        "IB_END": "09:00",
         "IB_TZ": "Europe/Berlin",
-        "IB_WAIT": 15,
-        "TRADE_WINDOW": 240,
-        "RR_TARGET": 2.0,
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
         "STOP_MODE": "ib_start",
-        "TSL_TARGET": 0.0,
-        "TSL_SL": 0.5,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.0015,
+        "REV_RB_ENABLED": False,
         "REV_RB_PCT": 1.0,
-        "REV_RB_ENABLED": True,
-        "IB_BUFFER_PCT": 0.2,
-        "MAX_DISTANCE_PCT": 0.75,
-        # R: 2.32, Sharpe: 3.55, WR: 50.0%, Trades: 8, MaxDD: 1.17
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 0.0,
     },
 }
 
