@@ -54,6 +54,7 @@ class Fractal:
     price: float
     time: datetime                        # Center bar time
     confirmed_time: datetime              # After confirming bar closes
+    candle_close: Optional[float] = None  # Close of center bar (for CISD SL mode)
     status: str = "active"                # active / swept
     swept: bool = False
     sweep_time: Optional[datetime] = None

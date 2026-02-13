@@ -33,7 +33,6 @@ from src.utils.strategy_logic import (
     initial_stop_price,
     place_sl_tp_with_min_size,
     simulate_after_entry,
-    simulate_reverse_limit_both_sides,
     ib_window_on_date,
     trade_window_on_date,
     get_trade_window
@@ -77,6 +76,13 @@ class IBStrategy(BaseStrategy):
                 logger.info(f"[{symbol}] News filter enabled with {self.news_filter.event_count} events")
             except Exception as e:
                 logger.warning(f"[{symbol}] Failed to initialize news filter: {e}")
+
+        # Analysis timeframe (default M2 for backward compatibility)
+        from src.utils.strategy_logic import ANALYSIS_TF_CONFIG
+        self.analysis_tf = params.get("ANALYSIS_TF", "2min")
+        _atf = ANALYSIS_TF_CONFIG[self.analysis_tf]
+        self._atf_mt5_tf = _atf["mt5_tf"]
+        self._atf_minutes = _atf["minutes"]
 
         # Timezone and IB parameters (assuming same across variations)
         self.ib_tz = pytz.timezone(params["Reverse"]["IB_TZ"])
@@ -148,6 +154,17 @@ class IBStrategy(BaseStrategy):
             self.current_local_date = local_time.date()
             logger.info(f"{self.log_prefix} New day {self.current_local_date}, state reset")
 
+            # Check if day should be skipped due to high-impact news
+            skip_categories = self.params.get("NEWS_SKIP_EVENTS", [])
+            if self.news_filter is not None and skip_categories:
+                should_skip, reason = self.news_filter.should_skip_day(
+                    self.current_local_date, skip_categories
+                )
+                if should_skip:
+                    logger.info(f"{self.log_prefix} Day skipped by NEWS_SKIP_EVENTS: {reason}")
+                    self.state = "DAY_ENDED"
+                    return None
+
         # 1. FSM State: AWAITING_IB_CALCULATION
         if self.state == "AWAITING_IB_CALCULATION":
             # Check if IB period ended
@@ -156,8 +173,8 @@ class IBStrategy(BaseStrategy):
             if local_time.time() >= ib_end_time:
                 logger.info(f"{self.log_prefix} IB period ended, calculating IB...")
 
-                # Get bars for the entire day up to now (M2 timeframe)
-                bars = self.executor.get_bars(self.symbol, "M2", 500)
+                # Get bars for the entire day up to now (analysis timeframe)
+                bars = self.executor.get_bars(self.symbol, self._atf_mt5_tf, 500)
 
                 if bars is not None and not bars.empty:
                     # Calculate IB
@@ -237,8 +254,8 @@ class IBStrategy(BaseStrategy):
                     logger.info(f"  Event time: {blocking_event.datetime_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
                     return None
 
-            # Get current bars
-            bars = self.executor.get_bars(self.symbol, "M2", 500)
+            # Get current bars (analysis timeframe)
+            bars = self.executor.get_bars(self.symbol, self._atf_mt5_tf, 500)
 
             if bars is None or bars.empty:
                 return None
@@ -260,11 +277,7 @@ class IBStrategy(BaseStrategy):
             if signal:
                 return signal
 
-            # 4. Try REV_RB (if enabled)
-            if self.params.get("REV_RB", {}).get("REV_RB_ENABLED", False):
-                signal = self._check_rev_rb_signal(bars, local_time.date(), current_time_utc)
-                if signal:
-                    return signal
+            # REV_RB is handled as a limit order in the backtest template (FVG-based)
 
         return None
 
@@ -287,8 +300,8 @@ class IBStrategy(BaseStrategy):
 
         last_candle_time = df_trade["time"].iloc[-1]
 
-        # M2 candles - next candle starts 2 minutes later
-        next_candle_time = last_candle_time + timedelta(minutes=2)
+        # Analysis TF candles - next candle starts N minutes later
+        next_candle_time = last_candle_time + timedelta(minutes=self._atf_minutes)
 
         # Last candle is closed if current time >= next candle time
         is_closed = current_time_utc >= next_candle_time
@@ -418,7 +431,7 @@ class IBStrategy(BaseStrategy):
         # CRITICAL: Check if SIGNAL CANDLE is fully formed (closed)
         # We must wait for THIS candle to close, not the last candle in window
         signal_candle_time = entry_candle["time"]
-        next_candle_time = signal_candle_time + timedelta(minutes=2)
+        next_candle_time = signal_candle_time + timedelta(minutes=self._atf_minutes)
 
         if current_time_utc < next_candle_time:
             # Signal candle not closed yet, wait
@@ -494,7 +507,7 @@ class IBStrategy(BaseStrategy):
         # CRITICAL: Check if SIGNAL CANDLE is fully formed (closed)
         # We must wait for THIS candle to close, not the last candle in window
         signal_candle_time = entry_candle["time"]
-        next_candle_time = signal_candle_time + timedelta(minutes=2)
+        next_candle_time = signal_candle_time + timedelta(minutes=self._atf_minutes)
 
         if current_time_utc < next_candle_time:
             # Signal candle not closed yet, wait
@@ -538,73 +551,6 @@ class IBStrategy(BaseStrategy):
             take_profit=tp,
             comment=f"IBStrategy_TCWE_{direction}",
             variation="TCWE",
-            use_virtual_tp=(params["TSL_TARGET"] > 0)  # Use actual TP when TSL disabled
-        )
-
-    def _check_rev_rb_signal(self, bars: pd.DataFrame, day_date: date, current_time_utc: datetime) -> Optional[Signal]:
-        """Check for REV_RB (Reverse Blocked - limit orders) signal"""
-        params = self.params.get("REV_RB")
-        if not params or not params.get("REV_RB_ENABLED"):
-            return None
-
-        df_trade = get_trade_window(bars, day_date, params["IB_END"], params["IB_TZ"],
-                                     params["IB_WAIT"], params["TRADE_WINDOW"])
-
-        if df_trade.empty:
-            return None
-
-        # CRITICAL: Check if last candle is fully formed (closed)
-        # We must wait for candle to close before checking signal
-        if not self._is_last_candle_closed(df_trade, current_time_utc):
-            return None
-
-        # For REV_RB, we use first trade window bar as fake_block_time
-        # (as per original backtest logic)
-        fake_block_time = df_trade["time"].iat[0]
-
-        # Process REV_RB signal using simulate_reverse_limit_both_sides
-        result = simulate_reverse_limit_both_sides(
-            df_trade, self.ibh, self.ibl, self.eq, fake_block_time, params
-        )
-
-        if result is None or result.get("status") != "done":
-            return None
-
-        direction = result["direction"]
-        entry_price = result["entry_price"]
-        stop = result["stop"]
-        tp = result["tp"]
-
-        logger.info(f"{self.log_prefix} REV_RB signal - {direction.upper()} at {entry_price:.5f}, SL:{stop:.5f}, TP:{tp:.5f}")
-
-        # Calculate variation-specific position window end
-        variation_window = params["TRADE_WINDOW"]
-        position_window_end_local = self.trade_window_start + timedelta(minutes=variation_window)
-        position_window_end_utc = position_window_end_local.astimezone(pytz.utc)
-
-        self.tsl_state = {
-            "variation": "REV_RB",
-            "tsl_target": params["TSL_TARGET"],
-            "tsl_sl": params["TSL_SL"],
-            "initial_sl": stop,
-            "initial_tp": tp,
-            "current_tp": tp,  # Virtual TP for TSL logic
-            "entry_price": entry_price,
-            "tsl_triggered": False,
-            "position_window_end": position_window_end_utc,
-            "variation_window_minutes": variation_window,
-            "tsl_history": [],  # List of (time, sl, tp) for chart visualization
-        }
-
-        logger.info(f"{self.log_prefix} Position window: {variation_window} min, closes at {position_window_end_local.strftime('%H:%M:%S')} ({self.ib_tz})")
-
-        return Signal(
-            direction=direction,
-            entry_price=entry_price,
-            stop_loss=stop,
-            take_profit=tp,
-            comment=f"IBStrategy_REV_RB_{direction}",
-            variation="REV_RB",
             use_virtual_tp=(params["TSL_TARGET"] > 0)  # Use actual TP when TSL disabled
         )
 

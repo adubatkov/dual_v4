@@ -86,6 +86,7 @@ class DataIngestor:
         Handles multiple datetime formats:
         - ISO 8601 with Z suffix (2025-10-06T00:15:00Z)
         - ISO 8601 with timezone offset
+        - UNIX epoch seconds (1751839320)
         - Standard datetime formats
 
         Args:
@@ -94,6 +95,12 @@ class DataIngestor:
         Returns:
             DataFrame with parsed datetime index
         """
+        # Detect UNIX epoch timestamps (pure numeric values like 1751839320)
+        sample = str(df["time"].iloc[0]).strip()
+        if sample.isdigit() and len(sample) >= 10:
+            df["time"] = pd.to_datetime(df["time"].astype(float), unit="s", utc=True)
+            return df
+
         # Try parsing as datetime
         try:
             # First try ISO format (most common in our data)

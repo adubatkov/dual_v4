@@ -22,7 +22,7 @@ ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 # Paths
-DATA_DIR = ROOT / "data" / "control"
+DATA_DIR = ROOT / "data" / "optimized"
 OUTPUT_DIR = ROOT / "strategy_optimization" / "candle_size" / "results"
 
 # Symbol configurations
@@ -34,6 +34,14 @@ SYMBOL_CONFIG = {
     "XAUUSD": {
         "timezone": "Asia/Tokyo",
         "parquet": "XAUUSD_m1.parquet",
+    },
+    "NAS100": {
+        "timezone": "America/New_York",
+        "parquet": "NAS100_m1.parquet",
+    },
+    "UK100": {
+        "timezone": "Europe/London",
+        "parquet": "UK100_m1.parquet",
     },
 }
 
@@ -147,6 +155,15 @@ def create_chart(
         _add_session_line(ax, data, datetime_time(9, 0), "red", "Tokyo Open (09:00)")
         _add_session_line(ax, data, datetime_time(16, 0), "green", "London Open (16:00)")
         _add_session_line(ax, data, datetime_time(21, 0), "blue", "NY Open (21:00)")
+        ax.legend(loc="upper right")
+    elif symbol == "NAS100":
+        _add_session_line(ax, data, datetime_time(9, 30), "green", "NYSE Open (09:30)")
+        _add_session_line(ax, data, datetime_time(16, 0), "red", "NYSE Close (16:00)")
+        ax.legend(loc="upper right")
+    elif symbol == "UK100":
+        _add_session_line(ax, data, datetime_time(8, 0), "green", "London Open (08:00)")
+        _add_session_line(ax, data, datetime_time(14, 30), "blue", "US Open (14:30)")
+        _add_session_line(ax, data, datetime_time(16, 30), "red", "London Close (16:30)")
         ax.legend(loc="upper right")
 
     plt.tight_layout()

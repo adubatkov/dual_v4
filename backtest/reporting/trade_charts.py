@@ -45,6 +45,9 @@ COLORS = {
     "ibh_ibl": "#666666",
     "eq": "#9c27b0",
     "grid": "#e0e0e0",
+    "fvg_bullish": "#26a69a",      # Teal (same as candle_up)
+    "fvg_bearish": "#ef5350",      # Red (same as candle_down)
+    "fvg_h4_edge": "#ff9800",      # Orange for H4 FVG edges
 }
 
 FIGSIZE = (16, 10)
@@ -131,6 +134,14 @@ class TradeChartGenerator:
             # Prepare and draw fractals (per-trade sweep computation)
             fractal_draw_data = self._prepare_fractal_data(fractal_lists, m1_data, chart_start, chart_end)
             self._draw_fractals(ax, fractal_draw_data, chart_start, chart_end)
+
+            # Prepare and draw M2 BOS (2-minute fractal structure breaks)
+            m2_bos_data = self._prepare_m2_bos_data(fractal_lists, m1_data, chart_start, chart_end)
+            self._draw_m2_bos(ax, m2_bos_data, chart_start, chart_end)
+
+            # Prepare and draw HTF FVGs (H1/H4 Fair Value Gaps)
+            fvg_draw_data = self._prepare_fvg_data(fractal_lists, m1_data, chart_start, chart_end)
+            self._draw_fvgs(ax, fvg_draw_data, chart_start, chart_end)
 
             # Title
             self._add_title(ax, trade, ib_data)
@@ -425,25 +436,27 @@ class TradeChartGenerator:
             # Line start: max(chart left edge, fractal formation time)
             line_start = max(start_naive, frac_local)
 
-            # Line end: sweep time or chart right edge
+            # Line end: sweep time (skip unswept fractals -- no dashed lines to right edge)
             swept = frac["sweep_time"] is not None
-            if swept:
-                sweep_time = frac["sweep_time"]
-                if sweep_time.tzinfo is None:
-                    sweep_time = pytz.utc.localize(sweep_time)
-                line_end = sweep_time.astimezone(self.tz).replace(tzinfo=None)
-            else:
-                line_end = end_naive
+            if not swept:
+                continue
+            sweep_time = frac["sweep_time"]
+            if sweep_time.tzinfo is None:
+                sweep_time = pytz.utc.localize(sweep_time)
+            line_end = sweep_time.astimezone(self.tz).replace(tzinfo=None)
+            # Skip if sweep is beyond chart right edge
+            if line_end > end_naive:
+                continue
 
             if line_end <= line_start:
                 continue
 
-            # Style: H4=red, H1=black; swept=solid, unswept=dashed
+            # Style: H4=red thick, H1=black thick; swept=solid, unswept=dashed
             is_h4 = frac["timeframe"] == "H4"
             color = "#d32f2f" if is_h4 else "black"
-            linewidth = 1.5 if is_h4 else 0.8
+            linewidth = 1.5
             linestyle = "-" if swept else "--"
-            alpha = 0.8 if is_h4 else 0.6
+            alpha = 0.8
 
             ax.hlines(
                 y=[price], xmin=line_start, xmax=line_end,
@@ -459,12 +472,331 @@ class TradeChartGenerator:
 
             ax.text(
                 line_start, price, f" {tf_label} {type_label} {label_utc}",
-                fontsize=7 if is_h4 else 6, va=va, ha="left",
+                fontsize=7, va=va, ha="left",
                 color=color, alpha=alpha,
-                fontweight="bold" if is_h4 else "normal",
+                fontweight="bold",
             )
 
         # Re-apply y-limits to prevent hlines/text from expanding axes
+        ax.set_ylim(ymin, ymax)
+
+    def _prepare_m2_bos_data(
+        self,
+        fractal_lists: Optional[Dict],
+        m1_data: pd.DataFrame,
+        chart_start: datetime,
+        chart_end: datetime,
+    ) -> List[Dict]:
+        """Find M2 fractal BOS events within chart window.
+
+        For each M2 fractal confirmed during the chart window, scan M1 candles
+        forward to find the first candle whose close breaks the fractal level:
+        - High fractal: close > price (bullish BOS)
+        - Low fractal: close < price (bearish BOS)
+
+        Returns list of dicts: {price, type, frac_time, bos_time}
+        """
+        if not fractal_lists:
+            return []
+
+        all_m2 = fractal_lists.get("all_m2", [])
+        if not all_m2:
+            return []
+
+        start_utc = chart_start.astimezone(pytz.UTC)
+        end_utc = chart_end.astimezone(pytz.UTC)
+
+        # Filter M2 fractals confirmed within chart window
+        window_fracs = [
+            f for f in all_m2
+            if start_utc <= f.confirmed_time <= end_utc
+        ]
+
+        if not window_fracs:
+            return []
+
+        # Build M1 time index for efficient scanning
+        m1_times = m1_data["time"].values  # numpy datetime64
+        m1_closes = m1_data["close"].values
+
+        result = []
+        for frac in window_fracs:
+            confirmed_np = np.datetime64(frac.confirmed_time)
+            # Find M1 candles after confirmed_time
+            mask = m1_times >= confirmed_np
+            indices = np.where(mask)[0]
+
+            bos_time = None
+            for idx in indices:
+                t = pd.Timestamp(m1_times[idx]).to_pydatetime()
+                if t.tzinfo is None:
+                    t = pytz.utc.localize(t)
+                if t > end_utc:
+                    break
+                c = m1_closes[idx]
+                if frac.type == "high" and c > frac.price:
+                    bos_time = t
+                    break
+                elif frac.type == "low" and c < frac.price:
+                    bos_time = t
+                    break
+
+            result.append({
+                "price": frac.price,
+                "type": frac.type,
+                "frac_time": frac.confirmed_time,
+                "bos_time": bos_time,
+            })
+
+        return result
+
+    def _draw_m2_bos(
+        self,
+        ax,
+        m2_bos_data: List[Dict],
+        chart_start: datetime,
+        chart_end: datetime,
+    ) -> None:
+        """Draw M2 BOS lines: thin black semi-transparent horizontals.
+
+        Solid line from fractal confirmed_time to BOS candle.
+        Dashed line to chart edge if no BOS found.
+        """
+        if not m2_bos_data:
+            return
+
+        start_naive = chart_start.replace(tzinfo=None)
+        end_naive = chart_end.replace(tzinfo=None)
+        ymin, ymax = ax.get_ylim()
+
+        for bos in m2_bos_data:
+            price = bos["price"]
+            if price < ymin or price > ymax:
+                continue
+
+            # Convert fractal confirmed time to local naive
+            frac_time = bos["frac_time"]
+            if frac_time.tzinfo is None:
+                frac_time = pytz.utc.localize(frac_time)
+            frac_local = frac_time.astimezone(self.tz).replace(tzinfo=None)
+
+            line_start = max(start_naive, frac_local)
+
+            # Line end: BOS candle or chart edge
+            has_bos = bos["bos_time"] is not None
+            if has_bos:
+                bos_time = bos["bos_time"]
+                if bos_time.tzinfo is None:
+                    bos_time = pytz.utc.localize(bos_time)
+                line_end = bos_time.astimezone(self.tz).replace(tzinfo=None)
+            else:
+                line_end = end_naive
+
+            if line_end <= line_start:
+                continue
+
+            linestyle = "-" if has_bos else "--"
+
+            ax.hlines(
+                y=[price], xmin=line_start, xmax=line_end,
+                colors="black", linewidth=0.5, linestyles=linestyle,
+                zorder=1, alpha=0.3,
+            )
+
+        ax.set_ylim(ymin, ymax)
+
+    def _prepare_fvg_data(
+        self,
+        fractal_lists: Optional[Dict],
+        m1_data: pd.DataFrame,
+        chart_start: datetime,
+        chart_end: datetime,
+    ) -> List[Dict]:
+        """Find active H1/H4 FVGs for chart window with touch time.
+
+        For each FVG, computes when price first enters the zone:
+        - Bullish FVG: first candle where low <= fvg.high (price dips into zone)
+        - Bearish FVG: first candle where high >= fvg.low (price rises into zone)
+
+        Returns list of dicts sorted by proximity to chart midpoint, max 6.
+        """
+        if not fractal_lists:
+            return []
+
+        start_utc = chart_start.astimezone(pytz.UTC)
+        end_utc = chart_end.astimezone(pytz.UTC)
+
+        m1_times = m1_data["time"].values
+        m1_highs = m1_data["high"].values
+        m1_lows = m1_data["low"].values
+
+        result = []
+        for tf_key in ["all_h1_fvgs", "all_h4_fvgs"]:
+            all_fvgs = fractal_lists.get(tf_key, [])
+            for fvg in all_fvgs:
+                if fvg.formation_time > end_utc:
+                    continue
+
+                # Skip FVGs already touched before chart start
+                if fvg.formation_time < start_utc:
+                    form_np = np.datetime64(fvg.formation_time)
+                    start_np = np.datetime64(start_utc)
+                    pre_mask = (m1_times > form_np) & (m1_times <= start_np)
+                    pre_indices = np.where(pre_mask)[0]
+                    if len(pre_indices) > 0:
+                        if fvg.direction == "bullish":
+                            if m1_lows[pre_indices].min() <= fvg.high:
+                                continue
+                        else:
+                            if m1_highs[pre_indices].max() >= fvg.low:
+                                continue
+
+                # Find touch_time: first candle where price enters the FVG zone
+                form_np = np.datetime64(fvg.formation_time)
+                end_np = np.datetime64(end_utc)
+                post_mask = (m1_times > form_np) & (m1_times <= end_np)
+                post_indices = np.where(post_mask)[0]
+
+                touch_time = None
+                for idx in post_indices:
+                    if fvg.direction == "bullish" and m1_lows[idx] <= fvg.high:
+                        touch_time = pd.Timestamp(m1_times[idx]).to_pydatetime()
+                        if touch_time.tzinfo is None:
+                            touch_time = pytz.utc.localize(touch_time)
+                        break
+                    elif fvg.direction == "bearish" and m1_highs[idx] >= fvg.low:
+                        touch_time = pd.Timestamp(m1_times[idx]).to_pydatetime()
+                        if touch_time.tzinfo is None:
+                            touch_time = pytz.utc.localize(touch_time)
+                        break
+
+                result.append({
+                    "high": fvg.high,
+                    "low": fvg.low,
+                    "direction": fvg.direction,
+                    "timeframe": fvg.timeframe,
+                    "formation_time": fvg.formation_time,
+                    "touch_time": touch_time,
+                })
+
+        # Filter: get chart price range
+        start_np = np.datetime64(start_utc)
+        end_np_w = np.datetime64(end_utc)
+        window_mask = (m1_times >= start_np) & (m1_times <= end_np_w)
+        window_indices = np.where(window_mask)[0]
+        if len(window_indices) > 0:
+            chart_low = float(m1_lows[window_indices].min())
+            chart_high = float(m1_highs[window_indices].max())
+        else:
+            chart_low = min(r["low"] for r in result) if result else 0
+            chart_high = max(r["high"] for r in result) if result else 1
+        chart_range = chart_high - chart_low if chart_high > chart_low else 1
+        chart_mid = (chart_high + chart_low) / 2
+
+        # Remove oversized FVGs (>40% of visible price range)
+        result = [r for r in result if (r["high"] - r["low"]) < chart_range * 0.4]
+
+        # Sort by distance from chart midpoint, limit to 6
+        result.sort(key=lambda r: abs((r["high"] + r["low"]) / 2 - chart_mid))
+        return result[:6]
+
+    def _draw_fvgs(
+        self,
+        ax,
+        fvg_draw_data: List[Dict],
+        chart_start: datetime,
+        chart_end: datetime,
+    ) -> None:
+        """Draw FVG zones as simple rectangles.
+
+        Each FVG is a rectangle from formation_time to touch_time (or chart edge).
+        Ends with a vertical line at the touch point.
+        """
+        if not fvg_draw_data:
+            return
+
+        start_naive = chart_start.replace(tzinfo=None)
+        end_naive = chart_end.replace(tzinfo=None)
+        ymin, ymax = ax.get_ylim()
+
+        def _to_local_naive(t):
+            if t is None:
+                return None
+            if t.tzinfo is None:
+                t = pytz.utc.localize(t)
+            return t.astimezone(self.tz).replace(tzinfo=None)
+
+        for fvg in fvg_draw_data:
+            fvg_high = fvg["high"]
+            fvg_low = fvg["low"]
+
+            # Skip if entirely outside visible y-range
+            if fvg_low > ymax or fvg_high < ymin:
+                continue
+
+            form_local = _to_local_naive(fvg["formation_time"])
+            touch_local = _to_local_naive(fvg["touch_time"])
+
+            # Rectangle start
+            x_start = max(start_naive, form_local)
+
+            # Rectangle end: touch_time or chart right edge
+            if touch_local is not None and touch_local <= end_naive:
+                x_end = max(x_start, touch_local)
+            else:
+                x_end = end_naive
+
+            if x_end <= x_start:
+                continue
+
+            # Colors
+            is_h4 = fvg["timeframe"] == "H4"
+            if fvg["direction"] == "bullish":
+                fill_color = COLORS["fvg_bullish"]
+                line_color = COLORS["fvg_h4_edge"] if is_h4 else COLORS["fvg_bullish"]
+            else:
+                fill_color = COLORS["fvg_bearish"]
+                line_color = COLORS["fvg_h4_edge"] if is_h4 else COLORS["fvg_bearish"]
+
+            linewidth = 1.2 if is_h4 else 0.8
+            fill_alpha = 0.10
+            line_alpha = 0.5
+
+            x_s = mdates.date2num(x_start)
+            x_e = mdates.date2num(x_end)
+
+            # Rectangle fill
+            rect = Rectangle(
+                (x_s, fvg_low), x_e - x_s, fvg_high - fvg_low,
+                facecolor=fill_color, edgecolor="none",
+                alpha=fill_alpha, zorder=0,
+            )
+            ax.add_patch(rect)
+
+            # Top and bottom boundary lines
+            ax.hlines(
+                y=[fvg_high, fvg_low], xmin=x_start, xmax=x_end,
+                colors=line_color, linewidth=linewidth,
+                linestyles="-", zorder=1, alpha=line_alpha,
+            )
+
+            # Vertical end line (right edge of rectangle)
+            ax.vlines(
+                x=[x_end], ymin=fvg_low, ymax=fvg_high,
+                colors=line_color, linewidth=linewidth,
+                linestyles="-", zorder=1, alpha=line_alpha,
+            )
+
+            # Label
+            tf_label = "4h" if is_h4 else "1h"
+            midpoint = (fvg_high + fvg_low) / 2
+            ax.text(
+                x_start, midpoint, f" {tf_label}",
+                fontsize=6, va="center", ha="left",
+                color=line_color, alpha=0.6,
+                fontweight="bold",
+            )
+
         ax.set_ylim(ymin, ymax)
 
     def _draw_trade(

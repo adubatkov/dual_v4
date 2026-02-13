@@ -1,0 +1,166 @@
+%% GER40 IB Trading Strategy - TSL + Fractal Overlay Sub-Flowchart
+%% PROD Baseline: TSL_TARGET=1.0, TSL_SL=1.0
+%% FRACTAL_BE_ENABLED=True, FRACTAL_TSL_ENABLED=True, M2_BOS_CHART_ENABLED=True
+
+flowchart TD
+
+    START([Per-Candle Update Cycle]) --> TIME_EXIT
+
+    %% ============================================================
+    %% STEP 1: TIME EXIT CHECK
+    %% ============================================================
+    subgraph TIME_CHK["Step 1: Time Exit Check"]
+        TIME_EXIT{"current_time >=<br/>position_window_end?<br/>(09:00 + 120min = 11:00)"}
+        TIME_EXIT -->|Yes| CLOSE_TIME["Close at market price<br/>Exit reason: time"]
+    end
+
+    CLOSE_TIME --> DONE([Exit position management])
+
+    %% ============================================================
+    %% STEP 2: ORGANIC TSL
+    %% ============================================================
+    TIME_EXIT -->|No| RESTORE
+
+    subgraph ORG_TSL["Step 2: Organic TSL (Stepped Trailing)"]
+        RESTORE["Restore organic SL<br/>(undo prev fractal overlay,<br/>set SL back to TSL-only value)"]
+        RESTORE --> TSL_ENABLED{"TSL_TARGET > 0?<br/>(PROD: 1.0 = enabled)"}
+        TSL_ENABLED -->|No| NO_TRAIL["No trailing:<br/>check fixed TP/SL only"]
+        TSL_ENABLED -->|Yes| VP_HIT{"Virtual TP hit?<br/>LONG: price >= curr_tp<br/>SHORT: price <= curr_tp"}
+        VP_HIT -->|No| SAVE_ORG["Save organic SL<br/>(unchanged)"]
+
+        VP_HIT -->|Yes| RATCHET["Ratchet SL and TP"]
+        RATCHET --> CALC_NEW_SL["LONG: new_SL = curr_SL +<br/>TSL_SL * risk (1.0R)<br/>SHORT: new_SL = curr_SL -<br/>TSL_SL * risk (1.0R)"]
+        CALC_NEW_SL --> PROTECT{"SL moves protectively?<br/>LONG: new >= current<br/>SHORT: new <= current"}
+        PROTECT -->|No| KEEP_SL["Keep current SL<br/>(never move against)"]
+        PROTECT -->|Yes| APPLY_SL["Apply new SL"]
+        KEEP_SL --> CALC_NEW_TP
+        APPLY_SL --> CALC_NEW_TP["new_TP = entry +/-<br/>(target_R + TSL_TARGET) * risk<br/>Move virtual TP forward"]
+
+        CALC_NEW_TP --> MULTI_HIT{"Same candle hits<br/>another TP level?<br/>(while loop)"}
+        MULTI_HIT -->|Yes| RATCHET
+        MULTI_HIT -->|No| TRAIL_CHK{"Trail conflict?<br/>Same candle: TP hit<br/>AND lo/hi hits new SL"}
+        TRAIL_CHK -->|Yes| MARK_EXIT["Set exit_next_open = true<br/>(close on next candle open)"]
+        TRAIL_CHK -->|No| SAVE_ORG_2["Save organic SL<br/>(after TSL ratchet)"]
+
+        MARK_EXIT --> NEXT_CANDLE["On NEXT candle:"]
+        NEXT_CANDLE --> CLOSE_TRAIL["Close at open price<br/>Exit reason: trail_conflict"]
+
+        NO_TRAIL --> CHECK_TP{"TP hit?<br/>LONG: hi >= tp<br/>SHORT: lo <= tp"}
+        CHECK_TP -->|Yes| CLOSE_TP["Close at TP price<br/>Exit reason: tp"]
+        CHECK_TP -->|No| CHECK_SL_NT{"SL hit?<br/>LONG: lo <= sl<br/>SHORT: hi >= sl"}
+        CHECK_SL_NT -->|Yes| CLOSE_SL_NT["Close at SL price<br/>Exit reason: stop"]
+        CHECK_SL_NT -->|No| SAVE_ORG
+    end
+
+    SAVE_ORG --> FRAC_PHASE
+    SAVE_ORG_2 --> FRAC_PHASE
+
+    %% ============================================================
+    %% STEP 3: FRACTAL POINTER MANAGEMENT
+    %% ============================================================
+    subgraph FRAC_PTR["Step 3: Fractal Pointer Management"]
+        FRAC_PHASE["Advance fractal pointers"]
+        FRAC_PHASE --> H1H4_PTR["Advance H1/H4 pointer:<br/>add fractals where<br/>confirmed_time <= now"]
+        H1H4_PTR --> EXPIRE_H1H4["Expire stale fractals:<br/>H1: older than 48h<br/>H4: older than 96h"]
+        EXPIRE_H1H4 --> DEDUP["Deduplicate: H4 overrides<br/>H1 at same (type, price)"]
+        DEDUP --> M2_PTR["Advance M2 pointer:<br/>track most recent<br/>M2 high and M2 low fractals"]
+    end
+
+    %% ============================================================
+    %% STEP 4: FRACTAL SWEEP DETECTION
+    %% ============================================================
+    subgraph FRAC_SWEEP["Step 4: Fractal Sweep Detection"]
+        M2_PTR --> SWEEP_CHK["Check each active<br/>H1/H4 fractal"]
+        SWEEP_CHK --> SWEPT{"Candle sweeps fractal?<br/>High frac: candle high >= price<br/>Low frac: candle low <= price"}
+        SWEPT -->|No| NEXT_FRAC["Next fractal"]
+        SWEPT -->|Yes| REMOVE_FRAC["Mark fractal as swept,<br/>remove from active list"]
+        REMOVE_FRAC --> HAS_POS{"Position open?"}
+        HAS_POS -->|No| NEXT_FRAC
+        HAS_POS -->|Yes| TRIGGER_BE
+
+        NEXT_FRAC --> MORE_FRAC{"More active<br/>fractals?"}
+        MORE_FRAC -->|Yes| SWEPT
+        MORE_FRAC -->|No| EFFECTIVE
+    end
+
+    %% ============================================================
+    %% STEP 5: FRACTAL BE TRIGGER
+    %% ============================================================
+    subgraph FRAC_BE["Step 5: Fractal BE (Breakeven)"]
+        TRIGGER_BE{"Fractal BE already<br/>active for this ticket?"}
+        TRIGGER_BE -->|Yes| TRIGGER_TSL
+        TRIGGER_BE -->|No| BE_ENABLED{"FRACTAL_BE_ENABLED?<br/>(PROD: True)"}
+        BE_ENABLED -->|No| TRIGGER_TSL
+        BE_ENABLED -->|Yes| SL_NEG{"SL in negative zone?<br/>LONG: organic_SL < entry<br/>SHORT: organic_SL > entry"}
+        SL_NEG -->|No| TRIGGER_TSL
+        SL_NEG -->|Yes| ACTIVATE_BE["Activate Fractal BE:<br/>BE_SL = entry_price<br/>(ONE-TIME, never resets)"]
+        ACTIVATE_BE --> TRIGGER_TSL
+    end
+
+    %% ============================================================
+    %% STEP 6: FRACTAL TSL TRIGGER
+    %% ============================================================
+    subgraph FRAC_TSL["Step 6: Fractal TSL (M2 Trailing)"]
+        TRIGGER_TSL{"Fractal TSL already<br/>active for this ticket?"}
+        TRIGGER_TSL -->|Yes| NEXT_FRAC
+        TRIGGER_TSL -->|No| TSL_ENABLED_F{"FRACTAL_TSL_ENABLED?<br/>(PROD: True)"}
+        TSL_ENABLED_F -->|No| NEXT_FRAC
+        TSL_ENABLED_F -->|Yes| ACTIVATE_TSL["Activate Fractal TSL:<br/>LONG: M2_SL = last M2 low price<br/>SHORT: M2_SL = last M2 high price<br/>(ONE-TIME activation,<br/>but M2_SL updates per candle)"]
+        ACTIVATE_TSL --> NEXT_FRAC
+    end
+
+    %% ============================================================
+    %% STEP 7: EFFECTIVE SL COMPUTATION
+    %% ============================================================
+    subgraph EFF_SL["Step 7: Three-Way SL Competition"]
+        EFFECTIVE["Collect SL candidates"]
+        EFFECTIVE --> GATHER["candidates = organic_SL"]
+        GATHER --> ADD_BE{"Fractal BE<br/>active?"}
+        ADD_BE -->|Yes| ADD_BE_SL["Add BE_SL = entry_price"]
+        ADD_BE -->|No| ADD_TSL_CHK
+        ADD_BE_SL --> ADD_TSL_CHK{"Fractal TSL<br/>active?"}
+        ADD_TSL_CHK -->|Yes| ADD_TSL_SL["Add M2_TSL_SL =<br/>latest M2 fractal price<br/>LONG: last M2 low<br/>SHORT: last M2 high"]
+        ADD_TSL_CHK -->|No| COMPUTE_EFF
+        ADD_TSL_SL --> COMPUTE_EFF
+
+        COMPUTE_EFF["Compute effective SL:<br/>LONG: max(all candidates)<br/>SHORT: min(all candidates)"]
+        COMPUTE_EFF --> APPLY_EFF["Apply effective SL<br/>to broker position"]
+    end
+
+    %% ============================================================
+    %% STEP 8: SL HIT DETECTION (Same-Candle Protection)
+    %% ============================================================
+    subgraph SL_HIT["Step 8: SL Hit Detection"]
+        APPLY_EFF --> SL_CHANGED{"Effective SL changed<br/>this candle?<br/>(BE or TSL just activated)"}
+        SL_CHANGED -->|Yes| USE_PREV["Use PREVIOUS candle<br/>effective SL for hit check<br/>(same-candle protection)"]
+        SL_CHANGED -->|No| USE_CURR["Use current effective SL<br/>for hit check"]
+
+        USE_PREV --> HIT_CHECK{"Price hits SL?<br/>LONG: candle low <= check_SL<br/>SHORT: candle high >= check_SL"}
+        USE_CURR --> HIT_CHECK
+
+        HIT_CHECK -->|Yes| CLOSE_SL["Close at SL price<br/>Exit reason: stop"]
+        HIT_CHECK -->|No| LOOP_END([Return to loop start])
+    end
+
+    %% ============================================================
+    %% EXIT STATES
+    %% ============================================================
+    CLOSE_TRAIL --> DONE
+    CLOSE_TP --> DONE
+    CLOSE_SL_NT --> DONE
+    CLOSE_SL --> DONE
+
+    %% ============================================================
+    %% STYLING
+    %% ============================================================
+    style START fill:#e8f5e9,stroke:#2e7d32,color:#000
+    style DONE fill:#ffebee,stroke:#c62828,color:#000
+    style LOOP_END fill:#e8f5e9,stroke:#2e7d32,color:#000
+    style CLOSE_TIME fill:#fff3e0,stroke:#e65100,color:#000
+    style CLOSE_TRAIL fill:#fff3e0,stroke:#e65100,color:#000
+    style CLOSE_TP fill:#fff3e0,stroke:#e65100,color:#000
+    style CLOSE_SL_NT fill:#fff3e0,stroke:#e65100,color:#000
+    style CLOSE_SL fill:#fff3e0,stroke:#e65100,color:#000
+    style ACTIVATE_BE fill:#e1f5fe,stroke:#0277bd,color:#000
+    style ACTIVATE_TSL fill:#e1f5fe,stroke:#0277bd,color:#000
+    style COMPUTE_EFF fill:#f3e5f5,stroke:#7b1fa2,color:#000

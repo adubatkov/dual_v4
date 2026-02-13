@@ -83,6 +83,30 @@ class BacktestConfig:
                     trade_contract_size=100.0,  # 100 oz per lot
                     timezone="Asia/Tokyo",
                 ),
+                "NAS100": SymbolConfig(
+                    name="NAS100",
+                    spread_points=1.5,  # ~1.5 index points
+                    digits=1,
+                    volume_step=0.1,
+                    volume_min=0.1,
+                    volume_max=50.0,
+                    trade_tick_size=0.1,
+                    trade_tick_value=0.1,
+                    trade_contract_size=1.0,
+                    timezone="America/New_York",
+                ),
+                "UK100": SymbolConfig(
+                    name="UK100",
+                    spread_points=1.0,  # ~1.0 index points
+                    digits=1,
+                    volume_step=0.1,
+                    volume_min=0.1,
+                    volume_max=50.0,
+                    trade_tick_size=0.1,
+                    trade_tick_value=0.1,
+                    trade_contract_size=1.0,
+                    timezone="Europe/London",
+                ),
             }
 
 
@@ -94,6 +118,8 @@ DEFAULT_CONFIG = BacktestConfig()
 DATA_FILES = {
     "GER40": Path("C:/Trading/ib_trading_bot/dual_v4/data/optimized/GER40_m1.parquet"),
     "XAUUSD": Path("C:/Trading/ib_trading_bot/dual_v4/data/optimized/XAUUSD_m1.parquet"),
+    "NAS100": Path("C:/Trading/ib_trading_bot/dual_v4/data/optimized/NAS100_m1.parquet"),
+    "UK100": Path("C:/Trading/ib_trading_bot/dual_v4/data/optimized/UK100_m1.parquet"),
 }
 
 # Legacy CSV folder mapping (kept for reference)

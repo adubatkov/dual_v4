@@ -1,0 +1,111 @@
+%% GER40 IB Trading Strategy - Signal Detection Sub-Flowchart
+%% Priority Cascade: Reverse > OCAE > TCWE (REV_RB disabled)
+%% PROD Baseline: IB_BUFFER_PCT=0.0, MAX_DISTANCE_PCT=1.0
+
+flowchart TD
+
+    START([Signal Detection Entry]) --> REV_START
+
+    %% ============================================================
+    %% REVERSE SIGNAL
+    %% ============================================================
+    subgraph REVERSE["Reverse Signal Detection"]
+        REV_START["Scan M2 trade window<br/>candles sequentially"] --> REV_INVALID{"Both open AND close<br/>beyond IB + buffer<br/>on same side?"}
+        REV_INVALID -->|Yes| REV_STOP["INVALIDATION:<br/>Stop scanning sweeps"]
+        REV_INVALID -->|No| REV_UPPER{"Upper sweep?<br/>high > IBH AND<br/>open <= IBH + buffer AND<br/>close <= IBH + buffer"}
+        REV_UPPER -->|Yes| REV_ADD_UP["Add to sweep list:<br/>dir=upper, ext=high"]
+        REV_UPPER -->|No| REV_LOWER{"Lower sweep?<br/>low < IBL AND<br/>open >= IBL - buffer AND<br/>close >= IBL - buffer"}
+        REV_LOWER -->|Yes| REV_ADD_DN["Add to sweep list:<br/>dir=lower, ext=low"]
+        REV_LOWER -->|No| REV_NEXT["Next candle"]
+        REV_ADD_UP --> REV_NEXT
+        REV_ADD_DN --> REV_NEXT
+        REV_NEXT --> REV_MORE{"More candles<br/>before invalidation?"}
+        REV_MORE -->|Yes| REV_INVALID
+        REV_MORE -->|No| REV_GROUP
+
+        REV_STOP --> REV_FILTER["Filter sweeps:<br/>keep only before<br/>invalidation index"]
+        REV_FILTER --> REV_GROUP
+
+        REV_GROUP["Group consecutive<br/>same-direction sweeps:<br/>track group extreme"] --> REV_HAS{"Any sweep<br/>groups found?"}
+        REV_HAS -->|No| REV_FAIL([No Reverse signal])
+        REV_HAS -->|Yes| REV_LOOP["For each group<br/>in order"]
+
+        REV_LOOP --> REV_CTX["Build context:<br/>IB bars + pre-trade bars"]
+        REV_CTX --> REV_OPP{"Find last opposite<br/>candle before group?<br/>Upper: last bearish<br/>Lower: last bullish"}
+        REV_OPP -->|"Not found"| REV_NEXT_GRP["Try next group"]
+        REV_OPP -->|Found| REV_CISD_SCAN["Scan candles AFTER<br/>group end for CISD"]
+
+        REV_CISD_SCAN --> REV_CISD{"CISD found?<br/>Upper/SHORT: close < opp low<br/>Lower/LONG: close > opp high"}
+        REV_CISD -->|No candle matches| REV_NEXT_GRP
+        REV_CISD -->|Yes| REV_DIST{"Distance check:<br/>|IB boundary - CISD close|<br/>< 50% of IB Range?"}
+        REV_DIST -->|"No (too far)"| REV_NEXT_GRP
+        REV_DIST -->|Yes| REV_ENTRY["Reverse Entry:<br/>Price = OPEN of next candle<br/>after CISD candle<br/>SL = sweep group extreme"]
+
+        REV_NEXT_GRP --> REV_MORE_GRP{"More groups?"}
+        REV_MORE_GRP -->|Yes| REV_LOOP
+        REV_MORE_GRP -->|No| REV_FAIL
+    end
+
+    REV_ENTRY --> SIGNAL_FOUND([Signal Found - Execute])
+    REV_FAIL --> OCAE_START
+
+    %% ============================================================
+    %% OCAE SIGNAL
+    %% ============================================================
+    subgraph OCAE["OCAE Signal Detection (One Candle After Equilibrium)"]
+        OCAE_START["Scan M2 trade window"] --> OCAE_BREAK{"Find first breakout bar:<br/>close > IBH + buffer (LONG)<br/>OR close < IBL - buffer (SHORT)"}
+        OCAE_BREAK -->|"Not found"| OCAE_FAIL([No OCAE signal])
+        OCAE_BREAK -->|Found| OCAE_DIST{"Distance check:<br/>|close - IB boundary|<br/><= MAX_DISTANCE_PCT *<br/>IB Range (1.0)?"}
+        OCAE_DIST -->|"No (too far)"| OCAE_FAIL
+        OCAE_DIST -->|Yes| OCAE_EQ{"EQ touched before<br/>breakout candle?<br/>Any bar: low <= EQ<br/>AND high >= EQ"}
+        OCAE_EQ -->|No| OCAE_FAIL
+        OCAE_EQ -->|Yes| OCAE_WAIT{"Signal candle<br/>closed?<br/>(current_time >=<br/>candle_time + 2min)"}
+        OCAE_WAIT -->|No| OCAE_LATER["Wait for candle close"]
+        OCAE_WAIT -->|Yes| OCAE_SL["Compute SL:<br/>STOP_MODE = ib_start<br/>SL = first candle open<br/>of trade window"]
+        OCAE_SL --> OCAE_ENTRY["OCAE Entry:<br/>Price = CLOSE of breakout bar<br/>SL = trade_window open price"]
+    end
+
+    OCAE_ENTRY --> SIGNAL_FOUND
+    OCAE_FAIL --> TCWE_START
+
+    %% ============================================================
+    %% TCWE SIGNAL
+    %% ============================================================
+    subgraph TCWE["TCWE Signal Detection (Two Candles Without Equilibrium)"]
+        TCWE_START["Scan M2 trade window"] --> TCWE_FIRST{"Find first breakout bar<br/>WITHOUT EQ touch:<br/>close beyond IB + buffer<br/>AND no EQ touch up to bar"}
+        TCWE_FIRST -->|"Not found"| TCWE_FAIL([No TCWE signal])
+        TCWE_FIRST -->|Found| TCWE_DIST1{"Distance check:<br/>|close - IB boundary|<br/><= MAX_DISTANCE_PCT *<br/>IB Range?"}
+        TCWE_DIST1 -->|"No (too far)"| TCWE_FAIL
+        TCWE_DIST1 -->|Yes| TCWE_SECOND["Scan subsequent candles<br/>for second further breakout"]
+
+        TCWE_SECOND --> TCWE_EQ_MID{"EQ touched between<br/>first and current bar?"}
+        TCWE_EQ_MID -->|Yes| TCWE_FAIL
+        TCWE_EQ_MID -->|No| TCWE_FURTHER{"Current close<br/>beyond first close<br/>in same direction?<br/>LONG: c2 > c1 > IBH<br/>SHORT: c2 < c1 < IBL"}
+        TCWE_FURTHER -->|No| TCWE_NEXT["Next candle"]
+        TCWE_NEXT --> TCWE_MORE{"More candles<br/>in window?"}
+        TCWE_MORE -->|Yes| TCWE_EQ_MID
+        TCWE_MORE -->|No| TCWE_FAIL
+
+        TCWE_FURTHER -->|Yes| TCWE_DIST2{"Second bar distance:<br/>|close - IB boundary|<br/><= MAX_DISTANCE_PCT *<br/>IB Range?"}
+        TCWE_DIST2 -->|"No (too far)"| TCWE_NEXT
+        TCWE_DIST2 -->|Yes| TCWE_WAIT{"Signal candle<br/>closed?"}
+        TCWE_WAIT -->|No| TCWE_LATER["Wait for candle close"]
+        TCWE_WAIT -->|Yes| TCWE_SL["Compute SL:<br/>STOP_MODE = ib_start<br/>SL = first candle open<br/>of trade window"]
+        TCWE_SL --> TCWE_ENTRY["TCWE Entry:<br/>Price = CLOSE of second bar<br/>SL = trade_window open price"]
+    end
+
+    TCWE_ENTRY --> SIGNAL_FOUND
+    TCWE_FAIL --> NO_SIGNAL([No signal this candle])
+
+    %% ============================================================
+    %% STYLING
+    %% ============================================================
+    style START fill:#e8f5e9,stroke:#2e7d32,color:#000
+    style SIGNAL_FOUND fill:#e3f2fd,stroke:#1565c0,color:#000
+    style NO_SIGNAL fill:#ffebee,stroke:#c62828,color:#000
+    style REV_FAIL fill:#fff3e0,stroke:#e65100,color:#000
+    style OCAE_FAIL fill:#fff3e0,stroke:#e65100,color:#000
+    style TCWE_FAIL fill:#fff3e0,stroke:#e65100,color:#000
+    style REV_ENTRY fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style OCAE_ENTRY fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style TCWE_ENTRY fill:#c8e6c9,stroke:#2e7d32,color:#000

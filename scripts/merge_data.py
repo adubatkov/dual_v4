@@ -20,21 +20,37 @@ from backtest.data_processor.data_ingestor import DataIngestor
 DATA_DIR = Path(__file__).parent.parent / "data"
 OUTPUT_DIR = DATA_DIR / "optimized"
 
-# Sources per symbol: (parquet_file, [csv_directories])
+# Sources per symbol: csv_dirs listed in chronological order (newer data wins on dedup)
 SOURCES = {
     "GER40": {
-        "parquet": OUTPUT_DIR / "GER40_m1.parquet",
+        "parquet": None,  # Rebuild entirely from CSVs (old parquet missing Asian session data)
         "csv_dirs": [
-            DATA_DIR / "ger40+pepperstone_0411-2001",
+            DATA_DIR / "GER40 1m 01_01_2023-04_11_2025",  # Training: 2023-01 to 2025-11 (incl. Asian session)
+            DATA_DIR / "ger40+pepperstone_0411-2001",       # Control:  2025-10 to 2026-02
         ],
         "output": OUTPUT_DIR / "GER40_m1.parquet",
     },
     "XAUUSD": {
-        "parquet": OUTPUT_DIR / "XAUUSD_m1.parquet",
+        "parquet": None,  # Rebuild entirely from CSVs for consistency
         "csv_dirs": [
-            DATA_DIR / "xauusd_oanda_0411-2001",
+            DATA_DIR / "XAUUSD 1m 01_01_2023-04_11_2025",  # Training: 2023-01 to 2025-11
+            DATA_DIR / "xauusd_oanda_0411-2001",             # Control:  2025-10 to 2026-02
         ],
         "output": OUTPUT_DIR / "XAUUSD_m1.parquet",
+    },
+    "NAS100": {
+        "parquet": None,
+        "csv_dirs": [
+            DATA_DIR / "NAS100_2023-2026_forexcom",
+        ],
+        "output": OUTPUT_DIR / "NAS100_m1.parquet",
+    },
+    "UK100": {
+        "parquet": None,
+        "csv_dirs": [
+            DATA_DIR / "UK100_2023-2026_forexcom",
+        ],
+        "output": OUTPUT_DIR / "UK100_m1.parquet",
     },
 }
 
@@ -43,9 +59,9 @@ def merge_symbol(symbol: str, config: dict) -> None:
     """Merge all data sources for a symbol into one parquet file."""
     frames = []
 
-    # Load existing parquet
-    parquet_path = config["parquet"]
-    if parquet_path.exists():
+    # Load existing parquet (if specified)
+    parquet_path = config.get("parquet")
+    if parquet_path is not None and parquet_path.exists():
         df_existing = pd.read_parquet(parquet_path)
         print(f"  [{symbol}] Existing parquet: {len(df_existing)} rows, "
               f"{df_existing['time'].min()} to {df_existing['time'].max()}")

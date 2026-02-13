@@ -106,6 +106,7 @@ class BacktestExecutor:
         timeframe_map = {
             "M1": Timeframe.TIMEFRAME_M1,
             "M2": Timeframe.TIMEFRAME_M2,
+            "M3": Timeframe.TIMEFRAME_M3,
             "M5": Timeframe.TIMEFRAME_M5,
             "M15": Timeframe.TIMEFRAME_M15,
             "M30": Timeframe.TIMEFRAME_M30,
@@ -418,6 +419,7 @@ def create_mt5_patch_module(emulator: mt5_emu.MT5Emulator):
     # Constants
     mt5_patch.TIMEFRAME_M1 = Timeframe.TIMEFRAME_M1
     mt5_patch.TIMEFRAME_M2 = Timeframe.TIMEFRAME_M2
+    mt5_patch.TIMEFRAME_M3 = Timeframe.TIMEFRAME_M3
     mt5_patch.TIMEFRAME_M5 = Timeframe.TIMEFRAME_M5
     mt5_patch.TIMEFRAME_M15 = Timeframe.TIMEFRAME_M15
     mt5_patch.TIMEFRAME_M30 = Timeframe.TIMEFRAME_M30

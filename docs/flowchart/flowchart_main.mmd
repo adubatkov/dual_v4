@@ -1,0 +1,111 @@
+%% GER40 IB Trading Strategy - Main Flow
+%% PROD Baseline: IB 08:00-09:00 Europe/Berlin, TRADE_WINDOW=120min
+%% All variations uniform params, REV_RB disabled
+
+flowchart TD
+
+    %% ============================================================
+    %% PHASE 1: DAILY INITIALIZATION
+    %% ============================================================
+    subgraph INIT["Phase 1: Daily Initialization"]
+        START([New Trading Day]) --> RESET["Daily Reset:<br/>Clear IB, TSL state,<br/>fractal pointers, positions"]
+        RESET --> WAIT_IB{"Local time >= 09:00<br/>Europe/Berlin?"}
+        WAIT_IB -->|No| WAIT_IB
+    end
+
+    %% ============================================================
+    %% PHASE 2: IB CALCULATION
+    %% ============================================================
+    subgraph IB_CALC["Phase 2: IB Calculation"]
+        WAIT_IB -->|Yes| CALC_IB["Calculate IB from<br/>08:00-09:00 M2 bars:<br/>IBH = max high<br/>IBL = min low<br/>EQ = (IBH + IBL) / 2"]
+        CALC_IB --> IB_VALID{"IB data exists<br/>AND Range > 0?"}
+        IB_VALID -->|No| DAY_END([DAY ENDED - No trade])
+    end
+
+    %% ============================================================
+    %% PHASE 3: SIGNAL DETECTION
+    %% ============================================================
+    subgraph SIGNAL_DET["Phase 3: Signal Detection (09:00 - 11:00)"]
+        IB_VALID -->|Yes| TIME_CHECK{"current_time<br/>< 11:00 Berlin?"}
+        TIME_CHECK -->|No| DAY_END
+        TIME_CHECK -->|Yes| NEWS{"News filter:<br/>within 2min of<br/>high-impact event?"}
+        NEWS -->|"Yes (blocked)"| NEXT_CANDLE["Wait for next<br/>M1 candle"]
+        NEWS -->|"No (clear)"| SIGNAL["Signal Detection:<br/>Priority Cascade"]
+
+        SIGNAL --> REV_CHK{"Reverse<br/>signal found?"}
+        REV_CHK -->|Yes| ENTRY
+        REV_CHK -->|No| OCAE_CHK{"OCAE<br/>signal found?"}
+        OCAE_CHK -->|Yes| ENTRY
+        OCAE_CHK -->|No| TCWE_CHK{"TCWE<br/>signal found?"}
+        TCWE_CHK -->|Yes| ENTRY
+        TCWE_CHK -->|No| NEXT_CANDLE
+        NEXT_CANDLE --> TIME_CHECK
+    end
+
+    %% ============================================================
+    %% PHASE 4: TRADE EXECUTION
+    %% ============================================================
+    subgraph EXEC["Phase 4: Trade Execution"]
+        ENTRY["Compute Entry, SL, TP"] --> SL_DIR{"SL on correct<br/>side of entry?"}
+        SL_DIR -->|No| FLIP_SL["Flip SL to correct side:<br/>LONG: SL below entry<br/>SHORT: SL above entry"]
+        SL_DIR -->|Yes| MIN_SL
+        FLIP_SL --> MIN_SL{"risk < entry *<br/>MIN_SL_PCT (0.15%)?"}
+        MIN_SL -->|Yes| EXPAND_SL["Expand SL to<br/>minimum distance"]
+        MIN_SL -->|No| CALC_TP
+        EXPAND_SL --> CALC_TP["TP = entry +/- RR_TARGET * risk<br/>(RR_TARGET = 1.0)"]
+        CALC_TP --> LOTS["Calculate lots:<br/>risk$ / |entry - SL| * point_val"]
+        LOTS --> MARGIN{"Margin check<br/>passed?"}
+        MARGIN -->|No| DAY_END
+        MARGIN -->|Yes| OPEN["Open Position:<br/>market order, SL in broker,<br/>TP = 0 (virtual)"]
+    end
+
+    %% ============================================================
+    %% PHASE 5: POSITION MANAGEMENT
+    %% ============================================================
+    subgraph MANAGE["Phase 5: Position Management (per M1 candle)"]
+        OPEN --> LOOP["Position Management<br/>Loop Start"]
+        LOOP --> TIME_EXIT{"current_time >=<br/>position_window_end<br/>(09:00 + 120min)?"}
+        TIME_EXIT -->|Yes| CLOSE_TIME["Close at market<br/>Exit: time"]
+
+        TIME_EXIT -->|No| RESTORE_ORG["Restore organic SL<br/>(undo prev fractal overlay)"]
+        RESTORE_ORG --> TSL_CHECK{"Virtual TP hit?<br/>LONG: price >= TP<br/>SHORT: price <= TP"}
+        TSL_CHECK -->|"TP hit"| RATCHET["Ratchet SL and TP:<br/>SL += TSL_SL * risk (1.0R)<br/>TP += TSL_TARGET * risk (1.0R)<br/>SL only moves protectively"]
+        RATCHET --> TRAIL_CONFLICT{"Same candle<br/>hits new SL?"}
+        TRAIL_CONFLICT -->|Yes| CLOSE_TRAIL["Close at next open<br/>Exit: trail_conflict"]
+        TRAIL_CONFLICT -->|No| SAVE_ORG
+
+        TSL_CHECK -->|"No TP hit"| SAVE_ORG["Save organic SL"]
+        SAVE_ORG --> FRAC_PTR["Advance H1/H4/M2<br/>fractal pointers,<br/>expire stale fractals"]
+        FRAC_PTR --> FRAC_SWEEP{"H1/H4 fractal<br/>swept by candle<br/>high/low?"}
+        FRAC_SWEEP -->|No| APPLY_EFF
+        FRAC_SWEEP -->|Yes| FRAC_BE{"SL in negative zone<br/>AND BE not yet active?"}
+        FRAC_BE -->|Yes| SET_BE["Fractal BE: set<br/>SL = entry (one-time)"]
+        FRAC_BE -->|No| FRAC_TSL{"Fractal TSL<br/>not yet active?"}
+        SET_BE --> FRAC_TSL
+        FRAC_TSL -->|Yes| SET_M2["Fractal TSL: activate<br/>M2 trailing SL (one-time)"]
+        FRAC_TSL -->|No| APPLY_EFF
+        SET_M2 --> APPLY_EFF
+
+        APPLY_EFF["Compute effective SL:<br/>LONG: max(organic, BE, M2_TSL)<br/>SHORT: min(organic, BE, M2_TSL)"]
+        APPLY_EFF --> SL_HIT{"Price hits<br/>effective SL?<br/>(use prev candle SL<br/>if changed this candle)"}
+        SL_HIT -->|Yes| CLOSE_SL["Close at SL<br/>Exit: stop"]
+        SL_HIT -->|No| LOOP
+    end
+
+    %% ============================================================
+    %% END STATES
+    %% ============================================================
+    CLOSE_TIME --> DAY_END
+    CLOSE_TRAIL --> DAY_END
+    CLOSE_SL --> DAY_END
+
+    %% ============================================================
+    %% STYLING
+    %% ============================================================
+    style START fill:#e8f5e9,stroke:#2e7d32,color:#000
+    style DAY_END fill:#ffebee,stroke:#c62828,color:#000
+    style ENTRY fill:#e3f2fd,stroke:#1565c0,color:#000
+    style OPEN fill:#e3f2fd,stroke:#1565c0,color:#000
+    style CLOSE_TIME fill:#fff3e0,stroke:#e65100,color:#000
+    style CLOSE_TRAIL fill:#fff3e0,stroke:#e65100,color:#000
+    style CLOSE_SL fill:#fff3e0,stroke:#e65100,color:#000

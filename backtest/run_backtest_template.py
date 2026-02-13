@@ -47,8 +47,15 @@ from backtest.reporting import BacktestReportManager, ExcelReportGenerator
 from backtest.reporting.trade_charts import generate_all_trade_charts
 
 # Import PROD parameters from strategy_logic
-from src.utils.strategy_logic import GER40_PARAMS_PROD, XAUUSD_PARAMS_PROD
+from src.utils.strategy_logic import (
+    GER40_PARAMS_PROD, XAUUSD_PARAMS_PROD,
+    NAS100_PARAMS_PROD, UK100_PARAMS_PROD,
+    trade_window_on_date, place_sl_tp_with_min_size,
+    ANALYSIS_TF_CONFIG,
+)
+from src.strategies.base_strategy import Signal
 from src.smc.detectors.fractal_detector import detect_fractals
+from src.smc.detectors.fvg_detector import detect_fvg
 
 # Configure logging
 logging.basicConfig(
@@ -80,11 +87,9 @@ GER40_PARAMS_V8 = {
         "IB_WAIT": 20,
         "TRADE_WINDOW": 210,
         "RR_TARGET": 1.5,
-        "STOP_MODE": "eq",
         "TSL_TARGET": 2.0,
         "TSL_SL": 1.5,
         "MIN_SL_PCT": 0.0015,
-        "REV_RB_PCT": 1.0,
         "REV_RB_ENABLED": True,
         "IB_BUFFER_PCT": 0.2,
         "MAX_DISTANCE_PCT": 0.5,
@@ -100,7 +105,6 @@ GER40_PARAMS_V8 = {
         "TSL_TARGET": 1.5,
         "TSL_SL": 0.75,
         "MIN_SL_PCT": 0.0015,
-        "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.2,
         "MAX_DISTANCE_PCT": 0.5,
     },
@@ -115,7 +119,6 @@ GER40_PARAMS_V8 = {
         "TSL_TARGET": 2.0,
         "TSL_SL": 2.0,
         "MIN_SL_PCT": 0.0015,
-        "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.2,
         "MAX_DISTANCE_PCT": 0.5,
     },
@@ -130,7 +133,6 @@ GER40_PARAMS_V8 = {
         "TSL_TARGET": 2.0,
         "TSL_SL": 2.0,
         "MIN_SL_PCT": 0.0015,
-        "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.2,
         "MAX_DISTANCE_PCT": 0.5,
     },
@@ -144,11 +146,9 @@ XAUUSD_PARAMS_V8 = {
         "IB_WAIT": 20,
         "TRADE_WINDOW": 90,
         "RR_TARGET": 1.0,
-        "STOP_MODE": "ib_start",
         "TSL_TARGET": 2.0,
         "TSL_SL": 2.0,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_PCT": 1.0,
         "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 1.5,
@@ -164,7 +164,6 @@ XAUUSD_PARAMS_V8 = {
         "TSL_TARGET": 1.0,
         "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 1.5,
     },
@@ -179,7 +178,6 @@ XAUUSD_PARAMS_V8 = {
         "TSL_TARGET": 2.0,
         "TSL_SL": 2.0,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 1.5,
     },
@@ -194,7 +192,6 @@ XAUUSD_PARAMS_V8 = {
         "TSL_TARGET": 2.0,
         "TSL_SL": 2.0,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_ENABLED": False,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 1.5,
     },
@@ -231,6 +228,32 @@ SYMBOL_CONFIGS: Dict[str, dict] = {
         "timezone": "Asia/Tokyo",
         "magic_number_base": 2000,
     },
+    "NAS100": {
+        "symbol_config": SymbolConfig(
+            name="NAS100",
+            spread_points=1.5,
+            digits=2,
+            volume_step=0.01,
+            trade_tick_size=0.5,
+            trade_tick_value=0.5,
+            trade_contract_size=1.0,
+        ),
+        "timezone": "America/New_York",
+        "magic_number_base": 3000,
+    },
+    "UK100": {
+        "symbol_config": SymbolConfig(
+            name="UK100",
+            spread_points=1.0,
+            digits=2,
+            volume_step=0.01,
+            trade_tick_size=0.5,
+            trade_tick_value=0.5,
+            trade_contract_size=1.0,
+        ),
+        "timezone": "Europe/London",
+        "magic_number_base": 4000,
+    },
 }
 
 # Parameter set version suffix for magic number differentiation
@@ -246,6 +269,8 @@ BUILTIN_PARAMS = {
     ("GER40", "prod"): GER40_PARAMS_PROD,
     ("XAUUSD", "v8"): XAUUSD_PARAMS_V8,
     ("XAUUSD", "prod"): XAUUSD_PARAMS_PROD,
+    ("NAS100", "prod"): NAS100_PARAMS_PROD,
+    ("UK100", "prod"): UK100_PARAMS_PROD,
 }
 
 
@@ -267,7 +292,7 @@ Examples:
         "--symbol",
         type=str,
         required=True,
-        choices=["GER40", "XAUUSD"],
+        choices=["GER40", "XAUUSD", "NAS100", "UK100"],
         help="Trading symbol (required)",
     )
     parser.add_argument(
@@ -321,6 +346,13 @@ Examples:
         help="Skip trade chart generation (faster runs)",
     )
     parser.add_argument(
+        "--chart-tf",
+        type=str,
+        default="1min",
+        choices=["1min", "2min", "3min", "5min"],
+        help="Candle timeframe for trade charts (default: 1min)",
+    )
+    parser.add_argument(
         "--initial-balance",
         type=float,
         default=100000.0,
@@ -331,6 +363,14 @@ Examples:
         type=float,
         default=40.0,
         help="Maximum margin usage percentage (default: 40)",
+    )
+
+    parser.add_argument(
+        "--analysis-tf",
+        type=str,
+        default="2min",
+        choices=list(ANALYSIS_TF_CONFIG.keys()),
+        help="Analysis timeframe for fractals/FVG/BOS detection (default: 2min)",
     )
 
     return parser.parse_args()
@@ -511,6 +551,8 @@ def run_backtest(
     max_margin_pct: float = 40.0,
     output_name: Optional[str] = None,
     generate_charts: bool = True,
+    chart_tf: str = "1min",
+    analysis_tf: str = "2min",
 ) -> None:
     """
     Run a parameterized backtest for the given symbol and configuration.
@@ -527,6 +569,8 @@ def run_backtest(
         max_margin_pct: Maximum margin usage percentage.
         output_name: Custom output directory name (auto-generated if None).
         generate_charts: Whether to generate individual trade charts.
+        chart_tf: Candle timeframe for trade charts ('1min' or '2min').
+        analysis_tf: Analysis timeframe for fractals/FVG/BOS ('2min', '3min', '5min').
     """
     # Resolve symbol configuration
     sym_info = SYMBOL_CONFIGS[symbol]
@@ -543,6 +587,17 @@ def run_backtest(
         risk_desc = f"{risk_value}% of balance"
         risk_amount = initial_balance * (risk_value / 100.0)
         risk_pct = risk_value
+
+    # Resolve analysis timeframe config
+    atf = ANALYSIS_TF_CONFIG[analysis_tf]
+    atf_freq = atf["resample_freq"]
+    atf_label = atf["label"]
+    atf_minutes = atf["minutes"]
+    atf_candle_hours = atf["candle_duration_hours"]
+    logger.info(f"Analysis TF: {analysis_tf} (label={atf_label}, minutes={atf_minutes})")
+
+    # Inject ANALYSIS_TF into params so ib_strategy.py can read it
+    params["ANALYSIS_TF"] = analysis_tf
 
     logger.info("=" * 60)
     logger.info(f"Starting {symbol} Backtest - params={params_label}")
@@ -617,6 +672,8 @@ def run_backtest(
     # Log parameter summary
     logger.info(f"Parameters ({params_label}):")
     for var_name, var_params in params.items():
+        if not isinstance(var_params, dict):
+            continue
         ib_info = f"IB: {var_params.get('IB_START', '?')}-{var_params.get('IB_END', '?')} ({var_params.get('IB_TZ', '?')})"
         rr_info = f"RR={var_params.get('RR_TARGET', '?')}"
         stop_info = f"Stop={var_params.get('STOP_MODE', '?')}"
@@ -649,12 +706,42 @@ def run_backtest(
     # Sort all fractals by confirmed_time for incremental activation
     all_fractals_sorted = sorted(filtered_h1 + all_h4, key=lambda f: f.confirmed_time)
 
-    # Pre-compute M2 fractals for fractal TSL
-    logger.info("Computing M2 fractals...")
-    m2_data = _resample_m1(m1_data, "2min")
-    all_m2 = detect_fractals(m2_data, symbol, "M2", candle_duration_hours=2/60)
-    logger.info(f"Detected {len(all_m2)} M2 fractals")
+    # Pre-compute analysis-TF fractals for fractal TSL
+    logger.info(f"Computing {atf_label} fractals...")
+    m2_data = _resample_m1(m1_data, atf_freq)
+    all_m2 = detect_fractals(m2_data, symbol, atf_label, candle_duration_hours=atf_candle_hours)
+    logger.info(f"Detected {len(all_m2)} {atf_label} fractals")
     all_m2_sorted = sorted(all_m2, key=lambda f: f.confirmed_time)
+
+    # Pre-check: do any variations use FVG BE?
+    any_fvg_be_enabled = any(
+        v.get("FVG_BE_ENABLED", False)
+        for v in params.values() if isinstance(v, dict)
+    )
+
+    # Pre-compute analysis-TF FVGs for REV_RB (skip if REV_RB disabled)
+    if rev_rb_enabled:
+        logger.info(f"Computing {atf_label} FVGs...")
+        all_m2_fvgs = detect_fvg(m2_data, symbol, atf_label)
+        all_m2_fvgs_sorted = sorted(all_m2_fvgs, key=lambda f: f.formation_time)
+        logger.info(f"Detected {len(all_m2_fvgs)} {atf_label} FVGs")
+    else:
+        all_m2_fvgs = []
+        all_m2_fvgs_sorted = []
+        logger.info(f"Skipping {atf_label} FVG computation (REV_RB disabled)")
+
+    # Pre-compute H1/H4 FVGs for FVG BE logic + chart overlay
+    if any_fvg_be_enabled or generate_charts:
+        logger.info("Computing H1/H4 FVGs...")
+        all_h1_fvgs = detect_fvg(h1_data, symbol, "H1")
+        all_h4_fvgs = detect_fvg(h4_data, symbol, "H4")
+        all_htf_fvgs_sorted = sorted(all_h1_fvgs + all_h4_fvgs, key=lambda f: f.formation_time)
+        logger.info(f"Detected {len(all_h1_fvgs)} H1 and {len(all_h4_fvgs)} H4 FVGs")
+    else:
+        all_h1_fvgs = []
+        all_h4_fvgs = []
+        all_htf_fvgs_sorted = []
+        logger.info("Skipping H1/H4 FVG computation (FVG_BE disabled, no charts)")
 
     # Fractal BE tracking state
     fractal_ptr = 0
@@ -665,12 +752,62 @@ def run_backtest(
 
     # Fractal TSL tracking state
     m2_fractal_ptr = 0
-    last_m2_high = None          # (price, confirmed_time) of most recent M2 high
-    last_m2_low = None           # (price, confirmed_time) of most recent M2 low
+    last_m2_high = None          # (price, confirmed_time, candle_close) of most recent M2 high
+    last_m2_low = None           # (price, confirmed_time, candle_close) of most recent M2 low
     fractal_tsl_active = {}      # ticket -> True
     fractal_tsl_prev_sl = {}     # ticket -> previous fractal TSL SL (for logging changes)
     fractal_tsl_count = 0
     fractal_tsl_updates = 0
+
+    # FVG BE tracking state
+    fvg_ptr = 0
+    active_fvgs = []             # Currently active (non-mitigated) H1/H4 FVGs
+    fvg_be_count = 0
+    fvg_be_active = {}           # ticket -> entry_price (once FVG BE triggered)
+
+    # BTIB (Back to IB) tracking state
+    btib_params = params.get("BTIB", {})
+    btib_enabled = btib_params.get("BTIB_ENABLED", False)
+    btib_sl_mode = btib_params.get("BTIB_SL_MODE", "fractal_2m")
+    btib_extension_upper = False
+    btib_extension_lower = False
+    btib_pending_entry = None
+    btib_bos_broken_low = None      # (price, confirmed_time) - last broken M2 low
+    btib_bos_broken_high = None     # (price, confirmed_time) - last broken M2 high
+    btib_core_cutoff_utc = None
+    btib_trade_window_end_utc = None
+    btib_day_ibh = None
+    btib_day_ibl = None
+    btib_trades_total = 0
+    btib_done_today = False
+    btib_tw_start_utc = None
+    prev_date_for_btib = None
+
+    if btib_enabled:
+        logger.info(f"[BTIB] BTIB enabled: cutoff={btib_params.get('CORE_CUTOFF_MIN', 40)}min, "
+                     f"ext={btib_params.get('EXTENSION_PCT', 1.0)*100:.0f}%, "
+                     f"RR={btib_params.get('RR_TARGET', 1.0)}")
+
+    # REV_RB (FVG-based limit order) tracking state
+    rev_rb_params = params.get("REV_RB", {})
+    rev_rb_enabled = rev_rb_params.get("REV_RB_ENABLED", False)
+    rev_rb_pending = None           # {direction, entry, sl, tp, trigger_time}
+    rev_rb_ib_broken_up = False
+    rev_rb_ib_broken_dn = False
+    rev_rb_break_time = None
+    rev_rb_break_side = None        # "upper" / "lower"
+    rev_rb_day_ibh = None
+    rev_rb_day_ibl = None
+    rev_rb_day_eq = None
+    rev_rb_done_today = False
+    rev_rb_tw_start_utc = None
+    rev_rb_tw_end_utc = None
+    m2_fvg_ptr = 0
+    prev_date_for_rev_rb = None
+
+    if rev_rb_enabled:
+        logger.info(f"[REV_RB] REV_RB enabled: RR={rev_rb_params.get('RR_TARGET', 1.0)}, "
+                     f"TSL={rev_rb_params.get('TSL_TARGET', 1.0)}")
 
     trades_executed = 0
     signals_detected = 0
@@ -691,45 +828,289 @@ def run_backtest(
             if len(days_processed) % 50 == 0:
                 logger.info(f"Processing day {len(days_processed)}: {current_date}")
 
+        # --- BTIB daily reset ---
+        if btib_enabled and current_date != prev_date_for_btib:
+            prev_date_for_btib = current_date
+            btib_extension_upper = False
+            btib_extension_lower = False
+            btib_pending_entry = None
+            btib_bos_broken_low = None
+            btib_bos_broken_high = None
+            btib_core_cutoff_utc = None
+            btib_trade_window_end_utc = None
+            btib_tw_start_utc = None
+            btib_day_ibh = None
+            btib_day_ibl = None
+            btib_done_today = False
+
+        # --- REV_RB daily reset ---
+        if rev_rb_enabled and current_date != prev_date_for_rev_rb:
+            prev_date_for_rev_rb = current_date
+            rev_rb_pending = None
+            rev_rb_ib_broken_up = False
+            rev_rb_ib_broken_dn = False
+            rev_rb_break_time = None
+            rev_rb_break_side = None
+            rev_rb_day_ibh = None
+            rev_rb_day_ibl = None
+            rev_rb_day_eq = None
+            rev_rb_done_today = False
+            rev_rb_tw_start_utc = None
+            rev_rb_tw_end_utc = None
+
+        # --- BTIB: execute pending entry (from previous candle's BOS) ---
+        if btib_pending_entry is not None and current_time_utc > btib_pending_entry["bos_time"]:
+            _entry_price = float(row["open"])
+            _direction = btib_pending_entry["direction"]
+            _raw_sl = btib_pending_entry["sl"]
+
+            _sl_tp = place_sl_tp_with_min_size(
+                _direction, _entry_price, _raw_sl,
+                btib_params.get("RR_TARGET", 1.0), btib_params.get("MIN_SL_PCT", 0.0015))
+            if _sl_tp is not None:
+                _sl, _tp, _ = _sl_tp
+                _btib_signal = Signal(
+                    direction=_direction,
+                    entry_price=_entry_price,
+                    stop_loss=_sl,
+                    take_profit=_tp,
+                    comment=f"IBStrategy_BTIB_{_direction}",
+                    variation="BTIB",
+                    use_virtual_tp=False,
+                )
+                _lots = risk_manager.calculate_position_size(symbol, _entry_price, _sl)
+                if _lots > 0:
+                    _validation = risk_manager.validate_trade(symbol, _lots, _entry_price)
+                    if _validation["valid"]:
+                        _result = executor.place_order(symbol, _btib_signal, _lots, magic_number)
+                        if _result["success"]:
+                            trades_executed += 1
+                            btib_trades_total += 1
+                            btib_done_today = True
+                            strategy.tsl_state = {
+                                "variation": "BTIB",
+                                "tsl_target": btib_params.get("TSL_TARGET", 0.0),
+                                "tsl_sl": btib_params.get("TSL_SL", 0.0),
+                                "initial_sl": _sl,
+                                "initial_tp": _tp,
+                                "current_tp": _tp,
+                                "entry_price": _entry_price,
+                                "tsl_triggered": False,
+                            }
+                            strategy.state = "POSITION_OPEN"
+                            # Store IB data for chart generation
+                            _dk = current_date.strftime("%Y-%m-%d")
+                            if _dk not in ib_data_by_date and strategy.ibh is not None:
+                                ib_data_by_date[_dk] = {
+                                    "ibh": strategy.ibh, "ibl": strategy.ibl,
+                                    "eq": strategy.eq, "ib_start": strategy.ib_start,
+                                    "ib_end": strategy.ib_end, "ib_tz": str(strategy.ib_tz),
+                                }
+                            logger.info(
+                                f"[BTIB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                                f"BTIB {_direction.upper()} entry: price={_entry_price:.2f}, "
+                                f"SL={_sl:.2f}, TP={_tp:.2f} (RR={btib_params.get('RR_TARGET', 1.0)})")
+                            # Cancel REV_RB pending if BTIB opens trade
+                            if rev_rb_pending is not None:
+                                logger.info(f"[REV_RB] Pending limit CANCELLED: BTIB trade opened")
+                                rev_rb_pending = None
+                                rev_rb_done_today = True
+                    else:
+                        logger.warning(f"[BTIB] Trade validation failed: {_validation['reason']}")
+            btib_pending_entry = None
+
+        # --- Compute BTIB window flag ---
+        in_btib_window = (btib_enabled and btib_core_cutoff_utc is not None
+                          and current_time_utc >= btib_core_cutoff_utc
+                          and current_time_utc < btib_trade_window_end_utc)
+
         positions = executor.get_open_positions()
         has_position = any(p.magic == magic_number for p in positions)
 
-        if not has_position:
-            signal = strategy.check_signal(current_time_utc)
+        # Always call check_signal for state tracking (resets IB on new day)
+        signal = strategy.check_signal(current_time_utc)
 
-            if signal:
-                signals_detected += 1
+        # --- BTIB: capture IB values + compute cutoff (once per day, AFTER check_signal) ---
+        if (btib_enabled and btib_day_ibh is None
+                and strategy.ibh is not None
+                and strategy.state in ("IN_TRADE_WINDOW", "POSITION_OPEN")):
+            btib_day_ibh = strategy.ibh
+            btib_day_ibl = strategy.ibl
+            ref_p = params.get("OCAE", params.get("Reverse", {}))
+            tw_start, tw_end = trade_window_on_date(
+                current_date, ref_p["IB_END"], ref_p["IB_TZ"],
+                ref_p["IB_WAIT"], ref_p["TRADE_WINDOW"])
+            btib_tw_start_utc = tw_start.to_pydatetime()
+            btib_core_cutoff_utc = (tw_start + timedelta(
+                minutes=btib_params.get("CORE_CUTOFF_MIN", 40))).to_pydatetime()
+            btib_trade_window_end_utc = tw_end.to_pydatetime()
 
-                date_key = current_date.strftime("%Y-%m-%d")
-                if date_key not in ib_data_by_date and strategy.ibh is not None:
-                    ib_data_by_date[date_key] = {
-                        "ibh": strategy.ibh,
-                        "ibl": strategy.ibl,
-                        "eq": strategy.eq,
-                        "ib_start": strategy.ib_start,
-                        "ib_end": strategy.ib_end,
-                        "ib_tz": str(strategy.ib_tz),
-                    }
+        # --- REV_RB: capture IB values + compute window (once per day, AFTER check_signal) ---
+        if (rev_rb_enabled and rev_rb_day_ibh is None
+                and strategy.ibh is not None
+                and strategy.state in ("IN_TRADE_WINDOW", "POSITION_OPEN")):
+            rev_rb_day_ibh = strategy.ibh
+            rev_rb_day_ibl = strategy.ibl
+            rev_rb_day_eq = strategy.eq
+            _rr_p = params.get("REV_RB", {})
+            _rr_tw_s, _rr_tw_e = trade_window_on_date(
+                current_date, _rr_p["IB_END"], _rr_p["IB_TZ"],
+                _rr_p["IB_WAIT"], _rr_p["TRADE_WINDOW"])
+            rev_rb_tw_start_utc = _rr_tw_s.to_pydatetime()
+            rev_rb_tw_end_utc = _rr_tw_e.to_pydatetime()
 
-                lots = risk_manager.calculate_position_size(
-                    symbol=symbol,
-                    entry_price=signal.entry_price,
-                    stop_loss=signal.stop_loss,
+        # --- REV_RB: IB break detection (during REV_RB trade window) ---
+        if (rev_rb_enabled and rev_rb_day_ibh is not None
+                and rev_rb_tw_start_utc is not None
+                and current_time_utc >= rev_rb_tw_start_utc
+                and current_time_utc < rev_rb_tw_end_utc
+                and not rev_rb_done_today and not has_position):
+            # Detect first IBH break (upper)
+            if not rev_rb_ib_broken_up and row["high"] > rev_rb_day_ibh:
+                rev_rb_ib_broken_up = True
+                if rev_rb_break_side is None:
+                    rev_rb_break_side = "upper"
+                    rev_rb_break_time = current_time_utc
+                    logger.info(
+                        f"[REV_RB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                        f"IBH BROKEN: high={row['high']:.2f} > IBH={rev_rb_day_ibh:.2f} "
+                        f"| Scanning for bullish FVG...")
+            # Detect first IBL break (lower)
+            if not rev_rb_ib_broken_dn and row["low"] < rev_rb_day_ibl:
+                rev_rb_ib_broken_dn = True
+                if rev_rb_break_side is None:
+                    rev_rb_break_side = "lower"
+                    rev_rb_break_time = current_time_utc
+                    logger.info(
+                        f"[REV_RB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                        f"IBL BROKEN: low={row['low']:.2f} < IBL={rev_rb_day_ibl:.2f} "
+                        f"| Scanning for bearish FVG...")
+
+        # --- BTIB: track extension (only during trade window) ---
+        if (btib_enabled and btib_day_ibh is not None
+                and btib_tw_start_utc is not None
+                and current_time_utc >= btib_tw_start_utc
+                and current_time_utc < btib_trade_window_end_utc):
+            ib_range = btib_day_ibh - btib_day_ibl
+            if ib_range > 0:
+                ext_pct = btib_params.get("EXTENSION_PCT", 1.0)
+                upper_ext = btib_day_ibh + ext_pct * ib_range
+                lower_ext = btib_day_ibl - ext_pct * ib_range
+                if row["high"] >= upper_ext and not btib_extension_upper:
+                    btib_extension_upper = True
+                    logger.info(
+                        f"[BTIB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                        f"Extension UPPER reached: high={row['high']:.2f} >= {upper_ext:.2f} "
+                        f"(IBH + {ext_pct*100:.0f}% IB range)")
+                if row["low"] <= lower_ext and not btib_extension_lower:
+                    btib_extension_lower = True
+                    logger.info(
+                        f"[BTIB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                        f"Extension LOWER reached: low={row['low']:.2f} <= {lower_ext:.2f} "
+                        f"(IBL - {ext_pct*100:.0f}% IB range)")
+
+        # --- REV_RB: execute pending limit order (before core signal) ---
+        if (rev_rb_pending is not None and not has_position
+                and rev_rb_tw_end_utc is not None
+                and current_time_utc <= rev_rb_tw_end_utc):
+            _rr_dir = rev_rb_pending["direction"]
+            _rr_entry = rev_rb_pending["entry"]
+            _rr_filled = False
+            if _rr_dir == "long" and row["low"] <= _rr_entry:
+                _rr_filled = True
+            elif _rr_dir == "short" and row["high"] >= _rr_entry:
+                _rr_filled = True
+
+            if _rr_filled:
+                _rr_sl = rev_rb_pending["sl"]
+                _rr_tp = rev_rb_pending["tp"]
+                _rr_signal = Signal(
+                    direction=_rr_dir,
+                    entry_price=_rr_entry,
+                    stop_loss=_rr_sl,
+                    take_profit=_rr_tp,
+                    comment=f"IBStrategy_REV_RB_{_rr_dir}",
+                    variation="REV_RB",
+                    use_virtual_tp=(rev_rb_params.get("TSL_TARGET", 1.0) > 0),
                 )
+                _rr_lots = risk_manager.calculate_position_size(symbol, _rr_entry, _rr_sl)
+                if _rr_lots > 0:
+                    _rr_val = risk_manager.validate_trade(symbol, _rr_lots, _rr_entry)
+                    if _rr_val["valid"]:
+                        _rr_result = executor.place_order(symbol, _rr_signal, _rr_lots, magic_number)
+                        if _rr_result["success"]:
+                            trades_executed += 1
+                            rev_rb_done_today = True
+                            strategy.state = "POSITION_OPEN"
+                            strategy.tsl_state = {
+                                "variation": "REV_RB",
+                                "tsl_target": rev_rb_params.get("TSL_TARGET", 1.0),
+                                "tsl_sl": rev_rb_params.get("TSL_SL", 1.0),
+                                "initial_sl": _rr_sl,
+                                "initial_tp": _rr_tp,
+                                "current_tp": _rr_tp,
+                                "entry_price": _rr_entry,
+                                "tsl_triggered": False,
+                                "position_window_end": rev_rb_tw_end_utc,
+                                "variation_window_minutes": rev_rb_params.get("TRADE_WINDOW", 120),
+                                "tsl_history": [],
+                            }
+                            _dk = current_date.strftime("%Y-%m-%d")
+                            if _dk not in ib_data_by_date and strategy.ibh is not None:
+                                ib_data_by_date[_dk] = {
+                                    "ibh": strategy.ibh, "ibl": strategy.ibl,
+                                    "eq": strategy.eq, "ib_start": strategy.ib_start,
+                                    "ib_end": strategy.ib_end, "ib_tz": str(strategy.ib_tz),
+                                }
+                            logger.info(
+                                f"[REV_RB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                                f"Limit FILLED: {_rr_dir.upper()} at {_rr_entry:.2f}, "
+                                f"SL={_rr_sl:.2f}, TP={_rr_tp:.2f}")
+                    else:
+                        logger.warning(f"[REV_RB] Trade validation failed: {_rr_val['reason']}")
+                rev_rb_pending = None
+                # Refresh position state after potential REV_RB fill
+                positions = executor.get_open_positions()
+                has_position = any(p.magic == magic_number for p in positions)
 
-                if lots <= 0:
-                    continue
+        # --- Process core signal (only when no position and not in BTIB window) ---
+        if signal and not has_position and not in_btib_window:
+            signals_detected += 1
 
+            date_key = current_date.strftime("%Y-%m-%d")
+            if date_key not in ib_data_by_date and strategy.ibh is not None:
+                ib_data_by_date[date_key] = {
+                    "ibh": strategy.ibh,
+                    "ibl": strategy.ibl,
+                    "eq": strategy.eq,
+                    "ib_start": strategy.ib_start,
+                    "ib_end": strategy.ib_end,
+                    "ib_tz": str(strategy.ib_tz),
+                }
+
+            lots = risk_manager.calculate_position_size(
+                symbol=symbol,
+                entry_price=signal.entry_price,
+                stop_loss=signal.stop_loss,
+            )
+
+            if lots > 0:
                 validation = risk_manager.validate_trade(symbol, lots, signal.entry_price)
                 if not validation["valid"]:
                     logger.warning(f"Trade validation failed: {validation['reason']}")
-                    continue
-
-                result = executor.place_order(symbol, signal, lots, magic_number)
-
-                if result["success"]:
-                    trades_executed += 1
-                    strategy.state = "POSITION_OPEN"
+                else:
+                    result = executor.place_order(symbol, signal, lots, magic_number)
+                    if result["success"]:
+                        trades_executed += 1
+                        strategy.state = "POSITION_OPEN"
+                        # Core signal traded -- block REV_RB for the rest of the day
+                        if rev_rb_pending is not None:
+                            logger.info(
+                                f"[REV_RB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                                f"Pending {rev_rb_pending['direction'].upper()} limit CANCELLED: "
+                                f"core signal ({signal.variation}) fired")
+                            rev_rb_pending = None
+                        rev_rb_done_today = True
 
         # --- TSL update (must use TSL-organic SL, not fractal-BE-modified) ---
         positions = executor.get_open_positions()
@@ -781,10 +1162,127 @@ def run_backtest(
                all_m2_sorted[m2_fractal_ptr].confirmed_time <= current_time_utc):
             m2f = all_m2_sorted[m2_fractal_ptr]
             if m2f.type == "high":
-                last_m2_high = (m2f.price, m2f.confirmed_time)
+                last_m2_high = (m2f.price, m2f.confirmed_time, m2f.candle_close)
             else:
-                last_m2_low = (m2f.price, m2f.confirmed_time)
+                last_m2_low = (m2f.price, m2f.confirmed_time, m2f.candle_close)
             m2_fractal_ptr += 1
+
+        # --- M2 FVG pointer: activate newly confirmed FVGs + REV_RB matching ---
+        while (m2_fvg_ptr < len(all_m2_fvgs_sorted) and
+               all_m2_fvgs_sorted[m2_fvg_ptr].formation_time + timedelta(minutes=atf_minutes) <= current_time_utc):
+            fvg = all_m2_fvgs_sorted[m2_fvg_ptr]
+
+            # Check if this FVG matches a pending IB break (REV_RB)
+            if (rev_rb_enabled and rev_rb_break_side is not None
+                    and rev_rb_pending is None and not rev_rb_done_today
+                    and rev_rb_break_time is not None):
+                # FVG must be confirmed within 6 minutes of IB break
+                _fvg_confirmed = fvg.formation_time + timedelta(minutes=atf_minutes)
+                _fvg_delay = (_fvg_confirmed - rev_rb_break_time).total_seconds()
+                if 0 <= _fvg_delay <= 360:
+                    _rr_matched = False
+                    if rev_rb_break_side == "upper" and fvg.direction == "bullish":
+                        if fvg.low <= rev_rb_day_ibh <= fvg.high:
+                            _rr_matched = True
+                            _rr_dir = "long"
+                            _rr_entry = rev_rb_day_ibh
+                            _rr_sl = rev_rb_day_eq
+                    elif rev_rb_break_side == "lower" and fvg.direction == "bearish":
+                        if fvg.low <= rev_rb_day_ibl <= fvg.high:
+                            _rr_matched = True
+                            _rr_dir = "short"
+                            _rr_entry = rev_rb_day_ibl
+                            _rr_sl = rev_rb_day_eq
+
+                    if _rr_matched:
+                        # Apply MIN_SL_PCT and compute TP
+                        _sl_tp = place_sl_tp_with_min_size(
+                            _rr_dir, _rr_entry, _rr_sl,
+                            rev_rb_params.get("RR_TARGET", 1.0),
+                            rev_rb_params.get("MIN_SL_PCT", 0.0015))
+                        if _sl_tp is not None:
+                            _rr_sl_f, _rr_tp_f, _ = _sl_tp
+                            rev_rb_pending = {
+                                "direction": _rr_dir,
+                                "entry": _rr_entry,
+                                "sl": _rr_sl_f,
+                                "tp": _rr_tp_f,
+                                "trigger_time": current_time_utc,
+                            }
+                            _ib_label = "IBH" if rev_rb_break_side == "upper" else "IBL"
+                            logger.info(
+                                f"[REV_RB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                                f"FVG MATCH: {fvg.direction} FVG [{fvg.low:.2f}-{fvg.high:.2f}] "
+                                f"contains {_ib_label}={_rr_entry:.2f}")
+                            logger.info(
+                                f"[REV_RB] Limit order SET: {_rr_dir.upper()} at {_rr_entry:.2f}, "
+                                f"SL={_rr_sl_f:.2f} (EQ), TP={_rr_tp_f:.2f} "
+                                f"(RR={rev_rb_params.get('RR_TARGET', 1.0)})")
+
+            m2_fvg_ptr += 1
+
+        # --- REV_RB: expire pending if window ended ---
+        if rev_rb_pending is not None and rev_rb_tw_end_utc is not None:
+            if current_time_utc >= rev_rb_tw_end_utc:
+                logger.info(
+                    f"[REV_RB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                    f"Pending {rev_rb_pending['direction'].upper()} limit EXPIRED: trade window ended")
+                rev_rb_pending = None
+                rev_rb_done_today = True
+
+        # --- FVG activation + mitigation + BE trigger (skip entirely if FVG BE disabled) ---
+        if any_fvg_be_enabled:
+            # Activate confirmed H1/H4 FVGs (H1 confirmed 1h after formation, H4 after 4h)
+            while fvg_ptr < len(all_htf_fvgs_sorted):
+                fvg_candidate = all_htf_fvgs_sorted[fvg_ptr]
+                confirm_hours = 1.0 if fvg_candidate.timeframe == "H1" else 4.0
+                confirmed_time = fvg_candidate.formation_time + timedelta(hours=confirm_hours)
+                if confirmed_time <= current_time_utc:
+                    active_fvgs.append(fvg_candidate)
+                    fvg_ptr += 1
+                else:
+                    break
+
+            # Remove mitigated FVGs: bullish mitigated if low <= fvg.low, bearish if high >= fvg.high
+            mitigated_fvg_indices = []
+            for fi, fvg_item in enumerate(active_fvgs):
+                if fvg_item.direction == "bullish" and row["low"] <= fvg_item.low:
+                    mitigated_fvg_indices.append(fi)
+                elif fvg_item.direction == "bearish" and row["high"] >= fvg_item.high:
+                    mitigated_fvg_indices.append(fi)
+            for fi in sorted(mitigated_fvg_indices, reverse=True):
+                active_fvgs.pop(fi)
+
+            # FVG BE: check if any active FVG zone is touched while position is open
+            positions = executor.get_open_positions()
+            our_pos_fvg = next((p for p in positions if p.magic == magic_number), None)
+            if our_pos_fvg is not None and our_pos_fvg.ticket not in fvg_be_active:
+                variation = strategy.tsl_state.get("variation") if strategy.tsl_state else None
+                var_params_fvg = strategy.params.get(variation, {}) if variation else {}
+                fvg_be_enabled = var_params_fvg.get("FVG_BE_ENABLED", False)
+
+                if fvg_be_enabled:
+                    is_long_fvg = our_pos_fvg.type == 0
+                    direction_str_fvg = "LONG" if is_long_fvg else "SHORT"
+                    entry_fvg = our_pos_fvg.price_open
+                    organic_sl_fvg = tsl_organic_sl.get(our_pos_fvg.ticket, our_pos_fvg.sl)
+                    sl_negative_fvg = (is_long_fvg and organic_sl_fvg < entry_fvg) or (
+                        not is_long_fvg and organic_sl_fvg > entry_fvg)
+
+                    if sl_negative_fvg:
+                        for fvg_item in active_fvgs:
+                            touched = row["low"] <= fvg_item.high and row["high"] >= fvg_item.low
+                            if touched:
+                                fvg_be_active[our_pos_fvg.ticket] = entry_fvg
+                                logger.info(
+                                    f"[FVG BE] {current_time_utc.strftime('%Y-%m-%d %H:%M')} UTC | "
+                                    f"{symbol} {direction_str_fvg} #{our_pos_fvg.ticket} | "
+                                    f"{fvg_item.timeframe} {fvg_item.direction} FVG "
+                                    f"[{fvg_item.low:.2f}-{fvg_item.high:.2f}] touched | "
+                                    f"FVG BE activated (entry={entry_fvg:.2f})"
+                                )
+                                fvg_be_count += 1
+                                break
 
         # --- Fractal sweep check + BE trigger ---
         swept_indices = []
@@ -875,6 +1373,9 @@ def run_backtest(
                     candidates.append(frac_be)
                 if frac_tsl_sl is not None:
                     candidates.append(frac_tsl_sl)
+                fvg_be = fvg_be_active.get(pos.ticket, None)
+                if fvg_be is not None:
+                    candidates.append(fvg_be)
 
                 effective = max(candidates) if is_long else min(candidates)
 
@@ -902,13 +1403,91 @@ def run_backtest(
                 fractal_be_active.pop(ticket, None)
                 fractal_tsl_active.pop(ticket, None)
                 fractal_tsl_prev_sl.pop(ticket, None)
+                fvg_be_active.pop(ticket, None)
+
+        # --- BTIB BOS detection (after position management + SL/TP checks) ---
+        if in_btib_window and btib_pending_entry is None and not btib_done_today:
+            _ib_range = btib_day_ibh - btib_day_ibl
+            _ext_pct = btib_params.get("EXTENSION_PCT", 1.0)
+            _upper_ext = btib_day_ibh + _ext_pct * _ib_range
+            _lower_ext = btib_day_ibl - _ext_pct * _ib_range
+
+            # Bearish BOS -> SHORT BTIB (upper extension + close still beyond ext)
+            if btib_extension_upper and last_m2_low is not None and row["close"] >= _upper_ext:
+                if btib_bos_broken_low is None or last_m2_low != btib_bos_broken_low:
+                    if row["close"] < last_m2_low[0]:
+                        btib_bos_broken_low = last_m2_low
+                        if last_m2_high:
+                            sl_frac = last_m2_high[2] if btib_sl_mode == "cisd" else last_m2_high[0]
+                        else:
+                            sl_frac = btib_day_ibh
+                        logger.info(
+                            f"[BTIB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                            f"Bearish BOS: close={row['close']:.2f} < M2 low {last_m2_low[0]:.2f} | "
+                            f"SL={sl_frac:.2f} (mode={btib_sl_mode})")
+                        # Close existing position if any
+                        _positions = executor.get_open_positions()
+                        _our = next((p for p in _positions if p.magic == magic_number), None)
+                        if _our is not None:
+                            emulator.close_position_by_ticket(
+                                _our.ticket, price=float(row["close"]),
+                                exit_reason="btib_signal")
+                            logger.info(
+                                f"[BTIB] Closed position #{_our.ticket} at {row['close']:.2f}")
+                            tsl_organic_sl.pop(_our.ticket, None)
+                            fractal_be_active.pop(_our.ticket, None)
+                            fractal_tsl_active.pop(_our.ticket, None)
+                            fractal_tsl_prev_sl.pop(_our.ticket, None)
+                            fvg_be_active.pop(_our.ticket, None)
+                        btib_pending_entry = {
+                            "direction": "short",
+                            "sl": sl_frac,
+                            "bos_time": current_time_utc,
+                        }
+
+            # Bullish BOS -> LONG BTIB (lower extension + close still beyond ext)
+            if btib_extension_lower and last_m2_high is not None and btib_pending_entry is None and row["close"] <= _lower_ext:
+                if btib_bos_broken_high is None or last_m2_high != btib_bos_broken_high:
+                    if row["close"] > last_m2_high[0]:
+                        btib_bos_broken_high = last_m2_high
+                        if last_m2_low:
+                            sl_frac = last_m2_low[2] if btib_sl_mode == "cisd" else last_m2_low[0]
+                        else:
+                            sl_frac = btib_day_ibl
+                        logger.info(
+                            f"[BTIB] {local_time.strftime('%Y-%m-%d %H:%M')} | "
+                            f"Bullish BOS: close={row['close']:.2f} > M2 high {last_m2_high[0]:.2f} | "
+                            f"SL={sl_frac:.2f} (mode={btib_sl_mode})")
+                        _positions = executor.get_open_positions()
+                        _our = next((p for p in _positions if p.magic == magic_number), None)
+                        if _our is not None:
+                            emulator.close_position_by_ticket(
+                                _our.ticket, price=float(row["close"]),
+                                exit_reason="btib_signal")
+                            logger.info(
+                                f"[BTIB] Closed position #{_our.ticket} at {row['close']:.2f}")
+                            tsl_organic_sl.pop(_our.ticket, None)
+                            fractal_be_active.pop(_our.ticket, None)
+                            fractal_tsl_active.pop(_our.ticket, None)
+                            fractal_tsl_prev_sl.pop(_our.ticket, None)
+                            fvg_be_active.pop(_our.ticket, None)
+                        btib_pending_entry = {
+                            "direction": "long",
+                            "sl": sl_frac,
+                            "bos_time": current_time_utc,
+                        }
 
     # Close remaining positions
     emulator.force_close_all_positions(reason="backtest_end")
     logger.info(f"[FRACTAL BE SUMMARY] {fractal_be_count} fractal BE activations "
                 f"out of {trades_executed} total trades")
     logger.info(f"[FRACTAL TSL SUMMARY] {fractal_tsl_count} fractal TSL activations, "
-                f"{fractal_tsl_updates} M2 SL updates out of {trades_executed} total trades")
+                f"{fractal_tsl_updates} {atf_label} SL updates out of {trades_executed} total trades")
+    logger.info(f"[FVG BE SUMMARY] {fvg_be_count} FVG BE activations "
+                f"out of {trades_executed} total trades")
+    if btib_enabled:
+        logger.info(f"[BTIB SUMMARY] {btib_trades_total} BTIB trades executed "
+                    f"out of {trades_executed} total trades")
 
     # Get results
     trade_log = emulator.get_trade_log()
@@ -1009,12 +1588,19 @@ def run_backtest(
 
         if generate_charts:
             # Reuse pre-computed fractal lists for chart overlay
-            fractal_lists = {"all_h1": all_h1, "all_h4": all_h4}
+            fractal_lists = {"all_h1": all_h1, "all_h4": all_h4, "all_m2": all_m2,
+                            "all_h1_fvgs": all_h1_fvgs, "all_h4_fvgs": all_h4_fvgs}
 
-            logger.info("Generating trade charts...")
+            # Resample candle data for charts if needed
+            chart_data = m1_data
+            if chart_tf != "1min":
+                logger.info(f"Resampling M1 -> {chart_tf} for trade charts...")
+                chart_data = _resample_m1(m1_data, chart_tf)
+
+            logger.info(f"Generating trade charts (candles: {chart_tf})...")
             charts_count = generate_all_trade_charts(
                 trade_log=trade_log,
-                m1_data=m1_data,
+                m1_data=chart_data,
                 output_dir=report_manager.get_trades_dir(),
                 timezone=local_tz_name,
                 ib_data_by_date=ib_data_by_date,
@@ -1066,6 +1652,8 @@ def main() -> None:
         max_margin_pct=args.max_margin_pct,
         output_name=args.output_name,
         generate_charts=not args.no_charts,
+        chart_tf=args.chart_tf,
+        analysis_tf=args.analysis_tf,
     )
 
 

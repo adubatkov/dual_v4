@@ -931,6 +931,7 @@ class MT5Emulator:
 # Create module-level constants to match MT5 API
 TIMEFRAME_M1 = Timeframe.TIMEFRAME_M1
 TIMEFRAME_M2 = Timeframe.TIMEFRAME_M2
+TIMEFRAME_M3 = Timeframe.TIMEFRAME_M3
 TIMEFRAME_M5 = Timeframe.TIMEFRAME_M5
 TIMEFRAME_M15 = Timeframe.TIMEFRAME_M15
 TIMEFRAME_M30 = Timeframe.TIMEFRAME_M30

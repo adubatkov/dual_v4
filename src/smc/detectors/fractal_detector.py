@@ -56,6 +56,7 @@ def detect_fractals(
                 price=curr["high"],
                 time=curr["time"],
                 confirmed_time=confirmed_time,
+                candle_close=float(curr["close"]),
             ))
 
         # Low fractal
@@ -68,6 +69,7 @@ def detect_fractals(
                 price=curr["low"],
                 time=curr["time"],
                 confirmed_time=confirmed_time,
+                candle_close=float(curr["close"]),
             ))
 
     return fractals

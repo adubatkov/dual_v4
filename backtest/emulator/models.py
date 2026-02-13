@@ -77,6 +77,7 @@ class Timeframe(IntEnum):
     """MT5 timeframes."""
     TIMEFRAME_M1 = 1
     TIMEFRAME_M2 = 2
+    TIMEFRAME_M3 = 3
     TIMEFRAME_M5 = 5
     TIMEFRAME_M15 = 15
     TIMEFRAME_M30 = 30

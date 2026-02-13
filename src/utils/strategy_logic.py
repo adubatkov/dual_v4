@@ -21,6 +21,19 @@ XAU_DATA_FOLDER = r"C:\Users\User\PyCharmMiscProject\Ger40 IBR Claude improve\da
 
 
 # ================================
+# ANALYSIS TIMEFRAME CONFIGURATION
+# ================================
+# Maps CLI/param string to all derived values for signal analysis candles.
+# Default "2min" preserves existing M2 behavior.
+ANALYSIS_TF_CONFIG = {
+    "1min": {"resample_freq": "1min", "label": "M1", "mt5_tf": "M1", "minutes": 1, "candle_duration_hours": 1 / 60},
+    "2min": {"resample_freq": "2min", "label": "M2", "mt5_tf": "M2", "minutes": 2, "candle_duration_hours": 2 / 60},
+    "3min": {"resample_freq": "3min", "label": "M3", "mt5_tf": "M3", "minutes": 3, "candle_duration_hours": 3 / 60},
+    "5min": {"resample_freq": "5min", "label": "M5", "mt5_tf": "M5", "minutes": 5, "candle_duration_hours": 5 / 60},
+}
+
+
+# ================================
 # PRODUCTION PARAMETERS
 # GER40: Baseline (FOS 08:00-09:00, uniform params)
 # XAUUSD: V9 - XAUUSD_059
@@ -31,6 +44,10 @@ XAU_DATA_FOLDER = r"C:\Users\User\PyCharmMiscProject\Ger40 IBR Claude improve\da
 # Trade window: 120 min (09:00-11:00, avoiding Lunch Hours 11:00-13:00)
 # Uniform baseline for all variations - starting point for optimization
 GER40_PARAMS_PROD = {
+    # Skip entire trading day if these news events are scheduled
+    # Categories: NFP, CPI, FOMC, ECB, GDP, ISM_PMI, RETAIL_SALES
+    # Empty list [] = no day-level skipping (2-min window still active)
+    "NEWS_SKIP_EVENTS": ["NFP", "CPI", "ECB"],
     "OCAE": {
         "IB_START": "08:00",
         "IB_END": "09:00",
@@ -42,12 +59,12 @@ GER40_PARAMS_PROD = {
         "TSL_TARGET": 1.0,
         "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.0015,
-        "REV_RB_ENABLED": False,
-        "REV_RB_PCT": 1.0,
-        "IB_BUFFER_PCT": 0.0,
+        "IB_BUFFER_PCT": 0.1,
         "MAX_DISTANCE_PCT": 1.0,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
     },
     "TCWE": {
         "IB_START": "08:00",
@@ -60,12 +77,12 @@ GER40_PARAMS_PROD = {
         "TSL_TARGET": 1.0,
         "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.0015,
-        "REV_RB_ENABLED": False,
-        "REV_RB_PCT": 1.0,
-        "IB_BUFFER_PCT": 0.0,
+        "IB_BUFFER_PCT": 0.1,
         "MAX_DISTANCE_PCT": 1.0,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
     },
     "Reverse": {
         "IB_START": "08:00",
@@ -78,12 +95,12 @@ GER40_PARAMS_PROD = {
         "TSL_TARGET": 1.0,
         "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.0015,
-        "REV_RB_ENABLED": False,
-        "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
         "MAX_DISTANCE_PCT": 1.0,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
     },
     "REV_RB": {
         "IB_START": "08:00",
@@ -92,16 +109,30 @@ GER40_PARAMS_PROD = {
         "IB_WAIT": 0,
         "TRADE_WINDOW": 120,
         "RR_TARGET": 1.0,
-        "STOP_MODE": "ib_start",
         "TSL_TARGET": 1.0,
         "TSL_SL": 1.0,
-        "MIN_SL_PCT": 0.0015,
+        "MIN_SL_PCT": 0.00,
         "REV_RB_ENABLED": False,
-        "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.0,
         "MAX_DISTANCE_PCT": 1.0,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "BTIB": {
+        "BTIB_ENABLED": False,
+        "BTIB_SL_MODE": "fractal_2m",    # "fractal_2m" (High/Low) | "cisd" (Close)
+        "CORE_CUTOFF_MIN": 40,
+        "EXTENSION_PCT": 1.0,
+        "RR_TARGET": 1.0,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.00,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
     },
 }
 
@@ -109,6 +140,7 @@ GER40_PARAMS_PROD = {
 # IB: 09:00-09:30 Asia/Tokyo, IB_WAIT: 20 min
 # Source: ib_buffer_maxdist_total_r, Combined R: 95.84, Trades: 627
 XAUUSD_PARAMS_PROD = {
+    "NEWS_SKIP_EVENTS": ["NFP", "CPI", "ECB"],
     "OCAE": {
         "IB_START": "09:00",
         "IB_END": "09:30",
@@ -120,12 +152,12 @@ XAUUSD_PARAMS_PROD = {
         "TSL_TARGET": 0.0,
         "TSL_SL": 0.5,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_ENABLED": False,
-        "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
         # R: 32.74, Sharpe: 2.22, WR: 54.42%, Trades: 226, MaxDD: 7.24
     },
     "TCWE": {
@@ -139,12 +171,12 @@ XAUUSD_PARAMS_PROD = {
         "TSL_TARGET": 1.5,
         "TSL_SL": 1.5,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_ENABLED": False,
-        "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
         # R: 19.04, Sharpe: 1.02, WR: 61.18%, Trades: 304, MaxDD: 11.72
     },
     "Reverse": {
@@ -158,12 +190,12 @@ XAUUSD_PARAMS_PROD = {
         "TSL_TARGET": 1.0,
         "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_ENABLED": False,
-        "REV_RB_PCT": 1.0,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
         # R: 44.06, Sharpe: 3.53, WR: 47.62%, Trades: 97, MaxDD: 11.47
     },
     "REV_RB": {
@@ -172,18 +204,215 @@ XAUUSD_PARAMS_PROD = {
         "IB_TZ": "Asia/Tokyo",
         "IB_WAIT": 20,
         "TRADE_WINDOW": 120,
-        "RR_TARGET": 1.75,
-        "STOP_MODE": "ib_start",
-        "TSL_TARGET": 2.0,
+        "RR_TARGET": 1.0,
+        "TSL_TARGET": 1.0,
         "TSL_SL": 1.0,
         "MIN_SL_PCT": 0.001,
-        "REV_RB_PCT": 1.0,
-        "REV_RB_ENABLED": False,
+        "REV_RB_ENABLED": True,
         "IB_BUFFER_PCT": 0.05,
         "MAX_DISTANCE_PCT": 0.75,
         "FRACTAL_BE_ENABLED": True,
         "FRACTAL_TSL_ENABLED": True,
-        # R: 0.0, Sharpe: 0.0, WR: 0.0%, Trades: 0, MaxDD: 0.0
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "BTIB": {
+        "BTIB_ENABLED": True,
+        "BTIB_SL_MODE": "fractal_2m",    # "fractal_2m" (High/Low) | "cisd" (Close)
+        "CORE_CUTOFF_MIN": 40,
+        "EXTENSION_PCT": 1.0,
+        "RR_TARGET": 1.0,
+        "TSL_TARGET": 0.0,
+        "TSL_SL": 0.0,
+        "MIN_SL_PCT": 0.001,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+}
+
+# NAS100 Production Parameters
+# Identical to GER40 baseline -- starting point for NAS100 optimization
+NAS100_PARAMS_PROD = {
+    "NEWS_SKIP_EVENTS": ["NFP", "CPI", "ECB"],
+    "OCAE": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "STOP_MODE": "ib_start",
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.0015,
+        "IB_BUFFER_PCT": 0.1,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "TCWE": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "STOP_MODE": "ib_start",
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.0015,
+        "IB_BUFFER_PCT": 0.1,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "Reverse": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "STOP_MODE": "ib_start",
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.0015,
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "REV_RB": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.00,
+        "REV_RB_ENABLED": False,
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "BTIB": {
+        "BTIB_ENABLED": False,
+        "BTIB_SL_MODE": "fractal_2m",
+        "CORE_CUTOFF_MIN": 40,
+        "EXTENSION_PCT": 1.0,
+        "RR_TARGET": 1.0,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.00,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+}
+
+# UK100 Production Parameters
+# Identical to GER40 baseline -- starting point for UK100 optimization
+UK100_PARAMS_PROD = {
+    "NEWS_SKIP_EVENTS": ["NFP", "CPI", "ECB"],
+    "OCAE": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "STOP_MODE": "ib_start",
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.0015,
+        "IB_BUFFER_PCT": 0.1,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "TCWE": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "STOP_MODE": "ib_start",
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.0015,
+        "IB_BUFFER_PCT": 0.1,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "Reverse": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "STOP_MODE": "ib_start",
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.0015,
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "REV_RB": {
+        "IB_START": "08:00",
+        "IB_END": "09:00",
+        "IB_TZ": "Europe/Berlin",
+        "IB_WAIT": 0,
+        "TRADE_WINDOW": 120,
+        "RR_TARGET": 1.0,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.00,
+        "REV_RB_ENABLED": False,
+        "IB_BUFFER_PCT": 0.0,
+        "MAX_DISTANCE_PCT": 1.0,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
+    },
+    "BTIB": {
+        "BTIB_ENABLED": False,
+        "BTIB_SL_MODE": "fractal_2m",
+        "CORE_CUTOFF_MIN": 40,
+        "EXTENSION_PCT": 1.0,
+        "RR_TARGET": 1.0,
+        "TSL_TARGET": 1.0,
+        "TSL_SL": 1.0,
+        "MIN_SL_PCT": 0.00,
+        "FRACTAL_BE_ENABLED": True,
+        "FRACTAL_TSL_ENABLED": True,
+        "FVG_BE_ENABLED": False,
+        "M2_BOS_CHART_ENABLED": True,
     },
 }
 
@@ -701,120 +930,6 @@ def simulate_after_entry(df_trade: pd.DataFrame, start_idx: int, direction: str,
     return {"exit_reason": "time", "exit_time": df_trade["time"].iat[-1], "exit_price": last_close, "R": r}
 
 # ================================
-# РЕВЕРС-СДЕЛКИ ПОСЛЕ REVERSE_BLOCKED (REV_RB)
-# ================================
-def simulate_reverse_limit_both_sides(df_trade: pd.DataFrame,
-                                      ibh: float, ibl: float, eq: float,
-                                      reverse_block_time: pd.Timestamp,
-                                      params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """
-    REV_RB сделки - лимитные ордера после reverse_blocked.
-    """
-    if reverse_block_time is None or df_trade.empty:
-        return None
-
-    # стартовый индекс для поиска триггера
-    start_idx = int(np.searchsorted(df_trade["time"].values, reverse_block_time.to_datetime64(), side="left"))
-
-    ib_range = float(ibh - ibl)
-    if ib_range <= 0:
-        return None
-
-    pct = params["REV_RB_PCT"]
-    ext_up = ibh + pct * ib_range
-    ext_dn = ibl - pct * ib_range
-
-    # найти первый триггер в обе стороны
-    j_up = None
-    j_dn = None
-    for j in range(start_idx, len(df_trade)):
-        if j_up is None and float(df_trade["high"].iat[j]) >= ext_up:
-            j_up = j
-        if j_dn is None and float(df_trade["low"].iat[j]) <= ext_dn:
-            j_dn = j
-        if j_up is not None and j_dn is not None:
-            break
-
-    # выбрать более ранний триггер
-    chosen = None
-    if j_up is not None and j_dn is not None:
-        chosen = ("long", j_up) if j_up <= j_dn else ("short", j_dn)
-    elif j_up is not None:
-        chosen = ("long", j_up)
-    elif j_dn is not None:
-        chosen = ("short", j_dn)
-    else:
-        return None
-
-    direction, trig_idx = chosen
-
-    if direction == "long":
-        entry_level = float(ibh)
-        stop = float(eq)  # SL=EQ для REV_RB
-        risk = abs(entry_level - stop)
-
-        # Проверка минимального размера SL
-        min_sl_size = entry_level * params["MIN_SL_PCT"]
-        if risk < min_sl_size:
-            stop = entry_level - min_sl_size
-            risk = min_sl_size
-
-        tp = entry_level + params["RR_TARGET"] * risk
-
-        # ждём возврата к ibh для лимитного исполнения
-        fill_idx = None
-        for k in range(trig_idx + 1, len(df_trade)):
-            if float(df_trade["low"].iat[k]) <= entry_level:
-                fill_idx = k
-                break
-        if fill_idx is None:
-            return None
-
-        sim = simulate_after_entry(df_trade, fill_idx, "long", entry_level, stop, tp, 
-                                  params["TSL_TARGET"], params["TSL_SL"])
-        return {
-            "variation": "REV_RB",
-            "direction": "long",
-            "entry_time": df_trade["time"].iat[fill_idx],
-            "entry_price": entry_level,
-            "stop": stop,
-            "tp": tp,
-            **sim
-        }
-
-    else:  # short
-        entry_level = float(ibl)
-        stop = float(eq)
-        risk = abs(entry_level - stop)
-
-        min_sl_size = entry_level * params["MIN_SL_PCT"]
-        if risk < min_sl_size:
-            stop = entry_level + min_sl_size
-            risk = min_sl_size
-
-        tp = entry_level - params["RR_TARGET"] * risk
-
-        fill_idx = None
-        for k in range(trig_idx + 1, len(df_trade)):
-            if float(df_trade["high"].iat[k]) >= entry_level:
-                fill_idx = k
-                break
-        if fill_idx is None:
-            return None
-
-        sim = simulate_after_entry(df_trade, fill_idx, "short", entry_level, stop, tp,
-                                  params["TSL_TARGET"], params["TSL_SL"])
-        return {
-            "variation": "REV_RB",
-            "direction": "short",
-            "entry_time": df_trade["time"].iat[fill_idx],
-            "entry_price": entry_level,
-            "stop": stop,
-            "tp": tp,
-            **sim
-        }
-
-# ================================
 # ДЕНЬ: ПОИСК ВХОДА И ПРОГОН
 # ================================
 def process_day_instrument(day_df_all: pd.DataFrame, day_date: datetime.date,
@@ -982,22 +1097,8 @@ def process_day_instrument(day_df_all: pd.DataFrame, day_date: datetime.date,
                 "trade_start": trade_start_price, "trades": [trade],
             }
 
-    # Пробуем REV_RB
-    rev_rb_params = params_dict["REV_RB"]
-    if rev_rb_params["REV_RB_ENABLED"]:
-        df_trade_rev = get_trade_window(day_df_all, day_date, rev_rb_params["IB_END"], rev_rb_params["IB_TZ"],
-                                        rev_rb_params["IB_WAIT"], rev_rb_params["TRADE_WINDOW"])
-        if not df_trade_rev.empty:
-            fake_block_time = df_trade_rev["time"].iat[0]
-            rev_trade = simulate_reverse_limit_both_sides(df_trade_rev, ibh, ibl, eq, fake_block_time, rev_rb_params)
-            if rev_trade is not None:
-                rev_trade["instrument"] = instrument
-                rev_trade["ib_params"] = make_ib_params(rev_rb_params)
-                return {
-                    "date": day_date, "instrument": instrument, "status": "done_rev_rb",
-                    "ib_high": ibh, "ib_low": ibl, "eq": eq,
-                    "trades": [rev_trade],
-                }
+    # REV_RB: now handled as FVG-based limit order in backtest template
+    # (simulate_reverse_limit_both_sides removed; process_day_instrument is legacy path)
 
     # Ничего не сработало
     return {

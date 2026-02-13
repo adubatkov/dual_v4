@@ -58,6 +58,28 @@ CURRENCY_RELEVANCE_MAP = {
 DEFAULT_BEFORE_MINUTES = 2
 DEFAULT_AFTER_MINUTES = 2
 
+# Category mapping for day-level news skip (NEWS_SKIP_EVENTS param)
+# Keys = short category codes used in strategy_logic.py
+# Values = substrings to match against ForexFactory event titles
+NEWS_EVENT_CATEGORIES = {
+    "NFP": ["Non-Farm Employment Change"],
+    "CPI": ["CPI m/m", "CPI y/y", "Core CPI", "German Prelim CPI"],
+    "FOMC": ["FOMC Statement", "FOMC Meeting Minutes", "FOMC Press Conference",
+             "Federal Funds Rate", "FOMC Economic Projections"],
+    "ECB": ["ECB Press Conference", "ECB Interest Rate Decision"],
+    "GDP": ["GDP"],
+    "ISM_PMI": ["ISM Manufacturing PMI", "ISM Services PMI"],
+    "RETAIL_SALES": ["Retail Sales"],
+}
+
+
+def categorize_event(title: str) -> str:
+    """Map event title to category code. Returns 'OTHER' if no match."""
+    for cat, patterns in NEWS_EVENT_CATEGORIES.items():
+        if any(p.lower() in title.lower() for p in patterns):
+            return cat
+    return "OTHER"
+
 
 def get_relevant_currencies(symbol: str) -> List[str]:
     """
@@ -335,6 +357,30 @@ class NewsFilter:
             before_minutes=self.before_minutes,
             after_minutes=self.after_minutes,
         )
+
+    def should_skip_day(
+        self,
+        trade_date: date,
+        skip_categories: List[str],
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Check if trading day should be skipped due to scheduled news.
+
+        Args:
+            trade_date: Date to check
+            skip_categories: List of category codes (e.g. ["NFP", "CPI", "ECB"])
+
+        Returns:
+            Tuple of (should_skip, reason_string)
+        """
+        if not skip_categories:
+            return (False, None)
+        events = self._events_by_date.get(trade_date, [])
+        for event in events:
+            cat = categorize_event(event.title)
+            if cat in skip_categories:
+                return (True, f"{cat}: {event.title} ({event.country})")
+        return (False, None)
 
     def get_blocking_events_for_day(
         self,
