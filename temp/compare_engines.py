@@ -329,6 +329,10 @@ def parse_args():
                         help="Enable FRACTAL_BE_ENABLED")
     parser.add_argument("--fractal-tsl", action="store_true", default=False,
                         help="Enable FRACTAL_TSL_ENABLED")
+    parser.add_argument("--rr", type=float, default=None, help="Override RR_TARGET")
+    parser.add_argument("--tsl-target", type=float, default=None, help="Override TSL_TARGET")
+    parser.add_argument("--tsl-sl", type=float, default=None, help="Override TSL_SL")
+    parser.add_argument("--stop-mode", type=str, default=None, help="Override STOP_MODE (ib_start|eq)")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
     return parser.parse_args()
 
@@ -352,14 +356,26 @@ def main():
     }
     nested_params = deepcopy(PARAMS_MAP.get(args.symbol, GER40_PARAMS_PROD))
 
-    # Override fractal flags if requested
+    # Override fractal flags and param overrides
     for var_name in ["OCAE", "TCWE", "Reverse", "REV_RB"]:
         if var_name in nested_params:
             nested_params[var_name]["FRACTAL_BE_ENABLED"] = args.fractal_be
             nested_params[var_name]["FRACTAL_TSL_ENABLED"] = args.fractal_tsl
+            if args.rr is not None:
+                nested_params[var_name]["RR_TARGET"] = args.rr
+            if args.tsl_target is not None:
+                nested_params[var_name]["TSL_TARGET"] = args.tsl_target
+            if args.tsl_sl is not None:
+                nested_params[var_name]["TSL_SL"] = args.tsl_sl
+            if args.stop_mode is not None:
+                nested_params[var_name]["STOP_MODE"] = args.stop_mode
 
+    rr_str = f"RR={args.rr}" if args.rr else "RR=PROD"
+    tsl_str = f"TSL={args.tsl_target}/{args.tsl_sl}" if args.tsl_target is not None else "TSL=PROD"
+    sm_str = f"STOP={args.stop_mode}" if args.stop_mode else "STOP=PROD"
     print(f"\nComparing engines: {args.symbol} | {args.start} to {args.end}")
     print(f"  FRACTAL_BE={args.fractal_be} | FRACTAL_TSL={args.fractal_tsl}")
+    print(f"  {rr_str} | {tsl_str} | {sm_str}")
     print(f"  NEWS_SKIP={nested_params.get('NEWS_SKIP_EVENTS', [])}")
 
     # Load M1 data
