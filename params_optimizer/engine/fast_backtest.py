@@ -109,6 +109,116 @@ class FastBacktest:
         if self.m1_data["time"].dt.tz is None:
             self.m1_data["time"] = self.m1_data["time"].dt.tz_localize("UTC")
 
+    def _resample_full(self, freq: str) -> pd.DataFrame:
+        """Resample full M1 data to higher timeframe (matching slow engine _resample_m1)."""
+        df = self.m1_data[["time", "open", "high", "low", "close"]].copy()
+        df = df.set_index("time")
+        resampled = df.resample(freq).agg({
+            "open": "first", "high": "max", "low": "min", "close": "last"
+        }).dropna().reset_index()
+        return resampled
+
+    def _precompute_fractals(self, params: Dict) -> Optional[Dict]:
+        """Pre-compute all H1, H4, M2 fractals for the entire M1 dataset.
+
+        Matches slow engine (run_backtest_template.py lines 694-714):
+        1. Resample M1 to H1, H4, M2
+        2. Detect fractals on each
+        3. H4 dedup: H4 overrides H1 at same (type, round(price, 2))
+        4. Sort by confirmed_time
+        5. Pre-sweep: simulate slow engine's global sweep tracking to mark
+           which fractals were swept before any trade opens
+        """
+        be_enabled = params.get("fractal_be_enabled", False)
+        tsl_enabled = params.get("fractal_tsl_enabled", False)
+
+        if not be_enabled and not tsl_enabled:
+            return None
+
+        from src.smc.detectors.fractal_detector import detect_fractals
+
+        h1_data = self._resample_full("1h")
+        h4_data = self._resample_full("4h")
+        m2_data = self._resample_full("2min")
+
+        h1_fractals = detect_fractals(h1_data, self.symbol, "H1", candle_duration_hours=1.0)
+        h4_fractals = detect_fractals(h4_data, self.symbol, "H4", candle_duration_hours=4.0)
+        m2_fractals = detect_fractals(m2_data, self.symbol, "M2", candle_duration_hours=2 / 60)
+
+        # H4 dedup: remove H1 fractals that overlap with H4 at same (type, round(price, 2))
+        h4_keys = {(f.type, round(f.price, 2)) for f in h4_fractals}
+        filtered_h1 = [f for f in h1_fractals if (f.type, round(f.price, 2)) not in h4_keys]
+
+        h1h4_sorted = sorted(filtered_h1 + h4_fractals, key=lambda f: f.confirmed_time)
+        m2_sorted = sorted(m2_fractals, key=lambda f: f.confirmed_time)
+
+        # Pre-sweep: simulate the slow engine's global fractal sweep processing.
+        # The slow engine checks sweeps on EVERY M1 candle (even without open positions)
+        # and removes swept fractals. By trade entry time, many nearby fractals
+        # are already gone. Without this, the fast engine has too many active fractals.
+        self._presweep_fractals(h1h4_sorted)
+
+        return {
+            "h1h4_fractals": h1h4_sorted,
+            "m2_fractals": m2_sorted,
+            "be_enabled": be_enabled,
+            "tsl_enabled": tsl_enabled,
+        }
+
+    def _presweep_fractals(self, h1h4_sorted: list) -> None:
+        """Simulate slow engine's global sweep tracking on all M1 data.
+
+        Sets sweep_time on each fractal to the M1 candle time when it was
+        first touched by price action. This allows _simulate_after_entry
+        to exclude pre-swept fractals from the initial active list.
+        """
+        # Use .tolist() to get tz-aware pd.Timestamp objects (not numpy datetime64)
+        # so comparisons with fractal.confirmed_time (tz-aware UTC) work correctly.
+        times = self.m1_data["time"].tolist()
+        highs = self.m1_data["high"].values.astype(float)
+        lows = self.m1_data["low"].values.astype(float)
+
+        exp_delta_h1 = timedelta(hours=48)
+        exp_delta_h4 = timedelta(hours=96)
+
+        ptr = 0
+        active = []
+
+        for j in range(len(times)):
+            t = times[j]
+            hi = highs[j]
+            lo = lows[j]
+
+            # Advance pointer (newly confirmed)
+            while ptr < len(h1h4_sorted) and h1h4_sorted[ptr].confirmed_time <= t:
+                active.append(h1h4_sorted[ptr])
+                ptr += 1
+
+            # Expire stale (H1: 48h, H4: 96h from fractal.time)
+            if active:
+                exp_h1 = t - exp_delta_h1
+                exp_h4 = t - exp_delta_h4
+                active = [
+                    f for f in active
+                    if (f.timeframe == "H1" and f.time >= exp_h1) or
+                       (f.timeframe == "H4" and f.time >= exp_h4)
+                ]
+
+            # Check sweeps
+            swept_idx = []
+            for i, frac in enumerate(active):
+                if frac.type == "high" and hi >= frac.price:
+                    frac.swept = True
+                    frac.sweep_time = t
+                    swept_idx.append(i)
+                elif frac.type == "low" and lo <= frac.price:
+                    frac.swept = True
+                    frac.sweep_time = t
+                    swept_idx.append(i)
+
+            for i in sorted(swept_idx, reverse=True):
+                active.pop(i)
+
     def run_with_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Run backtest with given parameters. Target: ~4-6 sec.
@@ -142,12 +252,15 @@ class FastBacktest:
                 lambda x: x.astimezone(tz).date()
             )
 
+            # Pre-compute fractals once for entire period (if enabled)
+            fractal_ctx = self._precompute_fractals(params)
+
             trades = []
 
             # Process day-by-day
             for day_date, day_df in self.m1_data.groupby("ib_date"):
                 day_df = day_df.sort_values("time").reset_index(drop=True)
-                trade = self._process_day(day_df, day_date, params)
+                trade = self._process_day(day_df, day_date, params, fractal_ctx)
                 if trade:
                     trades.append(trade)
 
@@ -167,7 +280,8 @@ class FastBacktest:
             }
 
     def _process_day(
-        self, day_df: pd.DataFrame, day_date: datetime.date, params: Dict
+        self, day_df: pd.DataFrame, day_date: datetime.date, params: Dict,
+        fractal_ctx: Optional[Dict] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Process single trading day.
@@ -310,7 +424,7 @@ class FastBacktest:
                 return None
 
         # 7. Simulate trade execution on M1 data for precise SL/TP
-        return self._simulate_trade_on_m1(df_trade_m1, signal, ib, day_date, params)
+        return self._simulate_trade_on_m1(df_trade_m1, signal, ib, day_date, params, fractal_ctx)
 
     def _apply_smc_filter(
         self, signal, day_df: pd.DataFrame, day_date, df_trade_m1: pd.DataFrame, params: Dict
@@ -1169,7 +1283,8 @@ class FastBacktest:
 
     def _simulate_trade_on_m1(
         self, df_m1: pd.DataFrame, signal: Signal,
-        ib: Dict[str, float], day_date: datetime.date, params: Dict
+        ib: Dict[str, float], day_date: datetime.date, params: Dict,
+        fractal_ctx: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """
         Simulate trade on M1 data for precise SL/TP detection.
@@ -1239,7 +1354,8 @@ class FastBacktest:
 
         # Simulate exit using EXECUTION price (with spread)
         exit_result = self._simulate_after_entry(
-            df_m1, m1_entry_idx, direction, entry_price, stop, tp, tsl_target, tsl_sl
+            df_m1, m1_entry_idx, direction, entry_price, stop, tp, tsl_target, tsl_sl,
+            fractal_ctx
         )
 
         # Risk based on execution price (matches BacktestWrapper)
@@ -1269,12 +1385,19 @@ class FastBacktest:
 
     def _simulate_after_entry(
         self, df_trade: pd.DataFrame, start_idx: int, direction: str,
-        entry_price: float, stop: float, tp: float, tsl_target: float, tsl_sl: float
+        entry_price: float, stop: float, tp: float, tsl_target: float, tsl_sl: float,
+        fractal_ctx: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """
-        Trailing stop logic (stepped) + no-trail mode.
+        Trade exit simulation with organic TSL + fractal BE/TSL.
 
-        Ported from simulate_after_entry() in strategy_logic.py
+        Matches slow engine (run_backtest_template.py) order of operations per M1 candle:
+        1. Organic TSL update (using prev candle close, one step per candle)
+        2. Fractal activation/expiry and sweep detection
+        3. Fractal BE/TSL activation on sweep
+        4. Effective SL = best_of(organic, fractal_be, fractal_tsl)
+        5. Same-candle SL prevention: if SL changed, use prev candle's SL
+        6. SL/TP hit check
         """
         risk = abs(entry_price - stop)
         if risk <= 0:
@@ -1289,128 +1412,232 @@ class FastBacktest:
         curr_target_R = float(tp - entry_price) / risk if direction == "long" else float(entry_price - tp) / risk
         curr_tp = float(tp)
 
-        # TSL is disabled when tsl_target <= 0 (matches IBStrategy behavior)
-        # IBStrategy's update_position_state returns early if tsl_target <= 0,
-        # which means tsl_sl is ALSO not applied even if > 0
         tsl_target_val = 0.0 if tsl_target is None else float(tsl_target)
         tsl_sl_val = 0.0 if tsl_sl is None else float(tsl_sl)
-        no_trail = (tsl_target_val <= 0.0)  # Match IBStrategy: TSL disabled when tsl_target <= 0
+        no_trail = (tsl_target_val <= 0.0)
 
-        exit_next_open = False
+        half_spread = SPREAD_POINTS.get(self.symbol, 0.0) / 2
+        is_long = direction == "long"
+
+        # --- Fractal state initialization ---
+        use_fractals = fractal_ctx is not None
+        fractal_be_sl = None    # entry_price when BE activated (None = inactive)
+        fractal_tsl_active = False
+        fractal_tsl_sl = None   # current M2 fractal SL level
+
+        if use_fractals:
+            entry_time = df_trade["time"].iat[start_idx]
+            h1h4_list = fractal_ctx["h1h4_fractals"]
+            m2_list = fractal_ctx["m2_fractals"]
+            be_enabled = fractal_ctx["be_enabled"]
+            tsl_enabled = fractal_ctx["tsl_enabled"]
+
+            # Find starting pointer positions (first fractal not yet confirmed at entry)
+            h1h4_ptr = 0
+            while h1h4_ptr < len(h1h4_list) and h1h4_list[h1h4_ptr].confirmed_time <= entry_time:
+                h1h4_ptr += 1
+
+            m2_ptr = 0
+            last_m2_high = None  # price only
+            last_m2_low = None   # price only
+            while m2_ptr < len(m2_list) and m2_list[m2_ptr].confirmed_time <= entry_time:
+                mf = m2_list[m2_ptr]
+                if mf.type == "high":
+                    last_m2_high = mf.price
+                else:
+                    last_m2_low = mf.price
+                m2_ptr += 1
+
+            # Build initial active H1/H4 fractals:
+            # confirmed before entry, not expired, not pre-swept.
+            # Use strict < for sweep_time: fractals swept ON the entry candle
+            # are still available (slow engine sweeps them during trade, not before).
+            expiry_h1 = entry_time - timedelta(hours=48)
+            expiry_h4 = entry_time - timedelta(hours=96)
+            active_fractals = []
+            for k in range(h1h4_ptr):
+                f = h1h4_list[k]
+                # Skip fractals swept BEFORE entry candle (strict <)
+                if f.swept and f.sweep_time < entry_time:
+                    continue
+                if (f.timeframe == "H1" and f.time >= expiry_h1) or \
+                   (f.timeframe == "H4" and f.time >= expiry_h4):
+                    active_fractals.append(f)
+
+            # --- Entry-candle fractal sweep processing ---
+            # The slow engine processes fractal sweeps on the entry candle itself
+            # (same candle as position open). Replicate that here.
+            entry_hi = float(df_trade["high"].iat[start_idx])
+            entry_lo = float(df_trade["low"].iat[start_idx])
+            swept_on_entry = []
+            for fi, frac in enumerate(active_fractals):
+                if frac.type == "high" and entry_hi >= frac.price:
+                    swept_on_entry.append(fi)
+                elif frac.type == "low" and entry_lo <= frac.price:
+                    swept_on_entry.append(fi)
+
+            if swept_on_entry:
+                # Fractal BE: activate if SL in negative zone
+                if be_enabled and fractal_be_sl is None:
+                    sl_negative = (is_long and curr_stop < entry_price) or \
+                                  (not is_long and curr_stop > entry_price)
+                    if sl_negative:
+                        fractal_be_sl = entry_price
+
+                # Fractal TSL: activate
+                if tsl_enabled and not fractal_tsl_active:
+                    fractal_tsl_active = True
+
+                # Remove swept fractals
+                for idx in sorted(swept_on_entry, reverse=True):
+                    active_fractals.pop(idx)
+
+        # Track effective SL for same-candle prevention
+        effective_sl = curr_stop
+        effective_sl_prev = curr_stop
+
+        # If fractal BE activated on entry candle, update effective_sl
+        # (same-candle prevention: entry candle SL check uses original stop,
+        # but effective_sl_prev is set for the NEXT candle)
+        if use_fractals:
+            candidates = [curr_stop]
+            if fractal_be_sl is not None:
+                candidates.append(fractal_be_sl)
+            if fractal_tsl_active and ((is_long and last_m2_low is not None) or
+                                       (not is_long and last_m2_high is not None)):
+                fractal_tsl_sl = last_m2_low if is_long else last_m2_high
+            effective_sl = max(candidates) if is_long else min(candidates)
+            if fractal_tsl_sl is not None:
+                effective_sl = max(effective_sl, fractal_tsl_sl) if is_long else min(effective_sl, fractal_tsl_sl)
+            # effective_sl_prev stays as curr_stop (original) for same-candle prevention
+            # Update it to effective_sl so the NEXT candle uses the BE-modified SL
+            effective_sl_prev = effective_sl
 
         for i in range(start_idx + 1, len(df_trade)):
             lo = float(df_trade["low"].iat[i])
             hi = float(df_trade["high"].iat[i])
             t = df_trade["time"].iat[i]
 
-            # Delayed exit on next candle (from TSL conflict)
-            if exit_next_open:
-                exit_price = float(df_trade["open"].iat[i])
-                r = (exit_price - entry_price) / risk if direction == "long" else (entry_price - exit_price) / risk
-                return {"exit_reason": "trail_conflict", "exit_time": t, "exit_price": exit_price, "R": r}
-
-            # IMPORTANT: Order of operations must match BacktestWrapper:
-            # 1) TSL update (may move SL) - FIRST
-            # 2) SL/TP hit check - SECOND
-            #
-            # This order ensures that if both TP and SL are hit in same candle,
-            # the SL check uses the NEW SL level (after TSL moved it).
-
+            # === Step 1: TP check (no_trail only - actual TP exit) ===
             if no_trail:
-                # NO TSL - but still check initial TP!
-                # When tsl_target=0, we disable trailing but TP still works.
-                # FIX: Previously TP was never checked here, causing rr_target to be ignored.
-
-                if direction == "long":
-                    # Check TP hit FIRST
+                if is_long:
                     if hi >= curr_tp:
-                        # TP hit - exit at TP price
-                        exit_price = curr_tp
-                        r = curr_target_R  # equals rr_target at start
-                        return {"exit_reason": "tp", "exit_time": t, "exit_price": exit_price, "R": r}
-                    # Then check SL hit - price dropped to or below SL
-                    if lo <= curr_stop:
-                        # If candle crossed SL, exit at SL; if gapped below, exit at high
-                        if hi >= curr_stop:
-                            exit_price = curr_stop
-                        else:
-                            exit_price = hi  # Gap scenario
-                        r = (exit_price - entry_price) / risk
-                        return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
+                        return {"exit_reason": "tp", "exit_time": t,
+                                "exit_price": curr_tp, "R": curr_target_R}
                 else:
-                    # Check TP hit FIRST (for short: TP is below entry)
                     if lo <= curr_tp:
-                        # TP hit - exit at TP price
-                        exit_price = curr_tp
-                        r = curr_target_R  # equals rr_target at start
-                        return {"exit_reason": "tp", "exit_time": t, "exit_price": exit_price, "R": r}
-                    # Then check SL hit - price rose to or above SL
-                    if hi >= curr_stop:
-                        # If candle crossed SL, exit at SL; if gapped above, exit at low
-                        if lo <= curr_stop:
-                            exit_price = curr_stop
-                        else:
-                            exit_price = lo  # Gap scenario
-                        r = (entry_price - exit_price) / risk
-                        return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
-            else:
-                # 1) Store SL BEFORE TSL update - we'll check SL hit against this
-                sl_before_tsl = curr_stop
+                        return {"exit_reason": "tp", "exit_time": t,
+                                "exit_price": curr_tp, "R": curr_target_R}
 
-                # 2) TSL update - matches IBStrategy.update_position_state()
-                # CRITICAL: The slow engine's TSL uses the CLOSE of the PREVIOUS M1
-                # candle (via get_tick -> _tick_from_m1 which returns last closed
-                # candle's close +/- half_spread). Only ONE step per candle (no loop).
-                # Using candle LOW/HIGH here would trigger TSL on intrabar extremes
-                # that the slow engine never sees, causing divergent SL levels.
-                half_spread = SPREAD_POINTS.get(self.symbol, 0.0) / 2
+            # === Step 2: Organic TSL update (trail mode only) ===
+            organic_sl = curr_stop
+            if not no_trail:
                 prev_close = float(df_trade["close"].iat[i - 1])
-
-                if direction == "long":
-                    # Slow engine: tick.ask = prev_close + half_spread
+                if is_long:
                     tsl_price = prev_close + half_spread
                     if tsl_price >= curr_tp:
-                        # Move SL up from current position (matches IBStrategy)
                         new_stop = curr_stop + tsl_sl_val * risk
-                        curr_stop = max(curr_stop, new_stop)  # Only move up
-                        # Move virtual TP
+                        curr_stop = max(curr_stop, new_stop)
                         curr_target_R += tsl_target_val
                         curr_tp = entry_price + curr_target_R * risk
                 else:
-                    # Slow engine: tick.bid = prev_close - half_spread
                     tsl_price = prev_close - half_spread
                     if tsl_price <= curr_tp:
-                        # Move SL down from current position (matches IBStrategy)
                         new_stop = curr_stop - tsl_sl_val * risk
-                        curr_stop = min(curr_stop, new_stop)  # Only move down
-                        # Move virtual TP
+                        curr_stop = min(curr_stop, new_stop)
                         curr_target_R += tsl_target_val
                         curr_tp = entry_price - curr_target_R * risk
+                organic_sl = curr_stop
 
-                # 3) SL hit check - use the ORIGINAL SL level (before TSL moved it)
-                # This prevents false SL hits when TSL moves SL to a level not touched by candle
-                if direction == "long":
-                    # SL hit: price dropped to or below original SL
-                    if lo <= sl_before_tsl:
-                        # If candle crossed SL, exit at SL; if gapped below, exit at high
-                        if hi >= sl_before_tsl:
-                            exit_price = sl_before_tsl
-                        else:
-                            exit_price = hi  # Gap scenario
-                        r = (exit_price - entry_price) / risk
-                        return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
-                else:
-                    # SL hit: price rose to or above original SL
-                    if hi >= sl_before_tsl:
-                        # If candle crossed SL, exit at SL; if gapped above, exit at low
-                        if lo <= sl_before_tsl:
-                            exit_price = sl_before_tsl
-                        else:
-                            exit_price = lo  # Gap scenario
-                        r = (entry_price - exit_price) / risk
-                        return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
+            # === Step 3: Fractal logic ===
+            if use_fractals:
+                # 3a. Advance H1/H4 pointer (newly confirmed fractals)
+                while h1h4_ptr < len(h1h4_list) and h1h4_list[h1h4_ptr].confirmed_time <= t:
+                    active_fractals.append(h1h4_list[h1h4_ptr])
+                    h1h4_ptr += 1
 
-        # 3) End of window - close at emulator price
+                # 3b. Expire stale H1/H4 fractals
+                if active_fractals:
+                    exp_h1 = t - timedelta(hours=48)
+                    exp_h4 = t - timedelta(hours=96)
+                    active_fractals = [
+                        f for f in active_fractals
+                        if (f.timeframe == "H1" and f.time >= exp_h1) or
+                           (f.timeframe == "H4" and f.time >= exp_h4)
+                    ]
+
+                # 3c. Advance M2 pointer, update last_m2_high/low
+                while m2_ptr < len(m2_list) and m2_list[m2_ptr].confirmed_time <= t:
+                    mf = m2_list[m2_ptr]
+                    if mf.type == "high":
+                        last_m2_high = mf.price
+                    else:
+                        last_m2_low = mf.price
+                    m2_ptr += 1
+
+                # 3d. Check H1/H4 fractal sweeps
+                swept_indices = []
+                for fi, frac in enumerate(active_fractals):
+                    if frac.type == "high" and hi >= frac.price:
+                        swept_indices.append(fi)
+                    elif frac.type == "low" and lo <= frac.price:
+                        swept_indices.append(fi)
+
+                if swept_indices:
+                    # 3e. Fractal BE activation (once, if SL negative)
+                    if be_enabled and fractal_be_sl is None:
+                        sl_negative = (is_long and organic_sl < entry_price) or \
+                                      (not is_long and organic_sl > entry_price)
+                        if sl_negative:
+                            fractal_be_sl = entry_price
+
+                    # 3f. Fractal TSL activation (once)
+                    if tsl_enabled and not fractal_tsl_active:
+                        fractal_tsl_active = True
+
+                    # Remove swept fractals
+                    for idx in sorted(swept_indices, reverse=True):
+                        active_fractals.pop(idx)
+
+                # 3g. Update fractal TSL SL value (every candle if active)
+                if fractal_tsl_active:
+                    if is_long and last_m2_low is not None:
+                        fractal_tsl_sl = last_m2_low
+                    elif not is_long and last_m2_high is not None:
+                        fractal_tsl_sl = last_m2_high
+
+            # === Step 4: Compute effective SL ===
+            candidates = [organic_sl]
+            if fractal_be_sl is not None:
+                candidates.append(fractal_be_sl)
+            if fractal_tsl_sl is not None:
+                candidates.append(fractal_tsl_sl)
+
+            effective_sl = max(candidates) if is_long else min(candidates)
+
+            # === Step 5: Same-candle SL prevention ===
+            # If SL changed this candle (by organic TSL or fractal), use prev candle's SL
+            if abs(effective_sl - effective_sl_prev) > 0.001:
+                check_sl = effective_sl_prev
+            else:
+                check_sl = effective_sl
+
+            # === Step 6: SL hit check ===
+            if is_long:
+                if lo <= check_sl:
+                    exit_price = check_sl if hi >= check_sl else hi
+                    r = (exit_price - entry_price) / risk
+                    return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
+            else:
+                if hi >= check_sl:
+                    exit_price = check_sl if lo <= check_sl else lo
+                    r = (entry_price - exit_price) / risk
+                    return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
+
+            # Update prev for next candle
+            effective_sl_prev = effective_sl
+
+        # End of window - close at emulator price
         # BacktestWrapper closes at window end using tick from PREVIOUS candle:
         # - At 08:30:00, the 08:30 candle is just opening
         # - Emulator uses last CLOSED candle (08:29) close price + spread
