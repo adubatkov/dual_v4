@@ -720,6 +720,7 @@ def run_backtest(
     )
 
     # Pre-compute analysis-TF FVGs for REV_RB (skip if REV_RB disabled)
+    rev_rb_enabled = params.get("REV_RB", {}).get("REV_RB_ENABLED", False)
     if rev_rb_enabled:
         logger.info(f"Computing {atf_label} FVGs...")
         all_m2_fvgs = detect_fvg(m2_data, symbol, atf_label)
@@ -1613,6 +1614,8 @@ def run_backtest(
         print(f"\nFull report saved to: {report_manager.get_output_dir()}")
     else:
         logger.warning("No trades executed during backtest period")
+
+    return trade_log
 
 
 def main() -> None:

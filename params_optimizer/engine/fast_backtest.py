@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 SPREAD_POINTS = {
     "GER40": 1.5,
     "XAUUSD": 0.30,  # Fixed: was 0.20, should match config.py
+    "NAS100": 1.5,
+    "UK100": 1.0,
 }
 
 
@@ -175,6 +177,13 @@ class FastBacktest:
 
         Returns trade result dict or None if no trade.
         """
+        # Day-level news skip (matches IBStrategy.check_signal day-level filter)
+        news_skip_events = params.get("news_skip_events", [])
+        if news_skip_events and self.news_filter is not None:
+            should_skip, reason = self.news_filter.should_skip_day(day_date, news_skip_events)
+            if should_skip:
+                return None
+
         # 1. Get IB from cache or compute
         ib = self._get_ib_cached(day_date, params)
         if ib is None:
@@ -747,8 +756,9 @@ class FastBacktest:
         if ib_range <= 0 or df_trade.empty:
             return None
 
-        ib_buffer_pct = params.get("ib_buffer_pct", 0.0)
-        max_distance_pct = params.get("max_distance_pct", 1.0)
+        # Per-variation override: OCAE may have different buffer than Reverse
+        ib_buffer_pct = params.get("ocae_ib_buffer_pct", params.get("ib_buffer_pct", 0.0))
+        max_distance_pct = params.get("ocae_max_distance_pct", params.get("max_distance_pct", 1.0))
         buffer = ib_buffer_pct * ib_range
         max_dist = max_distance_pct * ib_range
 
@@ -816,8 +826,9 @@ class FastBacktest:
         if ib_range <= 0:
             return None
 
-        ib_buffer_pct = params.get("ib_buffer_pct", 0.0)
-        max_distance_pct = params.get("max_distance_pct", 1.0)
+        # Per-variation override: TCWE may have different buffer than Reverse
+        ib_buffer_pct = params.get("tcwe_ib_buffer_pct", params.get("ib_buffer_pct", 0.0))
+        max_distance_pct = params.get("tcwe_max_distance_pct", params.get("max_distance_pct", 1.0))
         buffer = ib_buffer_pct * ib_range
         max_dist = max_distance_pct * ib_range
 
@@ -1347,31 +1358,34 @@ class FastBacktest:
                 sl_before_tsl = curr_stop
 
                 # 2) TSL update - matches IBStrategy.update_position_state()
-                # On virtual TP hit:
-                #   - SL moves by tsl_sl * risk FROM CURRENT SL (not from TP)
-                #   - Virtual TP moves by tsl_target * risk (0 if tsl_target=0)
+                # CRITICAL: The slow engine's TSL uses the CLOSE of the PREVIOUS M1
+                # candle (via get_tick -> _tick_from_m1 which returns last closed
+                # candle's close +/- half_spread). Only ONE step per candle (no loop).
+                # Using candle LOW/HIGH here would trigger TSL on intrabar extremes
+                # that the slow engine never sees, causing divergent SL levels.
+                half_spread = SPREAD_POINTS.get(self.symbol, 0.0) / 2
+                prev_close = float(df_trade["close"].iat[i - 1])
+
                 if direction == "long":
-                    while hi >= curr_tp:
+                    # Slow engine: tick.ask = prev_close + half_spread
+                    tsl_price = prev_close + half_spread
+                    if tsl_price >= curr_tp:
                         # Move SL up from current position (matches IBStrategy)
                         new_stop = curr_stop + tsl_sl_val * risk
                         curr_stop = max(curr_stop, new_stop)  # Only move up
-                        # Move virtual TP (if tsl_target > 0)
+                        # Move virtual TP
                         curr_target_R += tsl_target_val
                         curr_tp = entry_price + curr_target_R * risk
-                        if tsl_target_val <= 0:
-                            # TP doesn't move, so break after first hit
-                            break
                 else:
-                    while lo <= curr_tp:
+                    # Slow engine: tick.bid = prev_close - half_spread
+                    tsl_price = prev_close - half_spread
+                    if tsl_price <= curr_tp:
                         # Move SL down from current position (matches IBStrategy)
                         new_stop = curr_stop - tsl_sl_val * risk
                         curr_stop = min(curr_stop, new_stop)  # Only move down
-                        # Move virtual TP (if tsl_target > 0)
+                        # Move virtual TP
                         curr_target_R += tsl_target_val
                         curr_tp = entry_price - curr_target_R * risk
-                        if tsl_target_val <= 0:
-                            # TP doesn't move, so break after first hit
-                            break
 
                 # 3) SL hit check - use the ORIGINAL SL level (before TSL moved it)
                 # This prevents false SL hits when TSL moves SL to a level not touched by candle
@@ -1511,6 +1525,7 @@ class FastBacktest:
             "avg_trade_r": round(avg_trade_r, 4),
             "by_variation": by_variation,
             "trades_by_type": trades_by_type,
+            "trades_detail": trades,
         }
 
     def _calculate_metrics_by_variation(self, trades: List[Dict]) -> Dict[str, Dict[str, Any]]:
