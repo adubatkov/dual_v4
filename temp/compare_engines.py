@@ -27,7 +27,10 @@ sys.path.insert(0, str(project_root))
 from backtest.config import BacktestConfig, DATA_FILES
 from backtest.run_backtest_template import run_backtest
 from params_optimizer.engine.fast_backtest import FastBacktest
-from src.utils.strategy_logic import GER40_PARAMS_PROD, XAUUSD_PARAMS_PROD
+from src.utils.strategy_logic import (
+    GER40_PARAMS_PROD, XAUUSD_PARAMS_PROD,
+    NAS100_PARAMS_PROD, UK100_PARAMS_PROD,
+)
 from src.news_filter import NewsFilter
 
 logger = logging.getLogger(__name__)
@@ -384,10 +387,12 @@ def main():
     PARAMS_MAP = {
         "GER40": GER40_PARAMS_PROD,
         "XAUUSD": XAUUSD_PARAMS_PROD,
+        "NAS100": NAS100_PARAMS_PROD,
+        "UK100": UK100_PARAMS_PROD,
     }
     nested_params = deepcopy(PARAMS_MAP.get(args.symbol, GER40_PARAMS_PROD))
 
-    # Disable BTIB in slow engine unless --btib flag is set (fast engine doesn't support it yet)
+    # Disable BTIB unless --btib flag is set
     if not args.btib and "BTIB" in nested_params:
         nested_params["BTIB"]["BTIB_ENABLED"] = False
 
@@ -426,7 +431,7 @@ def main():
     print(f"  Loaded {len(m1_data)} M1 candles")
 
     # Initialize news filter
-    news_filter = NewsFilter(symbol=args.symbol, preload_years=[2025])
+    news_filter = NewsFilter(symbol=args.symbol, preload_years=[2024, 2025, 2026])
 
     # Run slow engine
     print("\nRunning SLOW engine...")
