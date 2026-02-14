@@ -60,14 +60,18 @@ def prod_to_flat(nested: dict, variation: str = "Reverse") -> dict:
         "news_skip_events": nested.get("NEWS_SKIP_EVENTS", []),
     }
 
-    # Per-variation buffer/distance overrides (OCAE and TCWE may differ from Reverse)
-    ocae = nested.get("OCAE", {})
-    flat["ocae_ib_buffer_pct"] = ocae.get("IB_BUFFER_PCT", flat["ib_buffer_pct"])
-    flat["ocae_max_distance_pct"] = ocae.get("MAX_DISTANCE_PCT", flat["max_distance_pct"])
-
-    tcwe = nested.get("TCWE", {})
-    flat["tcwe_ib_buffer_pct"] = tcwe.get("IB_BUFFER_PCT", flat["ib_buffer_pct"])
-    flat["tcwe_max_distance_pct"] = tcwe.get("MAX_DISTANCE_PCT", flat["max_distance_pct"])
+    # Per-variation overrides for RR/TSL/STOP/MIN_SL/buffer/distance
+    # Variations that may have different params than the Reverse base
+    for var_name in ["OCAE", "TCWE", "REV_RB"]:
+        vdata = nested.get(var_name, {})
+        prefix = var_name.lower()
+        flat[f"{prefix}_rr_target"] = vdata.get("RR_TARGET", flat["rr_target"])
+        flat[f"{prefix}_tsl_target"] = vdata.get("TSL_TARGET", flat["tsl_target"])
+        flat[f"{prefix}_tsl_sl"] = vdata.get("TSL_SL", flat["tsl_sl"])
+        flat[f"{prefix}_stop_mode"] = vdata.get("STOP_MODE", flat["stop_mode"])
+        flat[f"{prefix}_min_sl_pct"] = vdata.get("MIN_SL_PCT", flat["min_sl_pct"])
+        flat[f"{prefix}_ib_buffer_pct"] = vdata.get("IB_BUFFER_PCT", flat["ib_buffer_pct"])
+        flat[f"{prefix}_max_distance_pct"] = vdata.get("MAX_DISTANCE_PCT", flat["max_distance_pct"])
 
     return flat
 
@@ -132,6 +136,16 @@ def normalize_time(t):
     return str(t)
 
 
+def _normalize_variation(name: str) -> str:
+    """Normalize variation names between engines.
+
+    Slow engine extracts variation from comment "IBStrategy_REV_RB_short"
+    by splitting on "_" and taking parts[1], yielding "REV" instead of "REV_RB".
+    """
+    mapping = {"REV": "REV_RB"}
+    return mapping.get(name, name)
+
+
 def match_trades(slow_trades, fast_trades):
     """Match trades between engines by date + variation + direction."""
     # Build slow trade list
@@ -150,7 +164,7 @@ def match_trades(slow_trades, fast_trades):
             r_val = 0
         slow_list.append({
             "date": entry_date,
-            "variation": t.variation or "",
+            "variation": _normalize_variation(t.variation or ""),
             "direction": (t.direction or "").lower(),
             "entry_time": normalize_time(t.entry_time),
             "exit_time": normalize_time(t.exit_time),
@@ -333,6 +347,10 @@ def parse_args():
     parser.add_argument("--tsl-target", type=float, default=None, help="Override TSL_TARGET")
     parser.add_argument("--tsl-sl", type=float, default=None, help="Override TSL_SL")
     parser.add_argument("--stop-mode", type=str, default=None, help="Override STOP_MODE (ib_start|eq)")
+    parser.add_argument("--btib", action="store_true", default=False,
+                        help="Enable BTIB in slow engine (disabled by default until fast engine supports it)")
+    parser.add_argument("--rev-rb", action="store_true", default=False,
+                        help="Enable REV_RB (disabled by default)")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
     return parser.parse_args()
 
@@ -356,6 +374,14 @@ def main():
     }
     nested_params = deepcopy(PARAMS_MAP.get(args.symbol, GER40_PARAMS_PROD))
 
+    # Disable BTIB in slow engine unless --btib flag is set (fast engine doesn't support it yet)
+    if not args.btib and "BTIB" in nested_params:
+        nested_params["BTIB"]["BTIB_ENABLED"] = False
+
+    # Disable REV_RB unless --rev-rb flag is set
+    if not args.rev_rb and "REV_RB" in nested_params:
+        nested_params["REV_RB"]["REV_RB_ENABLED"] = False
+
     # Override fractal flags and param overrides
     for var_name in ["OCAE", "TCWE", "Reverse", "REV_RB"]:
         if var_name in nested_params:
@@ -373,9 +399,12 @@ def main():
     rr_str = f"RR={args.rr}" if args.rr else "RR=PROD"
     tsl_str = f"TSL={args.tsl_target}/{args.tsl_sl}" if args.tsl_target is not None else "TSL=PROD"
     sm_str = f"STOP={args.stop_mode}" if args.stop_mode else "STOP=PROD"
+    btib_str = "BTIB=ON" if args.btib else "BTIB=OFF"
+    revrb_str = "REV_RB=ON" if args.rev_rb else "REV_RB=OFF"
     print(f"\nComparing engines: {args.symbol} | {args.start} to {args.end}")
     print(f"  FRACTAL_BE={args.fractal_be} | FRACTAL_TSL={args.fractal_tsl}")
     print(f"  {rr_str} | {tsl_str} | {sm_str}")
+    print(f"  {btib_str} | {revrb_str}")
     print(f"  NEWS_SKIP={nested_params.get('NEWS_SKIP_EVENTS', [])}")
 
     # Load M1 data

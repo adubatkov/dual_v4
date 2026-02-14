@@ -911,9 +911,10 @@ class FastBacktest:
         c = float(df_trade["close"].iat[first_breakout_idx])
         base_price = c
         entry_price = self._apply_spread(base_price, first_breakout_direction)
+        ocae_stop_mode = params.get("ocae_stop_mode", params.get("stop_mode", "ib_start"))
         stop_price = self._get_stop_price(
             df_trade, first_breakout_idx, first_breakout_direction,
-            entry_price, trade_start_price, eq, params
+            entry_price, trade_start_price, eq, params, stop_mode=ocae_stop_mode
         )
         entry_time = df_trade["time"].iat[first_breakout_idx]
 
@@ -940,9 +941,10 @@ class FastBacktest:
         if ib_range <= 0:
             return None
 
-        # Per-variation override: TCWE may have different buffer than Reverse
+        # Per-variation override: TCWE may have different buffer/distance/stop than Reverse
         ib_buffer_pct = params.get("tcwe_ib_buffer_pct", params.get("ib_buffer_pct", 0.0))
         max_distance_pct = params.get("tcwe_max_distance_pct", params.get("max_distance_pct", 1.0))
+        tcwe_stop_mode = params.get("tcwe_stop_mode", params.get("stop_mode", "ib_start"))
         buffer = ib_buffer_pct * ib_range
         max_dist = max_distance_pct * ib_range
 
@@ -979,7 +981,8 @@ class FastBacktest:
                         base_price = c2
                         entry_price = self._apply_spread(base_price, "long")
                         stop_price = self._get_stop_price(
-                            df_trade, j, "long", entry_price, trade_start_price, eq, params
+                            df_trade, j, "long", entry_price, trade_start_price, eq, params,
+                            stop_mode=tcwe_stop_mode
                         )
                         entry_time = df_trade["time"].iat[j]
                         return Signal(
@@ -1005,7 +1008,8 @@ class FastBacktest:
                         base_price = c2
                         entry_price = self._apply_spread(base_price, "short")
                         stop_price = self._get_stop_price(
-                            df_trade, j, "short", entry_price, trade_start_price, eq, params
+                            df_trade, j, "short", entry_price, trade_start_price, eq, params,
+                            stop_mode=tcwe_stop_mode
                         )
                         entry_time = df_trade["time"].iat[j]
                         return Signal(
@@ -1062,13 +1066,15 @@ class FastBacktest:
 
         direction, trig_idx = chosen
 
+        rev_rb_min_sl_pct = params.get("rev_rb_min_sl_pct", params.get("min_sl_pct", 0.001))
+
         if direction == "long":
             entry_level = float(ibh)
             stop = float(eq)  # SL=EQ for REV_RB
             risk = abs(entry_level - stop)
 
             # Check minimum SL size
-            min_sl_size = entry_level * params.get("min_sl_pct", 0.001)
+            min_sl_size = entry_level * rev_rb_min_sl_pct
             if risk < min_sl_size:
                 stop = entry_level - min_sl_size
 
@@ -1100,7 +1106,7 @@ class FastBacktest:
             stop = float(eq)
             risk = abs(entry_level - stop)
 
-            min_sl_size = entry_level * params.get("min_sl_pct", 0.001)
+            min_sl_size = entry_level * rev_rb_min_sl_pct
             if risk < min_sl_size:
                 stop = entry_level + min_sl_size
 
@@ -1149,10 +1155,12 @@ class FastBacktest:
 
     def _get_stop_price(
         self, df_trade: pd.DataFrame, entry_idx: int, direction: str,
-        entry_price: float, trade_start_price: float, eq: float, params: Dict
+        entry_price: float, trade_start_price: float, eq: float, params: Dict,
+        stop_mode: Optional[str] = None
     ) -> float:
         """Get initial stop price based on STOP_MODE."""
-        stop_mode = params.get("stop_mode", "ib_start")
+        if stop_mode is None:
+            stop_mode = params.get("stop_mode", "ib_start")
 
         if stop_mode.lower() == "eq":
             return float(eq)
@@ -1229,13 +1237,20 @@ class FastBacktest:
         entry_idx = signal.entry_idx
         raw_entry_price = signal.entry_price  # Raw price for SL/TP calculation
 
+        # Resolve per-variation params
+        variation = signal.signal_type.lower()
+        rr_target = params.get(f"{variation}_rr_target", params.get("rr_target", 1.0))
+        min_sl_pct = params.get(f"{variation}_min_sl_pct", params.get("min_sl_pct", 0.001))
+        tsl_target = params.get(f"{variation}_tsl_target", params.get("tsl_target", 0.0))
+        tsl_sl = params.get(f"{variation}_tsl_sl", params.get("tsl_sl", 0.5))
+
         # Calculate SL/TP from RAW price (like IBStrategy does)
         stop, tp, sl_adjusted = self._place_sl_tp_with_min_size(
             direction,
             raw_entry_price,  # Use raw price for SL/TP calc
             signal.stop_price,
-            params.get("rr_target", 1.0),
-            params.get("min_sl_pct", 0.001)
+            rr_target,
+            min_sl_pct
         )
 
         # Get tick price for execution
@@ -1251,12 +1266,10 @@ class FastBacktest:
         # Apply spread to get execution price (like Emulator does)
         entry_price = self._get_execution_price(tick_mid_price, direction)
 
-        tsl_target = params.get("tsl_target", 0.0)
-        tsl_sl = params.get("tsl_sl", 0.5)
-
         # Simulate exit using EXECUTION price (with spread)
         exit_result = self._simulate_after_entry(
-            df_trade, entry_idx, direction, entry_price, stop, tp, tsl_target, tsl_sl
+            df_trade, entry_idx, direction, entry_price, stop, tp, tsl_target, tsl_sl,
+            raw_entry_price=raw_entry_price
         )
 
         # Risk based on execution price (matches BacktestWrapper)
@@ -1327,13 +1340,20 @@ class FastBacktest:
             # Fallback: use entry_idx directly (shouldn't happen)
             m1_entry_idx = min(signal.entry_idx * 2, len(df_m1) - 1)
 
+        # Resolve per-variation params (XAUUSD has different RR/TSL/STOP per variation)
+        variation = signal.signal_type.lower()  # "reverse", "ocae", "tcwe", "rev_rb"
+        rr_target = params.get(f"{variation}_rr_target", params.get("rr_target", 1.0))
+        min_sl_pct = params.get(f"{variation}_min_sl_pct", params.get("min_sl_pct", 0.001))
+        tsl_target = params.get(f"{variation}_tsl_target", params.get("tsl_target", 0.0))
+        tsl_sl = params.get(f"{variation}_tsl_sl", params.get("tsl_sl", 0.5))
+
         # Calculate SL/TP from RAW price (like IBStrategy does)
         stop, tp, sl_adjusted = self._place_sl_tp_with_min_size(
             direction,
             raw_entry_price,  # Use raw price for SL/TP calc
             signal.stop_price,
-            params.get("rr_target", 1.0),
-            params.get("min_sl_pct", 0.001)
+            rr_target,
+            min_sl_pct
         )
 
         # Get tick price for execution
@@ -1349,16 +1369,14 @@ class FastBacktest:
         # Apply spread to get execution price (like Emulator does)
         entry_price = self._get_execution_price(tick_mid_price, direction)
 
-        tsl_target = params.get("tsl_target", 0.0)
-        tsl_sl = params.get("tsl_sl", 0.5)
-
         # Simulate exit using EXECUTION price (with spread)
+        # Pass raw_entry_price so TSL uses correct risk base (matches slow engine)
         exit_result = self._simulate_after_entry(
             df_m1, m1_entry_idx, direction, entry_price, stop, tp, tsl_target, tsl_sl,
-            fractal_ctx
+            fractal_ctx, raw_entry_price=raw_entry_price
         )
 
-        # Risk based on execution price (matches BacktestWrapper)
+        # Risk based on execution price (matches BacktestWrapper R calculation)
         risk = abs(entry_price - stop)
 
         # Get entry time from M1 (more accurate)
@@ -1386,7 +1404,8 @@ class FastBacktest:
     def _simulate_after_entry(
         self, df_trade: pd.DataFrame, start_idx: int, direction: str,
         entry_price: float, stop: float, tp: float, tsl_target: float, tsl_sl: float,
-        fractal_ctx: Optional[Dict] = None
+        fractal_ctx: Optional[Dict] = None,
+        raw_entry_price: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Trade exit simulation with organic TSL + fractal BE/TSL.
@@ -1408,8 +1427,12 @@ class FastBacktest:
                 "R": 0.0
             }
 
+        # TSL risk: slow engine uses raw_entry_price for TSL step size,
+        # not execution price. SL/TP were computed from raw_entry, so
+        # TSL steps must use the same risk base.
+        tsl_risk = abs(raw_entry_price - stop) if raw_entry_price is not None else risk
+
         curr_stop = float(stop)
-        curr_target_R = float(tp - entry_price) / risk if direction == "long" else float(entry_price - tp) / risk
         curr_tp = float(tp)
 
         tsl_target_val = 0.0 if tsl_target is None else float(tsl_target)
@@ -1522,31 +1545,33 @@ class FastBacktest:
             if no_trail:
                 if is_long:
                     if hi >= curr_tp:
+                        tp_r = (curr_tp - entry_price) / risk
                         return {"exit_reason": "tp", "exit_time": t,
-                                "exit_price": curr_tp, "R": curr_target_R}
+                                "exit_price": curr_tp, "R": tp_r}
                 else:
                     if lo <= curr_tp:
+                        tp_r = (entry_price - curr_tp) / risk
                         return {"exit_reason": "tp", "exit_time": t,
-                                "exit_price": curr_tp, "R": curr_target_R}
+                                "exit_price": curr_tp, "R": tp_r}
 
             # === Step 2: Organic TSL update (trail mode only) ===
+            # Uses tsl_risk (raw entry based) for step size, matching slow engine's
+            # IBStrategy.update_position_state() which uses tsl_state["entry_price"]
             organic_sl = curr_stop
             if not no_trail:
                 prev_close = float(df_trade["close"].iat[i - 1])
                 if is_long:
                     tsl_price = prev_close + half_spread
                     if tsl_price >= curr_tp:
-                        new_stop = curr_stop + tsl_sl_val * risk
+                        new_stop = curr_stop + tsl_sl_val * tsl_risk
                         curr_stop = max(curr_stop, new_stop)
-                        curr_target_R += tsl_target_val
-                        curr_tp = entry_price + curr_target_R * risk
+                        curr_tp = curr_tp + tsl_target_val * tsl_risk
                 else:
                     tsl_price = prev_close - half_spread
                     if tsl_price <= curr_tp:
-                        new_stop = curr_stop - tsl_sl_val * risk
+                        new_stop = curr_stop - tsl_sl_val * tsl_risk
                         curr_stop = min(curr_stop, new_stop)
-                        curr_target_R += tsl_target_val
-                        curr_tp = entry_price - curr_target_R * risk
+                        curr_tp = curr_tp - tsl_target_val * tsl_risk
                 organic_sl = curr_stop
 
             # === Step 3: Fractal logic ===
