@@ -60,6 +60,7 @@ def prod_to_flat(nested: dict, variation: str = "Reverse") -> dict:
         "rev_rb_enabled": nested.get("REV_RB", {}).get("REV_RB_ENABLED", False),
         "fractal_be_enabled": v.get("FRACTAL_BE_ENABLED", False),
         "fractal_tsl_enabled": v.get("FRACTAL_TSL_ENABLED", False),
+        "fvg_be_enabled": v.get("FVG_BE_ENABLED", False),
         "news_skip_events": nested.get("NEWS_SKIP_EVENTS", []),
     }
 
@@ -75,6 +76,7 @@ def prod_to_flat(nested: dict, variation: str = "Reverse") -> dict:
         flat[f"{prefix}_min_sl_pct"] = vdata.get("MIN_SL_PCT", flat["min_sl_pct"])
         flat[f"{prefix}_ib_buffer_pct"] = vdata.get("IB_BUFFER_PCT", flat["ib_buffer_pct"])
         flat[f"{prefix}_max_distance_pct"] = vdata.get("MAX_DISTANCE_PCT", flat["max_distance_pct"])
+        flat[f"{prefix}_fvg_be_enabled"] = vdata.get("FVG_BE_ENABLED", flat["fvg_be_enabled"])
 
     # BTIB params
     btib = nested.get("BTIB", {})
@@ -88,6 +90,7 @@ def prod_to_flat(nested: dict, variation: str = "Reverse") -> dict:
     flat["btib_min_sl_pct"] = btib.get("MIN_SL_PCT", 0.001)
     flat["btib_fractal_be_enabled"] = btib.get("FRACTAL_BE_ENABLED", False)
     flat["btib_fractal_tsl_enabled"] = btib.get("FRACTAL_TSL_ENABLED", False)
+    flat["btib_fvg_be_enabled"] = btib.get("FVG_BE_ENABLED", False)
 
     return flat
 
@@ -367,6 +370,10 @@ def parse_args():
                         help="Enable BTIB in slow engine (disabled by default until fast engine supports it)")
     parser.add_argument("--rev-rb", action="store_true", default=False,
                         help="Enable REV_RB (disabled by default)")
+    parser.add_argument("--fvg-be", action="store_true", default=False,
+                        help="Enable FVG_BE_ENABLED")
+    parser.add_argument("--params-file", type=str, default=None,
+                        help="Path to JSON params file (nested format, overrides all other param flags)")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
     return parser.parse_args()
 
@@ -384,46 +391,66 @@ def main():
     end_date = datetime.strptime(args.end, "%Y-%m-%d").replace(tzinfo=pytz.UTC)
 
     # Load params
-    PARAMS_MAP = {
-        "GER40": GER40_PARAMS_PROD,
-        "XAUUSD": XAUUSD_PARAMS_PROD,
-        "NAS100": NAS100_PARAMS_PROD,
-        "UK100": UK100_PARAMS_PROD,
-    }
-    nested_params = deepcopy(PARAMS_MAP.get(args.symbol, GER40_PARAMS_PROD))
+    if args.params_file:
+        import json
+        with open(args.params_file, "r") as pf:
+            nested_params = json.load(pf)
+        # Extract date range from JSON metadata if present (override CLI args)
+        if "_start_date" in nested_params:
+            start_date = datetime.strptime(nested_params.pop("_start_date"), "%Y-%m-%d").replace(tzinfo=pytz.UTC)
+        if "_end_date" in nested_params:
+            end_date = datetime.strptime(nested_params.pop("_end_date"), "%Y-%m-%d").replace(tzinfo=pytz.UTC)
+        if "_symbol" in nested_params:
+            args.symbol = nested_params.pop("_symbol")
+        print(f"\nComparing engines: {args.symbol} | {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
+        print(f"  Params from: {args.params_file}")
+    else:
+        PARAMS_MAP = {
+            "GER40": GER40_PARAMS_PROD,
+            "XAUUSD": XAUUSD_PARAMS_PROD,
+            "NAS100": NAS100_PARAMS_PROD,
+            "UK100": UK100_PARAMS_PROD,
+        }
+        nested_params = deepcopy(PARAMS_MAP.get(args.symbol, GER40_PARAMS_PROD))
 
-    # Disable BTIB unless --btib flag is set
-    if not args.btib and "BTIB" in nested_params:
-        nested_params["BTIB"]["BTIB_ENABLED"] = False
+        # BTIB: explicitly enable/disable based on flag
+        if "BTIB" in nested_params:
+            nested_params["BTIB"]["BTIB_ENABLED"] = args.btib
 
-    # Disable REV_RB unless --rev-rb flag is set
-    if not args.rev_rb and "REV_RB" in nested_params:
-        nested_params["REV_RB"]["REV_RB_ENABLED"] = False
+        # REV_RB: explicitly enable/disable based on flag
+        if "REV_RB" in nested_params:
+            nested_params["REV_RB"]["REV_RB_ENABLED"] = args.rev_rb
 
-    # Override fractal flags and param overrides
-    for var_name in ["OCAE", "TCWE", "Reverse", "REV_RB"]:
-        if var_name in nested_params:
-            nested_params[var_name]["FRACTAL_BE_ENABLED"] = args.fractal_be
-            nested_params[var_name]["FRACTAL_TSL_ENABLED"] = args.fractal_tsl
-            if args.rr is not None:
-                nested_params[var_name]["RR_TARGET"] = args.rr
-            if args.tsl_target is not None:
-                nested_params[var_name]["TSL_TARGET"] = args.tsl_target
-            if args.tsl_sl is not None:
-                nested_params[var_name]["TSL_SL"] = args.tsl_sl
-            if args.stop_mode is not None:
-                nested_params[var_name]["STOP_MODE"] = args.stop_mode
+        # Override fractal flags and param overrides
+        for var_name in ["OCAE", "TCWE", "Reverse", "REV_RB"]:
+            if var_name in nested_params:
+                nested_params[var_name]["FRACTAL_BE_ENABLED"] = args.fractal_be
+                nested_params[var_name]["FRACTAL_TSL_ENABLED"] = args.fractal_tsl
+                nested_params[var_name]["FVG_BE_ENABLED"] = args.fvg_be
+                if args.rr is not None:
+                    nested_params[var_name]["RR_TARGET"] = args.rr
+                if args.tsl_target is not None:
+                    nested_params[var_name]["TSL_TARGET"] = args.tsl_target
+                if args.tsl_sl is not None:
+                    nested_params[var_name]["TSL_SL"] = args.tsl_sl
+                if args.stop_mode is not None:
+                    nested_params[var_name]["STOP_MODE"] = args.stop_mode
 
-    rr_str = f"RR={args.rr}" if args.rr else "RR=PROD"
-    tsl_str = f"TSL={args.tsl_target}/{args.tsl_sl}" if args.tsl_target is not None else "TSL=PROD"
-    sm_str = f"STOP={args.stop_mode}" if args.stop_mode else "STOP=PROD"
-    btib_str = "BTIB=ON" if args.btib else "BTIB=OFF"
-    revrb_str = "REV_RB=ON" if args.rev_rb else "REV_RB=OFF"
-    print(f"\nComparing engines: {args.symbol} | {args.start} to {args.end}")
-    print(f"  FRACTAL_BE={args.fractal_be} | FRACTAL_TSL={args.fractal_tsl}")
-    print(f"  {rr_str} | {tsl_str} | {sm_str}")
-    print(f"  {btib_str} | {revrb_str}")
-    print(f"  NEWS_SKIP={nested_params.get('NEWS_SKIP_EVENTS', [])}")
+        # BTIB FVG_BE override
+        if args.fvg_be and "BTIB" in nested_params:
+            nested_params["BTIB"]["FVG_BE_ENABLED"] = True
+
+        rr_str = f"RR={args.rr}" if args.rr else "RR=PROD"
+        tsl_str = f"TSL={args.tsl_target}/{args.tsl_sl}" if args.tsl_target is not None else "TSL=PROD"
+        sm_str = f"STOP={args.stop_mode}" if args.stop_mode else "STOP=PROD"
+        btib_str = "BTIB=ON" if args.btib else "BTIB=OFF"
+        revrb_str = "REV_RB=ON" if args.rev_rb else "REV_RB=OFF"
+        fvgbe_str = "FVG_BE=ON" if args.fvg_be else "FVG_BE=OFF"
+        print(f"\nComparing engines: {args.symbol} | {args.start} to {args.end}")
+        print(f"  FRACTAL_BE={args.fractal_be} | FRACTAL_TSL={args.fractal_tsl} | {fvgbe_str}")
+        print(f"  {rr_str} | {tsl_str} | {sm_str}")
+        print(f"  {btib_str} | {revrb_str}")
+        print(f"  NEWS_SKIP={nested_params.get('NEWS_SKIP_EVENTS', [])}")
 
     # Load M1 data
     print("\nLoading M1 data...")

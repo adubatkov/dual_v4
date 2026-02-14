@@ -132,8 +132,9 @@ class FastBacktest:
         be_enabled = params.get("fractal_be_enabled", False)
         tsl_enabled = params.get("fractal_tsl_enabled", False)
         btib_enabled = params.get("btib_enabled", False)
+        fvg_be_enabled = params.get("fvg_be_enabled", False)
 
-        if not be_enabled and not tsl_enabled and not btib_enabled:
+        if not be_enabled and not tsl_enabled and not btib_enabled and not fvg_be_enabled:
             return None
 
         from src.smc.detectors.fractal_detector import detect_fractals
@@ -164,11 +165,23 @@ class FastBacktest:
         # are already gone. Without this, the fast engine has too many active fractals.
         self._presweep_fractals(h1h4_sorted)
 
+        # FVG detection for FVG BE logic (reuses h1_data/h4_data already resampled)
+        if fvg_be_enabled:
+            from src.smc.detectors.fvg_detector import detect_fvg
+            h1_fvgs = detect_fvg(h1_data, self.symbol, "H1")
+            h4_fvgs = detect_fvg(h4_data, self.symbol, "H4")
+            htf_fvgs = sorted(h1_fvgs + h4_fvgs, key=lambda f: f.formation_time)
+            self._premitigate_fvgs(htf_fvgs)
+        else:
+            htf_fvgs = []
+
         return {
             "h1h4_fractals": h1h4_sorted,
             "m2_fractals": m2_sorted,
             "be_enabled": be_enabled,
             "tsl_enabled": tsl_enabled,
+            "fvg_be_enabled": fvg_be_enabled,
+            "htf_fvgs": htf_fvgs,
         }
 
     def _presweep_fractals(self, h1h4_sorted: list) -> None:
@@ -225,6 +238,61 @@ class FastBacktest:
             for i in sorted(swept_idx, reverse=True):
                 active.pop(i)
 
+    def _premitigate_fvgs(self, htf_fvgs: list) -> None:
+        """Walk all M1 candles and stamp each FVG with fill_time when mitigated.
+
+        Mirrors _presweep_fractals: lets _simulate_after_entry exclude
+        FVGs that were mitigated before trade entry.
+
+        Mitigation:
+        - Bullish FVG: mitigated when M1 candle low <= fvg.low
+        - Bearish FVG: mitigated when M1 candle high >= fvg.high
+
+        Confirmation:
+        - H1 FVG: confirmed 1h after formation_time
+        - H4 FVG: confirmed 4h after formation_time
+        """
+        if not htf_fvgs:
+            return
+
+        times = self.m1_data["time"].tolist()
+        highs = self.m1_data["high"].values.astype(float)
+        lows = self.m1_data["low"].values.astype(float)
+
+        ptr = 0       # pointer into htf_fvgs (sorted by formation_time)
+        active = []   # confirmed, not yet mitigated
+
+        for j in range(len(times)):
+            t = times[j]
+            hi = highs[j]
+            lo = lows[j]
+
+            # Activate newly confirmed FVGs
+            while ptr < len(htf_fvgs):
+                fvg = htf_fvgs[ptr]
+                confirm_hours = 1.0 if fvg.timeframe == "H1" else 4.0
+                confirmed_time = fvg.formation_time + timedelta(hours=confirm_hours)
+                if confirmed_time <= t:
+                    active.append(fvg)
+                    ptr += 1
+                else:
+                    break
+
+            # Check mitigation
+            mitigated = []
+            for i, fvg in enumerate(active):
+                if fvg.direction == "bullish" and lo <= fvg.low:
+                    fvg.fill_time = t
+                    fvg.status = "full_fill"
+                    mitigated.append(i)
+                elif fvg.direction == "bearish" and hi >= fvg.high:
+                    fvg.fill_time = t
+                    fvg.status = "full_fill"
+                    mitigated.append(i)
+
+            for i in sorted(mitigated, reverse=True):
+                active.pop(i)
+
     def run_with_params(
         self, params: Dict[str, Any], fractal_cache: Optional[Dict] = None
     ) -> Dict[str, Any]:
@@ -254,6 +322,8 @@ class FastBacktest:
                     "m2_fractals": fractal_cache["m2_fractals"],
                     "be_enabled": params.get("fractal_be_enabled", False),
                     "tsl_enabled": params.get("fractal_tsl_enabled", False),
+                    "fvg_be_enabled": params.get("fvg_be_enabled", False),
+                    "htf_fvgs": fractal_cache.get("htf_fvgs", []),
                 }
             else:
                 fractal_ctx = self._precompute_fractals(params)
@@ -1537,6 +1607,7 @@ class FastBacktest:
             btib_fractal_ctx = dict(fractal_ctx)
             btib_fractal_ctx["be_enabled"] = params.get("btib_fractal_be_enabled", False)
             btib_fractal_ctx["tsl_enabled"] = params.get("btib_fractal_tsl_enabled", False)
+            btib_fractal_ctx["fvg_be_enabled"] = params.get("btib_fvg_be_enabled", False)
 
         exit_result = self._simulate_after_entry(
             df_after_bos, entry_idx, direction, entry_price, stop, tp,
@@ -1719,6 +1790,8 @@ class FastBacktest:
         fractal_be_sl = None    # entry_price when BE activated (None = inactive)
         fractal_tsl_active = False
         fractal_tsl_sl = None   # current M2 fractal SL level
+        fvg_be_sl = None        # entry_price when FVG BE activated (None = inactive)
+        use_fvg_be = use_fractals and fractal_ctx.get("fvg_be_enabled", False)
 
         if use_fractals:
             entry_time = df_trade["time"].iat[start_idx]
@@ -1787,6 +1860,35 @@ class FastBacktest:
                 for idx in sorted(swept_on_entry, reverse=True):
                     active_fractals.pop(idx)
 
+            # --- FVG BE state initialization (inside use_fractals block) ---
+            if use_fvg_be:
+                htf_fvgs = fractal_ctx["htf_fvgs"]
+                fvg_ptr = 0
+                active_fvg_list = []
+
+                # Advance pointer: activate FVGs confirmed <= entry_time
+                while fvg_ptr < len(htf_fvgs):
+                    fvg = htf_fvgs[fvg_ptr]
+                    confirm_hours = 1.0 if fvg.timeframe == "H1" else 4.0
+                    ct = fvg.formation_time + timedelta(hours=confirm_hours)
+                    if ct <= entry_time:
+                        # Include if not mitigated, or mitigated strictly after entry
+                        if fvg.fill_time is None or fvg.fill_time > entry_time:
+                            active_fvg_list.append(fvg)
+                        fvg_ptr += 1
+                    else:
+                        break
+
+                # Entry-candle FVG BE check
+                if fvg_be_sl is None:
+                    sl_negative = (is_long and curr_stop < entry_price) or \
+                                  (not is_long and curr_stop > entry_price)
+                    if sl_negative:
+                        for fvg in active_fvg_list:
+                            if entry_lo <= fvg.high and entry_hi >= fvg.low:
+                                fvg_be_sl = entry_price
+                                break
+
         # Track effective SL for same-candle prevention
         effective_sl = curr_stop
         effective_sl_prev = curr_stop
@@ -1798,6 +1900,8 @@ class FastBacktest:
             candidates = [curr_stop]
             if fractal_be_sl is not None:
                 candidates.append(fractal_be_sl)
+            if fvg_be_sl is not None:
+                candidates.append(fvg_be_sl)
             if fractal_tsl_active and ((is_long and last_m2_low is not None) or
                                        (not is_long and last_m2_high is not None)):
                 fractal_tsl_sl = last_m2_low if is_long else last_m2_high
@@ -1903,12 +2007,42 @@ class FastBacktest:
                     elif not is_long and last_m2_high is not None:
                         fractal_tsl_sl = last_m2_high
 
+            # === Step 3.5: FVG BE logic ===
+            if use_fvg_be and fvg_be_sl is None:
+                # Advance FVG pointer (newly confirmed)
+                while fvg_ptr < len(htf_fvgs):
+                    fvg = htf_fvgs[fvg_ptr]
+                    confirm_hours = 1.0 if fvg.timeframe == "H1" else 4.0
+                    ct = fvg.formation_time + timedelta(hours=confirm_hours)
+                    if ct <= t:
+                        # Only add if not yet mitigated at this candle
+                        if fvg.fill_time is None or fvg.fill_time > t:
+                            active_fvg_list.append(fvg)
+                        fvg_ptr += 1
+                    else:
+                        break
+
+                # Remove mitigated FVGs (fill_time <= t means mitigated on or before this candle)
+                active_fvg_list = [f for f in active_fvg_list
+                                   if f.fill_time is None or f.fill_time > t]
+
+                # Check touch + trigger BE if SL negative (once per trade)
+                sl_negative = (is_long and organic_sl < entry_price) or \
+                              (not is_long and organic_sl > entry_price)
+                if sl_negative:
+                    for fvg in active_fvg_list:
+                        if lo <= fvg.high and hi >= fvg.low:
+                            fvg_be_sl = entry_price
+                            break
+
             # === Step 4: Compute effective SL ===
             candidates = [organic_sl]
             if fractal_be_sl is not None:
                 candidates.append(fractal_be_sl)
             if fractal_tsl_sl is not None:
                 candidates.append(fractal_tsl_sl)
+            if fvg_be_sl is not None:
+                candidates.append(fvg_be_sl)
 
             effective_sl = max(candidates) if is_long else min(candidates)
 

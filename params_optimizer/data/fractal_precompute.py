@@ -91,12 +91,30 @@ def precompute_fractal_cache(
     swept_count = sum(1 for f in h1h4_sorted if f.swept)
     print_status(f"Pre-sweep: {t_presweep:.2f}s ({swept_count}/{len(h1h4_sorted)} swept)", "INFO")
 
+    # FVG detection for FVG BE logic (reuses h1_data/h4_data already resampled)
+    from src.smc.detectors.fvg_detector import detect_fvg
+
+    t0 = time.perf_counter()
+    h1_fvgs = detect_fvg(h1_data, symbol, "H1")
+    h4_fvgs = detect_fvg(h4_data, symbol, "H4")
+    htf_fvgs = sorted(h1_fvgs + h4_fvgs, key=lambda f: f.formation_time)
+    engine._premitigate_fvgs(htf_fvgs)
+    t_fvg = time.perf_counter() - t0
+
+    mitigated_count = sum(1 for f in htf_fvgs if f.fill_time is not None)
+    print_status(f"FVG detect+premitigate: {t_fvg:.2f}s "
+                 f"(H1={len(h1_fvgs)}, H4={len(h4_fvgs)}, "
+                 f"{mitigated_count}/{len(htf_fvgs)} mitigated)", "INFO")
+
     return {
         "h1h4_fractals": h1h4_sorted,
         "m2_fractals": m2_sorted,
+        "htf_fvgs": htf_fvgs,
         "h1_count": len(h1_fractals),
         "h4_count": len(h4_fractals),
         "m2_count": len(m2_fractals),
+        "h1_fvg_count": len(h1_fvgs),
+        "h4_fvg_count": len(h4_fvgs),
         "symbol": symbol,
         "m1_candles": len(m1_data),
     }
