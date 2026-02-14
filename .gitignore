@@ -47,6 +47,7 @@ vm_optimizer_key
 *.db
 *.db.bak
 *.parquet
+*.pkl
 
 # Claude temp files
 tmpclaude-*

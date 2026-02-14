@@ -20,7 +20,7 @@ def detect_fractals(
     candle_duration_hours: float = 1.0,
 ) -> List[Fractal]:
     """
-    Detect Williams 3-bar fractals.
+    Detect Williams 3-bar fractals (vectorized).
 
     High fractal: center bar high > prev high AND next high
     Low fractal: center bar low < prev low AND next low
@@ -37,40 +37,60 @@ def detect_fractals(
     if len(ohlc_data) < 3:
         return []
 
+    import numpy as np
+
+    highs = ohlc_data["high"].values
+    lows = ohlc_data["low"].values
+    closes = ohlc_data["close"].values
+    # Use .tolist() to preserve tz-aware pd.Timestamp objects
+    # (numpy .values strips timezone info)
+    times = ohlc_data["time"].tolist()
+
+    # Vectorized comparison (center vs prev and next)
+    is_high = (highs[1:-1] > highs[:-2]) & (highs[1:-1] > highs[2:])
+    is_low = (lows[1:-1] < lows[:-2]) & (lows[1:-1] < lows[2:])
+
+    confirm_delta = timedelta(hours=candle_duration_hours)
+
     fractals = []
 
-    for i in range(1, len(ohlc_data) - 1):
-        curr = ohlc_data.iloc[i]
-        prev = ohlc_data.iloc[i - 1]
-        next_ = ohlc_data.iloc[i + 1]
+    # High fractals
+    high_idx = np.nonzero(is_high)[0] + 1  # +1 because is_high starts at index 1
+    for i in high_idx:
+        t = times[i]
+        confirmed = times[i + 1] + confirm_delta
+        fractals.append(Fractal(
+            id=make_id("frac", instrument, timeframe, t, f"high_{highs[i]}"),
+            instrument=instrument,
+            timeframe=timeframe,
+            type="high",
+            price=float(highs[i]),
+            time=t,
+            confirmed_time=confirmed,
+            candle_close=float(closes[i]),
+        ))
 
-        confirmed_time = next_["time"] + timedelta(hours=candle_duration_hours)
+    # Low fractals
+    low_idx = np.nonzero(is_low)[0] + 1
+    for i in low_idx:
+        t = times[i]
+        confirmed = times[i + 1] + confirm_delta
+        fractals.append(Fractal(
+            id=make_id("frac", instrument, timeframe, t, f"low_{lows[i]}"),
+            instrument=instrument,
+            timeframe=timeframe,
+            type="low",
+            price=float(lows[i]),
+            time=t,
+            confirmed_time=confirmed,
+            candle_close=float(closes[i]),
+        ))
 
-        # High fractal
-        if curr["high"] > prev["high"] and curr["high"] > next_["high"]:
-            fractals.append(Fractal(
-                id=make_id("frac", instrument, timeframe, curr["time"], f"high_{curr['high']}"),
-                instrument=instrument,
-                timeframe=timeframe,
-                type="high",
-                price=curr["high"],
-                time=curr["time"],
-                confirmed_time=confirmed_time,
-                candle_close=float(curr["close"]),
-            ))
-
-        # Low fractal
-        if curr["low"] < prev["low"] and curr["low"] < next_["low"]:
-            fractals.append(Fractal(
-                id=make_id("frac", instrument, timeframe, curr["time"], f"low_{curr['low']}"),
-                instrument=instrument,
-                timeframe=timeframe,
-                type="low",
-                price=curr["low"],
-                time=curr["time"],
-                confirmed_time=confirmed_time,
-                candle_close=float(curr["close"]),
-            ))
+    # Sort by (time, type) to match original interleaved order:
+    # original loop checked high then low for each bar, so for the same
+    # bar time, high appears before low. This order matters when fractals
+    # share confirmed_time -- stable sort in _precompute_fractals preserves it.
+    fractals.sort(key=lambda f: (f.time, 0 if f.type == "high" else 1))
 
     return fractals
 

@@ -24,27 +24,37 @@ _WORKER_DATA: Dict[str, Any] = {
     "symbol": None,
     "m1_data": None,
     "backtest": None,
+    "fractal_cache": None,
     "initialized": False,
 }
 
 
-def init_worker(symbol: str, data_path: str):
+def init_worker(symbol: str, data_path: str, fractal_cache_path: str = None):
     """
     Initialize worker process with cached data.
 
     Called once when worker process starts.
-    Loads data and creates FastBacktest instance.
+    Loads data, creates FastBacktest instance, and optionally loads
+    pre-computed fractal cache for ~41s speedup per run.
 
     Args:
         symbol: Trading symbol (e.g., "GER40")
         data_path: Path to Parquet data file
+        fractal_cache_path: Optional path to pre-computed fractal cache pickle
     """
     global _WORKER_DATA
+    import pickle
 
     # Load data
     _WORKER_DATA["symbol"] = symbol
     _WORKER_DATA["m1_data"] = pd.read_parquet(data_path)
     _WORKER_DATA["backtest"] = FastBacktest(symbol, _WORKER_DATA["m1_data"])
+
+    # Load fractal cache if provided
+    if fractal_cache_path:
+        with open(fractal_cache_path, "rb") as f:
+            _WORKER_DATA["fractal_cache"] = pickle.load(f)
+
     _WORKER_DATA["initialized"] = True
 
 
@@ -67,8 +77,10 @@ def process_params(params_tuple: Tuple) -> Dict[str, Any]:
     # Convert tuple to dict
     params = tuple_to_dict(params_tuple)
 
-    # Run backtest
-    results = _WORKER_DATA["backtest"].run_with_params(params)
+    # Run backtest (with fractal cache if available)
+    results = _WORKER_DATA["backtest"].run_with_params(
+        params, fractal_cache=_WORKER_DATA.get("fractal_cache")
+    )
 
     # Add params to results for tracking
     results["params"] = params
@@ -156,7 +168,9 @@ def process_params_dict(params: Dict[str, Any]) -> Dict[str, Any]:
     if not _WORKER_DATA["initialized"]:
         raise RuntimeError("Worker not initialized. Call init_worker first.")
 
-    results = _WORKER_DATA["backtest"].run_with_params(params)
+    results = _WORKER_DATA["backtest"].run_with_params(
+        params, fractal_cache=_WORKER_DATA.get("fractal_cache")
+    )
     results["params"] = params
 
     return results

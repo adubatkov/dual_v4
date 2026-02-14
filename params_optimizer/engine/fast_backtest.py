@@ -140,11 +140,16 @@ class FastBacktest:
 
         h1_data = self._resample_full("1h")
         h4_data = self._resample_full("4h")
-        m2_data = self._resample_full("2min")
 
         h1_fractals = detect_fractals(h1_data, self.symbol, "H1", candle_duration_hours=1.0)
         h4_fractals = detect_fractals(h4_data, self.symbol, "H4", candle_duration_hours=4.0)
-        m2_fractals = detect_fractals(m2_data, self.symbol, "M2", candle_duration_hours=2 / 60)
+
+        # M2 fractals needed for: fractal TSL (core trades) + BTIB BOS detection
+        if tsl_enabled or btib_enabled:
+            m2_data = self._resample_full("2min")
+            m2_fractals = detect_fractals(m2_data, self.symbol, "M2", candle_duration_hours=2 / 60)
+        else:
+            m2_fractals = []
 
         # H4 dedup: remove H1 fractals that overlap with H4 at same (type, round(price, 2))
         h4_keys = {(f.type, round(f.price, 2)) for f in h4_fractals}
@@ -220,26 +225,17 @@ class FastBacktest:
             for i in sorted(swept_idx, reverse=True):
                 active.pop(i)
 
-    def run_with_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def run_with_params(
+        self, params: Dict[str, Any], fractal_cache: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         """
-        Run backtest with given parameters. Target: ~4-6 sec.
+        Run backtest with given parameters.
 
         Args:
-            params: Dictionary with keys:
-                - ib_start: "HH:MM" format
-                - ib_end: "HH:MM" format
-                - ib_timezone: e.g., "Europe/Berlin"
-                - ib_wait_minutes: int
-                - trade_window_minutes: int
-                - rr_target: float
-                - stop_mode: "ib_start", "eq", or "cisd"
-                - tsl_target: float (0 = disabled)
-                - tsl_sl: float
-                - min_sl_pct: float
-                - rev_rb_enabled: bool
-                - rev_rb_pct: float
-                - ib_buffer_pct: float
-                - max_distance_pct: float
+            params: Dictionary with strategy parameters.
+            fractal_cache: Optional pre-computed fractal context (from
+                fractal_precompute.py). When provided, skips expensive
+                fractal detection + pre-sweep (~41s savings on 3yr data).
 
         Returns:
             Dictionary with backtest results
@@ -247,14 +243,20 @@ class FastBacktest:
         try:
             timezone_str = params.get("ib_timezone", "Europe/Berlin")
 
-            # Precompute IB date column for this timezone
+            # Precompute IB date column for this timezone (vectorized)
             tz = pytz.timezone(timezone_str)
-            self.m1_data["ib_date"] = self.m1_data["time"].apply(
-                lambda x: x.astimezone(tz).date()
-            )
+            self.m1_data["ib_date"] = self.m1_data["time"].dt.tz_convert(tz).dt.date
 
-            # Pre-compute fractals once for entire period (if enabled)
-            fractal_ctx = self._precompute_fractals(params)
+            # Use pre-computed fractal cache if available, otherwise compute
+            if fractal_cache is not None:
+                fractal_ctx = {
+                    "h1h4_fractals": fractal_cache["h1h4_fractals"],
+                    "m2_fractals": fractal_cache["m2_fractals"],
+                    "be_enabled": params.get("fractal_be_enabled", False),
+                    "tsl_enabled": params.get("fractal_tsl_enabled", False),
+                }
+            else:
+                fractal_ctx = self._precompute_fractals(params)
 
             trades = []
 
