@@ -133,8 +133,9 @@ class FastBacktest:
         tsl_enabled = params.get("fractal_tsl_enabled", False)
         btib_enabled = params.get("btib_enabled", False)
         fvg_be_enabled = params.get("fvg_be_enabled", False)
+        rev_rb_enabled = params.get("rev_rb_enabled", False)
 
-        if not be_enabled and not tsl_enabled and not btib_enabled and not fvg_be_enabled:
+        if not be_enabled and not tsl_enabled and not btib_enabled and not fvg_be_enabled and not rev_rb_enabled:
             return None
 
         from src.smc.detectors.fractal_detector import detect_fractals
@@ -145,11 +146,13 @@ class FastBacktest:
         h1_fractals = detect_fractals(h1_data, self.symbol, "H1", candle_duration_hours=1.0)
         h4_fractals = detect_fractals(h4_data, self.symbol, "H4", candle_duration_hours=4.0)
 
-        # M2 fractals needed for: fractal TSL (core trades) + BTIB BOS detection
-        if tsl_enabled or btib_enabled:
+        # M2 data needed for: fractal TSL, BTIB BOS, REV_RB FVG matching
+        need_m2 = tsl_enabled or btib_enabled or rev_rb_enabled
+        if need_m2:
             m2_data = self._resample_full("2min")
             m2_fractals = detect_fractals(m2_data, self.symbol, "M2", candle_duration_hours=2 / 60)
         else:
+            m2_data = None
             m2_fractals = []
 
         # H4 dedup: remove H1 fractals that overlap with H4 at same (type, round(price, 2))
@@ -175,6 +178,15 @@ class FastBacktest:
         else:
             htf_fvgs = []
 
+        # M2 FVG detection for REV_RB matching
+        if rev_rb_enabled and m2_data is not None:
+            if not fvg_be_enabled:
+                from src.smc.detectors.fvg_detector import detect_fvg
+            m2_fvgs = detect_fvg(m2_data, self.symbol, "M2")
+            m2_fvgs_sorted = sorted(m2_fvgs, key=lambda f: f.formation_time)
+        else:
+            m2_fvgs_sorted = []
+
         return {
             "h1h4_fractals": h1h4_sorted,
             "m2_fractals": m2_sorted,
@@ -182,6 +194,7 @@ class FastBacktest:
             "tsl_enabled": tsl_enabled,
             "fvg_be_enabled": fvg_be_enabled,
             "htf_fvgs": htf_fvgs,
+            "m2_fvgs": m2_fvgs_sorted,
         }
 
     def _presweep_fractals(self, h1h4_sorted: list) -> None:
@@ -324,6 +337,7 @@ class FastBacktest:
                     "tsl_enabled": params.get("fractal_tsl_enabled", False),
                     "fvg_be_enabled": params.get("fvg_be_enabled", False),
                     "htf_fvgs": fractal_cache.get("htf_fvgs", []),
+                    "m2_fvgs": fractal_cache.get("m2_fvgs", []),
                 }
             else:
                 fractal_ctx = self._precompute_fractals(params)
@@ -436,72 +450,147 @@ class FastBacktest:
             btib_cutoff = trade_window_start + timedelta(
                 minutes=params.get("btib_core_cutoff_min", 40))
 
-        def is_signal_valid(sig):
-            """Check if signal can be detected before trade window ends and not blocked by news/BTIB."""
-            if sig is None or sig.entry_time is None:
-                return sig is not None
+        def _to_utc(ts):
+            """Convert timestamp to UTC for news filter check."""
+            if hasattr(ts, 'tz') and ts.tz is not None:
+                return ts.tz_convert('UTC')
+            elif hasattr(ts, 'tzinfo') and ts.tzinfo is not None:
+                return ts.astimezone(pytz.UTC)
+            return ts
 
-            if sig.signal_type in ("OCAE", "TCWE"):
-                # Must wait for signal candle to close
+        def validate_signal(sig):
+            """Validate signal, adjusting entry for news delay (matches slow engine).
+
+            Slow engine checks news per M1 candle: if blocked, skips and retries
+            on the next M1 candle. When news clears, enters at tick price of that
+            M1 candle. This function replicates that behavior.
+
+            Returns the signal (possibly modified with delayed entry) or None.
+            """
+            if sig is None or sig.entry_time is None:
+                return sig if sig is not None else None
+
+            if sig.signal_type in ("Reverse", "OCAE", "TCWE"):
+                # All M2-based signals: detection happens at M2 candle close.
+                # Slow engine news check is at the M1 candle when M2 closes,
+                # which is entry_time + 2min.
                 signal_close_time = sig.entry_time + timedelta(minutes=2)
                 if signal_close_time > trade_window_end:
-                    return False
+                    return None
                 entry_time_for_news = signal_close_time
-            else:
-                # Reverse and REV_RB - entry_time is when we can enter
+            elif sig.signal_type == "REV_RB":
+                # REV_RB runs independently of news filter in slow engine
+                # (run_backtest_template.py handles REV_RB outside IBStrategy)
                 if sig.entry_time > trade_window_end:
-                    return False
+                    return None
+                return sig
+            else:
+                if sig.entry_time > trade_window_end:
+                    return None
                 entry_time_for_news = sig.entry_time
 
             # BTIB window blocks core signals after cutoff
             if btib_cutoff is not None and entry_time_for_news >= btib_cutoff:
-                return False
+                return None
 
-            # Check news filter if enabled
+            # Check news filter
             if self.news_filter is not None:
-                # Convert to UTC for news filter
-                if hasattr(entry_time_for_news, 'tz') and entry_time_for_news.tz is not None:
-                    entry_utc = entry_time_for_news.tz_convert('UTC')
-                elif hasattr(entry_time_for_news, 'tzinfo') and entry_time_for_news.tzinfo is not None:
-                    entry_utc = entry_time_for_news.astimezone(pytz.UTC)
-                else:
-                    # Assume already UTC
-                    entry_utc = entry_time_for_news
-
-                allowed, _ = self.news_filter.is_trade_allowed(entry_utc)
+                allowed, _ = self.news_filter.is_trade_allowed(_to_utc(entry_time_for_news))
                 if not allowed:
-                    self._news_filtered_count += 1
-                    return False
+                    # Walk M1 candles forward to find first news-clear entry
+                    delayed = _find_news_clear_entry(sig, entry_time_for_news)
+                    if delayed is None:
+                        self._news_filtered_count += 1
+                        return None
+                    return delayed
 
-            return True
+            return sig
+
+        def _find_news_clear_entry(sig, blocked_time):
+            """Walk M1 candles from blocked_time to find first news-clear candle.
+
+            Matches slow engine: when news blocks, retries each M1 candle until
+            news clears, then enters at that M1 candle's open (tick price).
+            """
+            mask = df_trade_m1["time"] >= blocked_time
+            candidate_indices = df_trade_m1[mask].index
+
+            for m1_idx in candidate_indices:
+                m1_time = df_trade_m1["time"].iat[m1_idx]
+
+                if m1_time > trade_window_end:
+                    return None
+                if btib_cutoff is not None and m1_time >= btib_cutoff:
+                    return None
+
+                allowed, _ = self.news_filter.is_trade_allowed(_to_utc(m1_time))
+                if allowed:
+                    m1_open = float(df_trade_m1["open"].iat[m1_idx])
+                    return Signal(
+                        signal_type=sig.signal_type,
+                        direction=sig.direction,
+                        entry_idx=sig.entry_idx,
+                        entry_price=sig.entry_price,
+                        stop_price=sig.stop_price,
+                        entry_time=sig.entry_time,
+                        tick_price=m1_open,
+                        extra={**sig.extra, "news_delayed_entry_time": m1_time},
+                    )
+
+            return None
 
         # Check primary signals: Reverse, OCAE, TCWE
         # Collect all valid primary signals and pick earliest by entry_idx
         primary_candidates = []
 
-        rev_sig = self._check_reverse(df_trade_m2, df_pre_context_m2, ibh, ibl, eq, params)
-        if is_signal_valid(rev_sig):
+        rev_sig = self._check_reverse(df_trade_m2, df_pre_context_m2, ibh, ibl, eq, params, df_trade_m1=df_trade_m1)
+        rev_sig = validate_signal(rev_sig)
+        if rev_sig is not None:
             primary_candidates.append(rev_sig)
 
         ocae_sig = self._check_ocae(df_trade_m2, ibh, ibl, eq, trade_start_price, params)
-        if is_signal_valid(ocae_sig):
+        ocae_sig = validate_signal(ocae_sig)
+        if ocae_sig is not None:
             primary_candidates.append(ocae_sig)
 
         tcwe_sig = self._check_tcwe(df_trade_m2, ibh, ibl, eq, trade_start_price, params)
-        if is_signal_valid(tcwe_sig):
+        tcwe_sig = validate_signal(tcwe_sig)
+        if tcwe_sig is not None:
             primary_candidates.append(tcwe_sig)
 
-        # If any primary signal found, select earliest by entry_idx
+        # Always check REV_RB (it may fill before primary signals)
+        # In the slow engine, REV_RB pending fills are processed BEFORE core
+        # signal detection on each M1 candle. So REV_RB can win by filling
+        # before a primary signal candle closes.
+        rev_rb_sig = self._check_rev_rb(df_trade_m1, ibh, ibl, eq, params, fractal_ctx)
+        rev_rb_sig = validate_signal(rev_rb_sig)
+
         signal = None
         if primary_candidates:
-            # Priority for tie-breaking: Reverse > OCAE > TCWE
             priority = {"Reverse": 0, "OCAE": 1, "TCWE": 2}
-            signal = min(primary_candidates, key=lambda s: (s.entry_idx, priority.get(s.signal_type, 99)))
-        else:
-            # Only check REV_RB if NO primary signals triggered (matches IBStrategy behavior)
-            rev_rb_sig = self._check_rev_rb(df_trade_m2, ibh, ibl, eq, params)
-            if is_signal_valid(rev_rb_sig):
-                signal = rev_rb_sig
+            primary = min(primary_candidates, key=lambda s: (s.entry_idx, priority.get(s.signal_type, 99)))
+
+            if rev_rb_sig is not None:
+                # Compare actual entry times to determine which fires first
+                # Primary: OCAE/TCWE enter after M2 candle closes (+2min),
+                #          Reverse enters at entry_time
+                p_time = primary.entry_time
+                if primary.signal_type in ("OCAE", "TCWE"):
+                    p_time = primary.entry_time + timedelta(minutes=2)
+                # Account for news delay
+                p_delayed = primary.extra.get("news_delayed_entry_time")
+                if p_delayed is not None:
+                    p_time = p_delayed
+
+                rr_time = rev_rb_sig.entry_time
+                if rr_time < p_time:
+                    signal = rev_rb_sig  # REV_RB fills first
+                else:
+                    signal = primary
+            else:
+                signal = primary
+        elif rev_rb_sig is not None:
+            signal = rev_rb_sig
 
         if signal is not None:
             # 6. Apply SMC filter (if enabled)
@@ -837,12 +926,18 @@ class FastBacktest:
 
     def _check_reverse(
         self, df_trade: pd.DataFrame, df_context_before: pd.DataFrame,
-        ibh: float, ibl: float, eq: float, params: Dict
+        ibh: float, ibl: float, eq: float, params: Dict,
+        df_trade_m1: Optional[pd.DataFrame] = None
     ) -> Optional[Signal]:
         """
         Reverse signal - sweep detection with CISD.
 
-        Ported from process_reverse_signal_fixed() in strategy_logic.py
+        Ported from process_reverse_signal_fixed() in strategy_logic.py.
+
+        The optional df_trade_m1 enables progressive M2 simulation:
+        the slow engine processes M1 candles one at a time, producing
+        partial M2 candles at the end. A partial M2 (first M1 only)
+        may qualify as a sweep while the complete M2 would invalidate.
         """
         ib_range = float(ibh - ibl)
         if ib_range <= 0 or df_trade.empty:
@@ -852,11 +947,51 @@ class FastBacktest:
         buffer = ib_buffer_pct * ib_range
         n = len(df_trade)
 
+        # Build M2 -> first M1 mapping for progressive simulation
+        m2_first_m1: Dict[int, Dict[str, float]] = {}
+        if df_trade_m1 is not None and not df_trade_m1.empty:
+            for i in range(n):
+                m2_time = df_trade["time"].iat[i]
+                mask = df_trade_m1["time"] == m2_time
+                if mask.any():
+                    idx = mask.idxmax()
+                    m2_first_m1[i] = {
+                        "o": float(df_trade_m1["open"].iat[idx]),
+                        "c": float(df_trade_m1["close"].iat[idx]),
+                        "h": float(df_trade_m1["high"].iat[idx]),
+                        "l": float(df_trade_m1["low"].iat[idx]),
+                    }
+
         # 1) Collect sweeps until first invalidation
+        # Progressive M2 simulation: the slow engine processes M1 candles
+        # one-at-a-time. Each M1 produces a "partial M2" (just 1 minute of data).
+        # A partial M2 may qualify as a sweep where the complete M2 doesn't
+        # (e.g., first M1 close within buffer, second M1 close outside).
+        # Check first M1 of each M2 candle BEFORE checking the complete candle.
         sweeps: List[Dict[str, Any]] = []
         invalid_at: Optional[int] = None
 
         for i in range(n):
+            # Check partial M2 (first M1 only) for sweep detection only.
+            # NOTE: Do NOT use partial invalidation. The slow engine processes
+            # M1s incrementally; a partial M2 might temporarily trigger
+            # invalidation (both O/C on same side of IB), but the complete
+            # M2 may NOT be an invalidation. The slow engine progresses past
+            # partial invalidation on the next M1 iteration. Only complete M2
+            # invalidation permanently stops the sweep scan.
+            partial_upper = False
+            partial_lower = False
+            if i in m2_first_m1:
+                pm = m2_first_m1[i]
+                # Partial sweep check (first M1 OHLC)
+                if pm["h"] > ibh and pm["o"] <= ibh + buffer and pm["c"] <= ibh + buffer:
+                    sweeps.append({"dir": "upper", "idx": i, "ext": pm["h"]})
+                    partial_upper = True
+                if pm["l"] < ibl and pm["o"] >= ibl - buffer and pm["c"] >= ibl - buffer:
+                    sweeps.append({"dir": "lower", "idx": i, "ext": pm["l"]})
+                    partial_lower = True
+
+            # Check complete M2 candle
             o = float(df_trade["open"].iat[i])
             c = float(df_trade["close"].iat[i])
             h = float(df_trade["high"].iat[i])
@@ -868,11 +1003,12 @@ class FastBacktest:
                 break
 
             # Upper sweep (short scenario): shadow above IBH but close within buffer zone
-            if h > ibh and o <= ibh + buffer and c <= ibh + buffer:
+            # Skip if partial already added sweep for this direction at same index
+            if not partial_upper and h > ibh and o <= ibh + buffer and c <= ibh + buffer:
                 sweeps.append({"dir": "upper", "idx": i, "ext": h})
 
             # Lower sweep (long scenario): shadow below IBL but close within buffer zone
-            if lo < ibl and o >= ibl - buffer and c >= ibl - buffer:
+            if not partial_lower and lo < ibl and o >= ibl - buffer and c >= ibl - buffer:
                 sweeps.append({"dir": "lower", "idx": i, "ext": lo})
 
         if invalid_at is not None:
@@ -900,7 +1036,14 @@ class FastBacktest:
         if cur is not None:
             groups.append(cur)
 
-        # 3) For each group, find CISD
+        # 3) For each group, find earliest CISD
+        # CRITICAL: collect CISD from ALL groups, return the earliest entry.
+        # The slow engine processes M1 candles incrementally. With limited data,
+        # Group 1 may not find CISD yet, so Group 2 (with a different last_opp
+        # threshold) fires first. The fast engine has all data, so Group 1 always
+        # finds CISD and hides Group 2's earlier signal. Fix: check all groups.
+        best_candidate = None  # (entry_idx, Signal)
+
         for g in groups:
             prev_trade = df_trade.iloc[:g["start"]][["time", "open", "high", "low", "close"]]
             if df_context_before is not None and not df_context_before.empty:
@@ -926,7 +1069,9 @@ class FastBacktest:
                 continue
 
             # 4) Find CISD AFTER sweep group ends
-            for k in range(g["end"] + 1, n):
+            # Only scan up to best_candidate's entry_idx (no point scanning further)
+            scan_limit = best_candidate[0] if best_candidate else n
+            for k in range(g["end"] + 1, min(n, scan_limit)):
                 ck = float(df_trade["close"].iat[k])
 
                 if g["dir"] == "upper":  # SHORT
@@ -935,19 +1080,14 @@ class FastBacktest:
                         if distance >= 0.5 * ib_range:
                             break
 
-                        # Entry on next candle open (after CISD candle closes)
-                        # IBStrategy uses OPEN of entry candle for SL/TP calculation
-                        # But MT5Emulator executes at tick based on CLOSE of CISD candle
                         if k + 1 < n:
                             entry_idx = k + 1
-                            # entry_price = OPEN of entry candle (for SL/TP calc, like IBStrategy)
                             entry_price = float(df_trade["open"].iat[entry_idx])
-                            # tick_price = CLOSE of CISD candle (for execution, like MT5Emulator)
                             tick_price = float(df_trade["close"].iat[k])
-                            stop_price = float(g["ext"])  # Sweep extreme
+                            stop_price = float(g["ext"])
                             entry_time = df_trade["time"].iat[entry_idx]
 
-                            return Signal(
+                            sig = Signal(
                                 signal_type="Reverse",
                                 direction="short",
                                 entry_idx=entry_idx,
@@ -957,6 +1097,9 @@ class FastBacktest:
                                 tick_price=tick_price,
                                 extra={"sweep_extreme": float(g["ext"]), "cisd_idx": k}
                             )
+                            if best_candidate is None or entry_idx < best_candidate[0]:
+                                best_candidate = (entry_idx, sig)
+                        break  # found CISD for this group
 
                 else:  # LONG
                     if ck > last_opp["high"]:
@@ -964,19 +1107,14 @@ class FastBacktest:
                         if distance >= 0.5 * ib_range:
                             break
 
-                        # Entry on next candle open (after CISD candle closes)
-                        # IBStrategy uses OPEN of entry candle for SL/TP calculation
-                        # But MT5Emulator executes at tick based on CLOSE of CISD candle
                         if k + 1 < n:
                             entry_idx = k + 1
-                            # entry_price = OPEN of entry candle (for SL/TP calc, like IBStrategy)
                             entry_price = float(df_trade["open"].iat[entry_idx])
-                            # tick_price = CLOSE of CISD candle (for execution, like MT5Emulator)
                             tick_price = float(df_trade["close"].iat[k])
                             stop_price = float(g["ext"])
                             entry_time = df_trade["time"].iat[entry_idx]
 
-                            return Signal(
+                            sig = Signal(
                                 signal_type="Reverse",
                                 direction="long",
                                 entry_idx=entry_idx,
@@ -986,8 +1124,11 @@ class FastBacktest:
                                 tick_price=tick_price,
                                 extra={"sweep_extreme": float(g["ext"]), "cisd_idx": k}
                             )
+                            if best_candidate is None or entry_idx < best_candidate[0]:
+                                best_candidate = (entry_idx, sig)
+                        break  # found CISD for this group
 
-        return None
+        return best_candidate[1] if best_candidate else None
 
     def _eq_touched_before_idx(self, df: pd.DataFrame, eq: float, idx: int) -> bool:
         """Check if EQ was touched before given index."""
@@ -1167,113 +1308,128 @@ class FastBacktest:
         return None
 
     def _check_rev_rb(
-        self, df_trade: pd.DataFrame, ibh: float, ibl: float, eq: float, params: Dict
+        self, df_trade_m1: pd.DataFrame, ibh: float, ibl: float, eq: float,
+        params: Dict, fractal_ctx: Optional[Dict] = None
     ) -> Optional[Signal]:
         """
-        REV_RB - limit order after extended zone trigger.
+        REV_RB - IB break + M2 FVG match + limit order fill.
 
-        Ported from simulate_reverse_limit_both_sides() in strategy_logic.py
+        Matches slow engine (run_backtest_template.py):
+        1. Detect first IB break on M1 (high > IBH or low < IBL)
+        2. Find M2 FVG confirmed within 6 min of break, matching direction
+           and IB level within FVG range
+        3. Set pending limit order at IB level (IBH/IBL), SL=EQ
+        4. Fill when price returns to IB level on subsequent M1 candle
         """
-        if not params.get("rev_rb_enabled", False) or df_trade.empty:
+        if not params.get("rev_rb_enabled", False) or df_trade_m1.empty:
             return None
 
         ib_range = float(ibh - ibl)
         if ib_range <= 0:
             return None
 
-        rev_rb_pct = params.get("rev_rb_pct", 0.5)
-        ext_up = ibh + rev_rb_pct * ib_range
-        ext_dn = ibl - rev_rb_pct * ib_range
-
-        # Find first trigger on both sides (starting from beginning of trade window)
-        j_up = None
-        j_dn = None
-        for j in range(len(df_trade)):
-            if j_up is None and float(df_trade["high"].iat[j]) >= ext_up:
-                j_up = j
-            if j_dn is None and float(df_trade["low"].iat[j]) <= ext_dn:
-                j_dn = j
-            if j_up is not None and j_dn is not None:
+        # Stage 1: IB Break Detection (M1)
+        # Slow engine: first break wins, upper has priority on same candle
+        break_side = None
+        break_idx = None
+        break_time = None
+        for j in range(len(df_trade_m1)):
+            hi = float(df_trade_m1["high"].iat[j])
+            lo = float(df_trade_m1["low"].iat[j])
+            # Upper break (checked first = priority on same candle)
+            if break_side is None and hi > ibh:
+                break_side = "upper"
+                break_idx = j
+                break_time = df_trade_m1["time"].iat[j]
+            # Lower break
+            if break_side is None and lo < ibl:
+                break_side = "lower"
+                break_idx = j
+                break_time = df_trade_m1["time"].iat[j]
+            if break_side is not None:
                 break
 
-        # Choose earlier trigger
-        chosen = None
-        if j_up is not None and j_dn is not None:
-            chosen = ("long", j_up) if j_up <= j_dn else ("short", j_dn)
-        elif j_up is not None:
-            chosen = ("long", j_up)
-        elif j_dn is not None:
-            chosen = ("short", j_dn)
-        else:
+        if break_side is None:
             return None
 
-        direction, trig_idx = chosen
+        # Stage 2: M2 FVG Matching
+        m2_fvgs = fractal_ctx.get("m2_fvgs", []) if fractal_ctx else []
+        atf_minutes = 2  # M2 = 2min candles
+        matched_fvg = None
 
-        rev_rb_min_sl_pct = params.get("rev_rb_min_sl_pct", params.get("min_sl_pct", 0.001))
+        for fvg in m2_fvgs:
+            fvg_confirmed = fvg.formation_time + timedelta(minutes=atf_minutes)
+            delay_s = (fvg_confirmed - break_time).total_seconds()
+            if delay_s < 0:
+                continue  # FVG confirmed before break
+            if delay_s > 360:
+                break  # Past 6-minute window (sorted by formation_time)
 
-        if direction == "long":
+            if break_side == "upper" and fvg.direction == "bullish":
+                if fvg.low <= ibh <= fvg.high:
+                    matched_fvg = fvg
+                    break
+            elif break_side == "lower" and fvg.direction == "bearish":
+                if fvg.low <= ibl <= fvg.high:
+                    matched_fvg = fvg
+                    break
+
+        if matched_fvg is None:
+            return None
+
+        # Stage 3: Setup limit order
+        if break_side == "upper":
+            direction = "long"
             entry_level = float(ibh)
-            stop = float(eq)  # SL=EQ for REV_RB
-            risk = abs(entry_level - stop)
-
-            # Check minimum SL size
-            min_sl_size = entry_level * rev_rb_min_sl_pct
-            if risk < min_sl_size:
-                stop = entry_level - min_sl_size
-
-            # Wait for price return to ibh for limit fill
-            fill_idx = None
-            for k in range(trig_idx + 1, len(df_trade)):
-                if float(df_trade["low"].iat[k]) <= entry_level:
-                    fill_idx = k
-                    break
-            if fill_idx is None:
-                return None
-
-            # Apply spread to limit entry price
-            entry_price = self._apply_spread(entry_level, "long")
-            entry_time = df_trade["time"].iat[fill_idx]
-
-            return Signal(
-                signal_type="REV_RB",
-                direction="long",
-                entry_idx=fill_idx,
-                entry_price=entry_price,
-                stop_price=stop,
-                entry_time=entry_time,
-                extra={"trigger_idx": trig_idx}
-            )
-
-        else:  # short
+        else:
+            direction = "short"
             entry_level = float(ibl)
-            stop = float(eq)
-            risk = abs(entry_level - stop)
+        stop = float(eq)
 
-            min_sl_size = entry_level * rev_rb_min_sl_pct
-            if risk < min_sl_size:
-                stop = entry_level + min_sl_size
-
-            fill_idx = None
-            for k in range(trig_idx + 1, len(df_trade)):
-                if float(df_trade["high"].iat[k]) >= entry_level:
-                    fill_idx = k
+        # Stage 4: Find limit fill on M1 (price returns to IB level)
+        # In slow engine, pending is set when FVG pointer advances (step 4),
+        # and fill is checked on the NEXT candle (step 2 of next iteration).
+        # So fill can only happen on M1 candles strictly after fvg_confirmed.
+        fvg_confirmed_time = matched_fvg.formation_time + timedelta(minutes=atf_minutes)
+        fill_start = break_idx + 1  # minimum: candle after break
+        # If FVG confirmed after break, push fill start to after confirmation
+        if fvg_confirmed_time > break_time:
+            for k in range(break_idx + 1, len(df_trade_m1)):
+                if df_trade_m1["time"].iat[k] > fvg_confirmed_time:
+                    fill_start = k
                     break
-            if fill_idx is None:
-                return None
+            else:
+                return None  # No M1 candles after FVG confirmation
 
-            # Apply spread to limit entry price
-            entry_price = self._apply_spread(entry_level, "short")
-            entry_time = df_trade["time"].iat[fill_idx]
+        fill_idx = None
+        for k in range(fill_start, len(df_trade_m1)):
+            if direction == "long" and float(df_trade_m1["low"].iat[k]) <= entry_level:
+                fill_idx = k
+                break
+            elif direction == "short" and float(df_trade_m1["high"].iat[k]) >= entry_level:
+                fill_idx = k
+                break
 
-            return Signal(
-                signal_type="REV_RB",
-                direction="short",
-                entry_idx=fill_idx,
-                entry_price=entry_price,
-                stop_price=stop,
-                entry_time=entry_time,
-                extra={"trigger_idx": trig_idx}
-            )
+        if fill_idx is None:
+            return None
+
+        # Tick price = previous M1 candle's close (emulator uses last CLOSED candle)
+        if fill_idx > 0:
+            tick_mid = float(df_trade_m1["close"].iat[fill_idx - 1])
+        else:
+            tick_mid = float(df_trade_m1["open"].iat[fill_idx])
+        entry_time = df_trade_m1["time"].iat[fill_idx]
+
+        return Signal(
+            signal_type="REV_RB",
+            direction=direction,
+            entry_idx=fill_idx,
+            entry_price=entry_level,  # Raw IB level for SL/TP calculation
+            stop_price=stop,
+            entry_time=entry_time,
+            tick_price=tick_mid,  # For execution price (+ spread)
+            extra={"m1_entry_time": entry_time, "trigger_time": break_time}
+        )
 
     # ========================================
     # Stop Price and Trade Simulation
@@ -1590,6 +1746,7 @@ class FastBacktest:
         btib_tsl_target = params.get("btib_tsl_target", 0.0)
         btib_tsl_sl = params.get("btib_tsl_sl", 0.0)
 
+        # Slow engine uses M1 open for SL/TP calculation
         raw_entry_price = float(df_after_bos["open"].iat[entry_idx])
 
         sl_tp = self._place_sl_tp_with_min_size(
@@ -1599,7 +1756,15 @@ class FastBacktest:
             return None
 
         stop, tp, sl_adjusted = sl_tp
-        entry_price = self._get_execution_price(raw_entry_price, direction)
+
+        # Emulator executes at tick price = previous CLOSED M1 candle's close.
+        # At entry time T, tick = M1_{T-1}.close. The BOS candle IS that M1_{T-1}.
+        bos_prev_mask = day_df["time"] <= bos_entry_time
+        if bos_prev_mask.any():
+            tick_mid = float(day_df.loc[bos_prev_mask, "close"].iloc[-1])
+        else:
+            tick_mid = raw_entry_price
+        entry_price = self._get_execution_price(tick_mid, direction)
 
         # Build BTIB-specific fractal context (own BE/TSL flags)
         btib_fractal_ctx = None
@@ -1635,6 +1800,7 @@ class FastBacktest:
             "ibh": ib["IBH"],
             "ibl": ib["IBL"],
             "eq": ib["EQ"],
+            "effective_sl": exit_result.get("effective_sl", stop),
         }
 
     def _simulate_trade_on_m1(
@@ -1666,15 +1832,14 @@ class FastBacktest:
         direction = signal.direction
         raw_entry_price = signal.entry_price  # Raw price for SL/TP calculation
 
-        # Map M2 entry time to M1 index
-        # For Reverse: entry is on OPEN of next M2 candle (entry_time is that candle's time)
-        # For OCAE/TCWE: entry is after signal candle CLOSES
-        # For REV_RB: entry is when limit order fills
-        if signal.entry_time is not None:
-            # Different logic for Reverse vs OCAE/TCWE
+        # Map entry time to M1 index
+        # Direct M1 time: news delay or REV_RB limit fill (already on M1 data)
+        m1_direct_time = signal.extra.get("news_delayed_entry_time") or signal.extra.get("m1_entry_time")
+        if m1_direct_time is not None:
+            m1_entry_idx = self._find_m1_idx_for_m2_time(df_m1, m1_direct_time, for_entry=False)
+        elif signal.entry_time is not None:
             if signal.signal_type == "Reverse":
                 # Reverse enters on OPEN of entry_time candle
-                # Find M1 candle at or after entry_time (which is M2 open time)
                 m1_entry_idx = self._find_m1_idx_for_m2_time(df_m1, signal.entry_time, for_entry=False)
             else:
                 # OCAE/TCWE/REV_RB enter after signal candle closes
@@ -1742,6 +1907,7 @@ class FastBacktest:
             "ibh": ib["IBH"],
             "ibl": ib["IBL"],
             "eq": ib["EQ"],
+            "effective_sl": exit_result.get("effective_sl", stop),
         }
 
     def _simulate_after_entry(
@@ -1767,7 +1933,8 @@ class FastBacktest:
                 "exit_reason": "invalid",
                 "exit_time": df_trade["time"].iat[start_idx],
                 "exit_price": entry_price,
-                "R": 0.0
+                "R": 0.0,
+                "effective_sl": stop
             }
 
         # TSL risk: slow engine uses raw_entry_price for TSL step size,
@@ -1923,12 +2090,14 @@ class FastBacktest:
                     if hi >= curr_tp:
                         tp_r = (curr_tp - entry_price) / risk
                         return {"exit_reason": "tp", "exit_time": t,
-                                "exit_price": curr_tp, "R": tp_r}
+                                "exit_price": curr_tp, "R": tp_r,
+                                "effective_sl": effective_sl}
                 else:
                     if lo <= curr_tp:
                         tp_r = (entry_price - curr_tp) / risk
                         return {"exit_reason": "tp", "exit_time": t,
-                                "exit_price": curr_tp, "R": tp_r}
+                                "exit_price": curr_tp, "R": tp_r,
+                                "effective_sl": effective_sl}
 
             # === Step 2: Organic TSL update (trail mode only) ===
             # Uses tsl_risk (raw entry based) for step size, matching slow engine's
@@ -2058,12 +2227,14 @@ class FastBacktest:
                 if lo <= check_sl:
                     exit_price = check_sl if hi >= check_sl else hi
                     r = (exit_price - entry_price) / risk
-                    return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
+                    return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r,
+                            "effective_sl": effective_sl}
             else:
                 if hi >= check_sl:
                     exit_price = check_sl if lo <= check_sl else lo
                     r = (entry_price - exit_price) / risk
-                    return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r}
+                    return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r,
+                            "effective_sl": effective_sl}
 
             # Update prev for next candle
             effective_sl_prev = effective_sl
@@ -2087,7 +2258,8 @@ class FastBacktest:
             exit_price = prev_close + half_spread  # Close at ask
 
         r = (exit_price - entry_price) / risk if direction == "long" else (entry_price - exit_price) / risk
-        return {"exit_reason": "time", "exit_time": df_trade["time"].iat[-1], "exit_price": exit_price, "R": r}
+        return {"exit_reason": "time", "exit_time": df_trade["time"].iat[-1], "exit_price": exit_price, "R": r,
+                "effective_sl": effective_sl_prev}
 
     # ========================================
     # Metrics Calculation

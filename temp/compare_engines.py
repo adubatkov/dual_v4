@@ -217,6 +217,7 @@ def match_trades(slow_trades, fast_trades):
             "sl": t.get("stop", 0),
             "tp": t.get("tp", 0),
             "R": round(t.get("R", 0), 4),
+            "effective_sl": t.get("effective_sl", 0),
         })
 
     # Match by date + variation + direction
@@ -317,6 +318,11 @@ def print_comparison(matches):
               f"{s['exit_time']:<18} {f['exit_time']:<18} "
               f"{s['exit_reason']:<6} {f['exit_reason']:<6} "
               f"{s['R']:>7.2f} {f['R']:>7.2f} {delta_r:>+7.2f} {status:<10}")
+
+        # Debug R mismatch details
+        if status == "MISMATCH":
+            print(f"  [R DEBUG] slow: entry={s.get('entry_price',0):.2f} exit={s.get('exit_price',0):.2f} sl={s.get('sl',0):.2f}")
+            print(f"  [R DEBUG] fast: entry={f.get('entry_price',0):.2f} exit={f.get('exit_price',0):.2f} sl={f.get('sl',0):.2f} eff_sl={f.get('effective_sl',0):.2f}")
 
     # Summary
     print("-" * len(header))
