@@ -73,6 +73,19 @@ def prod_to_flat(nested: dict, variation: str = "Reverse") -> dict:
         flat[f"{prefix}_ib_buffer_pct"] = vdata.get("IB_BUFFER_PCT", flat["ib_buffer_pct"])
         flat[f"{prefix}_max_distance_pct"] = vdata.get("MAX_DISTANCE_PCT", flat["max_distance_pct"])
 
+    # BTIB params
+    btib = nested.get("BTIB", {})
+    flat["btib_enabled"] = btib.get("BTIB_ENABLED", False)
+    flat["btib_sl_mode"] = btib.get("BTIB_SL_MODE", "fractal_2m")
+    flat["btib_core_cutoff_min"] = btib.get("CORE_CUTOFF_MIN", 40)
+    flat["btib_extension_pct"] = btib.get("EXTENSION_PCT", 1.0)
+    flat["btib_rr_target"] = btib.get("RR_TARGET", 1.0)
+    flat["btib_tsl_target"] = btib.get("TSL_TARGET", 0.0)
+    flat["btib_tsl_sl"] = btib.get("TSL_SL", 0.0)
+    flat["btib_min_sl_pct"] = btib.get("MIN_SL_PCT", 0.001)
+    flat["btib_fractal_be_enabled"] = btib.get("FRACTAL_BE_ENABLED", False)
+    flat["btib_fractal_tsl_enabled"] = btib.get("FRACTAL_TSL_ENABLED", False)
+
     return flat
 
 

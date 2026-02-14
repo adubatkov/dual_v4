@@ -131,8 +131,9 @@ class FastBacktest:
         """
         be_enabled = params.get("fractal_be_enabled", False)
         tsl_enabled = params.get("fractal_tsl_enabled", False)
+        btib_enabled = params.get("btib_enabled", False)
 
-        if not be_enabled and not tsl_enabled:
+        if not be_enabled and not tsl_enabled and not btib_enabled:
             return None
 
         from src.smc.detectors.fractal_detector import detect_fractals
@@ -260,9 +261,12 @@ class FastBacktest:
             # Process day-by-day
             for day_date, day_df in self.m1_data.groupby("ib_date"):
                 day_df = day_df.sort_values("time").reset_index(drop=True)
-                trade = self._process_day(day_df, day_date, params, fractal_ctx)
-                if trade:
-                    trades.append(trade)
+                result = self._process_day(day_df, day_date, params, fractal_ctx)
+                if result:
+                    if isinstance(result, list):
+                        trades.extend(result)
+                    else:
+                        trades.append(result)
 
             return self._calculate_metrics(trades, params)
 
@@ -344,8 +348,8 @@ class FastBacktest:
         # IMPORTANT: REV_RB only triggers if all other signals fail (not based on entry_idx)
         # This matches IBStrategy's sequential signal checking behavior
 
-        # Get trade window end time for filtering
-        _, trade_window_end = self._trade_window_on_date(
+        # Get trade window times for filtering
+        trade_window_start, trade_window_end = self._trade_window_on_date(
             day_date,
             params["ib_end"],
             params["ib_timezone"],
@@ -353,8 +357,15 @@ class FastBacktest:
             params["trade_window_minutes"]
         )
 
+        # BTIB: compute core cutoff time (blocks core signals after this point)
+        btib_enabled = params.get("btib_enabled", False)
+        btib_cutoff = None
+        if btib_enabled:
+            btib_cutoff = trade_window_start + timedelta(
+                minutes=params.get("btib_core_cutoff_min", 40))
+
         def is_signal_valid(sig):
-            """Check if signal can be detected before trade window ends and not blocked by news."""
+            """Check if signal can be detected before trade window ends and not blocked by news/BTIB."""
             if sig is None or sig.entry_time is None:
                 return sig is not None
 
@@ -369,6 +380,10 @@ class FastBacktest:
                 if sig.entry_time > trade_window_end:
                     return False
                 entry_time_for_news = sig.entry_time
+
+            # BTIB window blocks core signals after cutoff
+            if btib_cutoff is not None and entry_time_for_news >= btib_cutoff:
+                return False
 
             # Check news filter if enabled
             if self.news_filter is not None:
@@ -405,6 +420,7 @@ class FastBacktest:
             primary_candidates.append(tcwe_sig)
 
         # If any primary signal found, select earliest by entry_idx
+        signal = None
         if primary_candidates:
             # Priority for tie-breaking: Reverse > OCAE > TCWE
             priority = {"Reverse": 0, "OCAE": 1, "TCWE": 2}
@@ -414,17 +430,72 @@ class FastBacktest:
             rev_rb_sig = self._check_rev_rb(df_trade_m2, ibh, ibl, eq, params)
             if is_signal_valid(rev_rb_sig):
                 signal = rev_rb_sig
+
+        if signal is not None:
+            # 6. Apply SMC filter (if enabled)
+            if params.get("smc_enabled", False):
+                signal = self._apply_smc_filter(signal, day_df, day_date, df_trade_m1, params)
+
+        # 7. Detect BTIB BOS (independent of core signal)
+        btib_bos = None
+        if btib_enabled and fractal_ctx is not None:
+            btib_bos = self._detect_btib_bos(df_trade_m1, ib, day_date, params, fractal_ctx)
+
+        # 8. Handle core signal + BTIB interaction
+        results = []
+
+        if signal is not None:
+            core_trade = self._simulate_trade_on_m1(
+                df_trade_m1, signal, ib, day_date, params, fractal_ctx)
+
+            if btib_bos is not None:
+                # BTIB BOS detected -- check if it fires during or after core trade
+                bos_time = btib_bos["bos_time"]
+                core_exit_time = core_trade["exit_time"]
+
+                if bos_time < core_exit_time:
+                    # BTIB BOS fires DURING core trade: truncate core trade at BOS
+                    # Slow engine closes position at BOS candle close price
+                    bos_close = btib_bos["bos_close"]
+                    direction = core_trade["direction"]
+                    entry_price = core_trade["entry_price"]
+                    risk = abs(entry_price - core_trade["stop"])
+                    if risk > 0:
+                        if direction == "long":
+                            truncated_r = (bos_close - entry_price) / risk
+                        else:
+                            truncated_r = (entry_price - bos_close) / risk
+                    else:
+                        truncated_r = 0.0
+                    core_trade = dict(core_trade)
+                    core_trade["exit_time"] = bos_time
+                    core_trade["exit_price"] = bos_close
+                    core_trade["exit_reason"] = "btib_signal"
+                    core_trade["R"] = truncated_r
+                    core_trade["profit"] = truncated_r * risk if risk > 0 else 0
+
+                # Add core trade (possibly truncated)
+                results.append(core_trade)
+
+                # Add BTIB trade (entry on next candle after BOS)
+                btib_trade = self._simulate_btib_trade(
+                    day_df, btib_bos, ib, day_date, params, fractal_ctx)
+                if btib_trade is not None:
+                    results.append(btib_trade)
             else:
-                return None
+                results.append(core_trade)
+        elif btib_bos is not None:
+            # No core signal, only BTIB
+            btib_trade = self._simulate_btib_trade(
+                day_df, btib_bos, ib, day_date, params, fractal_ctx)
+            if btib_trade is not None:
+                results.append(btib_trade)
 
-        # 6. Apply SMC filter (if enabled)
-        if params.get("smc_enabled", False):
-            signal = self._apply_smc_filter(signal, day_df, day_date, df_trade_m1, params)
-            if signal is None:
-                return None
-
-        # 7. Simulate trade execution on M1 data for precise SL/TP
-        return self._simulate_trade_on_m1(df_trade_m1, signal, ib, day_date, params, fractal_ctx)
+        if not results:
+            return None
+        if len(results) == 1:
+            return results[0]
+        return results
 
     def _apply_smc_filter(
         self, signal, day_df: pd.DataFrame, day_date, df_trade_m1: pd.DataFrame, params: Dict
@@ -1281,6 +1352,205 @@ class FastBacktest:
             "direction": direction,
             "entry_time": df_trade["time"].iat[entry_idx],
             "entry_price": entry_price,  # Execution price (with spread)
+            "stop": stop,
+            "tp": tp,
+            "sl_adjusted": sl_adjusted,
+            "exit_time": exit_result["exit_time"],
+            "exit_price": exit_result["exit_price"],
+            "exit_reason": exit_result["exit_reason"],
+            "R": exit_result["R"],
+            "profit": exit_result["R"] * risk if risk > 0 else 0,
+            "ibh": ib["IBH"],
+            "ibl": ib["IBL"],
+            "eq": ib["EQ"],
+        }
+
+    def _detect_btib_bos(
+        self, df_trade_m1: pd.DataFrame, ib: Dict[str, float],
+        day_date: datetime.date, params: Dict,
+        fractal_ctx: Optional[Dict] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Detect BTIB BOS (Break of Structure) without simulating the trade.
+
+        Returns BOS detection info or None if no BOS found.
+        The BOS info includes: bos_time, bos_idx, direction, sl,
+        entry_idx (next candle after BOS).
+
+        BTIB logic (matches run_backtest_template.py lines 832-1479):
+        1. Track IB extensions (IBH + EXT_PCT*range, IBL - EXT_PCT*range)
+        2. After CORE_CUTOFF_MIN minutes, look for BOS
+        3. Bearish BOS SHORT: upper extension + close >= upper_ext + close < M2 low
+        4. Bullish BOS LONG: lower extension + close <= lower_ext + close > M2 high
+        5. SL from M2 fractal (fractal_2m: fractal.price, cisd: fractal.candle_close)
+        """
+        ibh, ibl = ib["IBH"], ib["IBL"]
+        ib_range = ibh - ibl
+        if ib_range <= 0:
+            return None
+
+        btib_sl_mode = params.get("btib_sl_mode", "fractal_2m")
+        core_cutoff_min = params.get("btib_core_cutoff_min", 40)
+        ext_pct = params.get("btib_extension_pct", 1.0)
+
+        upper_ext = ibh + ext_pct * ib_range
+        lower_ext = ibl - ext_pct * ib_range
+
+        # Compute trade window and cutoff
+        tw_start, tw_end = self._trade_window_on_date(
+            day_date, params["ib_end"], params["ib_timezone"],
+            params["ib_wait_minutes"], params["trade_window_minutes"]
+        )
+        cutoff_time = tw_start + timedelta(minutes=core_cutoff_min)
+
+        # Get M2 fractals from fractal_ctx (sorted by confirmed_time)
+        m2_list = fractal_ctx["m2_fractals"] if fractal_ctx else []
+
+        # State tracking
+        extension_upper = False
+        extension_lower = False
+        bos_broken_low = None   # (price, confirmed_time, candle_close) tuple
+        bos_broken_high = None
+
+        # M2 fractal pointer: track last confirmed M2 high/low
+        last_m2_high = None  # (price, confirmed_time, candle_close)
+        last_m2_low = None
+        m2_ptr = 0
+
+        for i in range(len(df_trade_m1)):
+            t = df_trade_m1["time"].iat[i]
+            hi = float(df_trade_m1["high"].iat[i])
+            lo = float(df_trade_m1["low"].iat[i])
+            cl = float(df_trade_m1["close"].iat[i])
+
+            # Advance M2 fractal pointer (confirmed_time <= current_time)
+            while m2_ptr < len(m2_list) and m2_list[m2_ptr].confirmed_time <= t:
+                m2f = m2_list[m2_ptr]
+                if m2f.type == "high":
+                    last_m2_high = (m2f.price, m2f.confirmed_time, m2f.candle_close)
+                else:
+                    last_m2_low = (m2f.price, m2f.confirmed_time, m2f.candle_close)
+                m2_ptr += 1
+
+            # Track extensions (whole trade window)
+            if hi >= upper_ext:
+                extension_upper = True
+            if lo <= lower_ext:
+                extension_lower = True
+
+            # BOS detection: only after core cutoff
+            if t < cutoff_time:
+                continue
+
+            # Bearish BOS -> SHORT: upper extension + close >= upper_ext + close < M2 low
+            if extension_upper and last_m2_low is not None and cl >= upper_ext:
+                if bos_broken_low is None or last_m2_low != bos_broken_low:
+                    if cl < last_m2_low[0]:
+                        bos_broken_low = last_m2_low
+                        # SL from last M2 high (opposite fractal)
+                        if last_m2_high:
+                            sl_price = last_m2_high[2] if btib_sl_mode == "cisd" else last_m2_high[0]
+                        else:
+                            sl_price = ibh
+                        # Entry on NEXT candle after BOS
+                        if i + 1 < len(df_trade_m1):
+                            return {
+                                "bos_time": t,
+                                "bos_idx": i,
+                                "bos_close": cl,
+                                "entry_idx": i + 1,
+                                "direction": "short",
+                                "sl": sl_price,
+                            }
+
+            # Bullish BOS -> LONG: lower extension + close <= lower_ext + close > M2 high
+            if extension_lower and last_m2_high is not None and cl <= lower_ext:
+                if bos_broken_high is None or last_m2_high != bos_broken_high:
+                    if cl > last_m2_high[0]:
+                        bos_broken_high = last_m2_high
+                        if last_m2_low:
+                            sl_price = last_m2_low[2] if btib_sl_mode == "cisd" else last_m2_low[0]
+                        else:
+                            sl_price = ibl
+                        if i + 1 < len(df_trade_m1):
+                            return {
+                                "bos_time": t,
+                                "bos_idx": i,
+                                "bos_close": cl,
+                                "entry_idx": i + 1,
+                                "direction": "long",
+                                "sl": sl_price,
+                            }
+
+        return None
+
+    def _simulate_btib_trade(
+        self, day_df: pd.DataFrame, bos_info: Dict,
+        ib: Dict[str, float], day_date: datetime.date, params: Dict,
+        fractal_ctx: Optional[Dict] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Simulate a BTIB trade from BOS detection info.
+
+        Entry is on the NEXT M1 candle OPEN after BOS.
+        Uses BTIB-specific RR/TSL/MIN_SL params.
+
+        Uses full day_df (not trade window) because BTIB trades have NO time
+        exit -- they run until SL/TP is hit. The slow engine's tsl_state for
+        BTIB omits position_window_end, so the position stays open beyond
+        the normal trade window.
+        """
+        # Find entry candle in day_df by matching the BOS entry time
+        bos_entry_time = bos_info["bos_time"]
+        direction = bos_info["direction"]
+        raw_sl = bos_info["sl"]
+
+        # Get data starting from BOS candle onward (all remaining day data)
+        df_after_bos = day_df[day_df["time"] > bos_entry_time].copy().reset_index(drop=True)
+        if df_after_bos.empty:
+            return None
+
+        # Entry on first candle OPEN after BOS
+        entry_idx = 0
+
+        btib_rr = params.get("btib_rr_target", 1.0)
+        btib_min_sl = params.get("btib_min_sl_pct", 0.001)
+        btib_tsl_target = params.get("btib_tsl_target", 0.0)
+        btib_tsl_sl = params.get("btib_tsl_sl", 0.0)
+
+        raw_entry_price = float(df_after_bos["open"].iat[entry_idx])
+
+        sl_tp = self._place_sl_tp_with_min_size(
+            direction, raw_entry_price, raw_sl, btib_rr, btib_min_sl
+        )
+        if sl_tp is None or sl_tp[0] is None:
+            return None
+
+        stop, tp, sl_adjusted = sl_tp
+        entry_price = self._get_execution_price(raw_entry_price, direction)
+
+        # Build BTIB-specific fractal context (own BE/TSL flags)
+        btib_fractal_ctx = None
+        if fractal_ctx is not None:
+            btib_fractal_ctx = dict(fractal_ctx)
+            btib_fractal_ctx["be_enabled"] = params.get("btib_fractal_be_enabled", False)
+            btib_fractal_ctx["tsl_enabled"] = params.get("btib_fractal_tsl_enabled", False)
+
+        exit_result = self._simulate_after_entry(
+            df_after_bos, entry_idx, direction, entry_price, stop, tp,
+            btib_tsl_target, btib_tsl_sl,
+            btib_fractal_ctx, raw_entry_price=raw_entry_price
+        )
+
+        risk = abs(entry_price - stop)
+        entry_time_m1 = df_after_bos["time"].iat[entry_idx]
+
+        return {
+            "date": day_date,
+            "variation": "BTIB",
+            "direction": direction,
+            "entry_time": entry_time_m1,
+            "entry_price": entry_price,
             "stop": stop,
             "tp": tp,
             "sl_adjusted": sl_adjusted,
