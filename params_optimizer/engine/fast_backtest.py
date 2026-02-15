@@ -15,6 +15,8 @@ from datetime import datetime, time, timedelta
 from typing import Optional, Dict, Any, Tuple, List, TYPE_CHECKING
 from dataclasses import dataclass, field
 
+from src.utils.strategy_logic import ANALYSIS_TF_CONFIG
+
 if TYPE_CHECKING:
     from src.news_filter import NewsFilter
 
@@ -33,10 +35,10 @@ class Signal:
     """Trading signal detected by signal detection functions."""
     signal_type: str  # "Reverse", "OCAE", "TCWE", "REV_RB"
     direction: str    # "long" or "short"
-    entry_idx: int    # Index in df_trade (M2) for entry
+    entry_idx: int    # Index in df_trade (ATF) for entry
     entry_price: float  # Raw price for SL/TP calculation (like IBStrategy signal.entry_price)
     stop_price: float
-    entry_time: Optional[pd.Timestamp] = None  # M2 candle time for M1 mapping
+    entry_time: Optional[pd.Timestamp] = None  # ATF candle time for M1 mapping
     tick_price: Optional[float] = None  # Tick price for execution (CLOSE of previous candle for Reverse)
     extra: Dict[str, Any] = field(default_factory=dict)  # Additional signal-specific data
 
@@ -149,18 +151,18 @@ class FastBacktest:
         # M2 data needed for: fractal TSL, BTIB BOS, REV_RB FVG matching
         need_m2 = tsl_enabled or btib_enabled or rev_rb_enabled
         if need_m2:
-            m2_data = self._resample_full("2min")
-            m2_fractals = detect_fractals(m2_data, self.symbol, "M2", candle_duration_hours=2 / 60)
+            atf_data = self._resample_full(self.atf_freq)
+            atf_fractals = detect_fractals(atf_data, self.symbol, self.atf_label, candle_duration_hours=self.atf_candle_hours)
         else:
-            m2_data = None
-            m2_fractals = []
+            atf_data = None
+            atf_fractals = []
 
         # H4 dedup: remove H1 fractals that overlap with H4 at same (type, round(price, 2))
         h4_keys = {(f.type, round(f.price, 2)) for f in h4_fractals}
         filtered_h1 = [f for f in h1_fractals if (f.type, round(f.price, 2)) not in h4_keys]
 
         h1h4_sorted = sorted(filtered_h1 + h4_fractals, key=lambda f: f.confirmed_time)
-        m2_sorted = sorted(m2_fractals, key=lambda f: f.confirmed_time)
+        atf_sorted = sorted(atf_fractals, key=lambda f: f.confirmed_time)
 
         # Pre-sweep: simulate the slow engine's global fractal sweep processing.
         # The slow engine checks sweeps on EVERY M1 candle (even without open positions)
@@ -179,22 +181,22 @@ class FastBacktest:
             htf_fvgs = []
 
         # M2 FVG detection for REV_RB matching
-        if rev_rb_enabled and m2_data is not None:
+        if rev_rb_enabled and atf_data is not None:
             if not fvg_be_enabled:
                 from src.smc.detectors.fvg_detector import detect_fvg
-            m2_fvgs = detect_fvg(m2_data, self.symbol, "M2")
-            m2_fvgs_sorted = sorted(m2_fvgs, key=lambda f: f.formation_time)
+            atf_fvgs = detect_fvg(atf_data, self.symbol, self.atf_label)
+            atf_fvgs_sorted = sorted(atf_fvgs, key=lambda f: f.formation_time)
         else:
-            m2_fvgs_sorted = []
+            atf_fvgs_sorted = []
 
         return {
             "h1h4_fractals": h1h4_sorted,
-            "m2_fractals": m2_sorted,
+            "atf_fractals": atf_sorted,
             "be_enabled": be_enabled,
             "tsl_enabled": tsl_enabled,
             "fvg_be_enabled": fvg_be_enabled,
             "htf_fvgs": htf_fvgs,
-            "m2_fvgs": m2_fvgs_sorted,
+            "atf_fvgs": atf_fvgs_sorted,
         }
 
     def _presweep_fractals(self, h1h4_sorted: list) -> None:
@@ -328,16 +330,24 @@ class FastBacktest:
             tz = pytz.timezone(timezone_str)
             self.m1_data["ib_date"] = self.m1_data["time"].dt.tz_convert(tz).dt.date
 
+            # Resolve analysis timeframe configuration
+            analysis_tf = params.get("analysis_tf", "2min")
+            atf_cfg = ANALYSIS_TF_CONFIG[analysis_tf]
+            self.atf_freq = atf_cfg["resample_freq"]
+            self.atf_label = atf_cfg["label"]
+            self.atf_minutes = atf_cfg["minutes"]
+            self.atf_candle_hours = atf_cfg["candle_duration_hours"]
+
             # Use pre-computed fractal cache if available, otherwise compute
             if fractal_cache is not None:
                 fractal_ctx = {
                     "h1h4_fractals": fractal_cache["h1h4_fractals"],
-                    "m2_fractals": fractal_cache["m2_fractals"],
+                    "atf_fractals": fractal_cache.get("atf_fractals", fractal_cache.get("m2_fractals", [])),
                     "be_enabled": params.get("fractal_be_enabled", False),
                     "tsl_enabled": params.get("fractal_tsl_enabled", False),
                     "fvg_be_enabled": params.get("fvg_be_enabled", False),
                     "htf_fvgs": fractal_cache.get("htf_fvgs", []),
-                    "m2_fvgs": fractal_cache.get("m2_fvgs", []),
+                    "atf_fvgs": fractal_cache.get("atf_fvgs", fractal_cache.get("m2_fvgs", [])),
                 }
             else:
                 fractal_ctx = self._precompute_fractals(params)
@@ -407,9 +417,9 @@ class FastBacktest:
         if df_trade_m1.empty:
             return None
 
-        # 3. Resample M1 to M2 for signal detection (like ib_strategy.get_bars("M2"))
-        df_trade_m2 = self._resample_m1_to_m2(df_trade_m1)
-        if df_trade_m2.empty:
+        # 3. Resample M1 to ATF for signal detection
+        df_trade_atf = self._resample_m1_to_atf(df_trade_m1)
+        if df_trade_atf.empty:
             return None
 
         # 4. Get pre-context for Reverse signal (also in M2)
@@ -425,10 +435,10 @@ class FastBacktest:
         ][["time", "open", "high", "low", "close"]].copy()
 
         # Resample pre-context to M2 as well
-        df_pre_context_m2 = self._resample_m1_to_m2(df_pre_context_m1) if not df_pre_context_m1.empty else pd.DataFrame()
+        df_pre_context_atf = self._resample_m1_to_atf(df_pre_context_m1) if not df_pre_context_m1.empty else pd.DataFrame()
 
         # Trade start price for stop calculation (first M2 candle open)
-        trade_start_price = float(df_trade_m2["open"].iat[0])
+        trade_start_price = float(df_trade_atf["open"].iat[0])
 
         # 5. Check signals in IBStrategy priority order: Reverse > OCAE > TCWE > REV_RB
         # IMPORTANT: REV_RB only triggers if all other signals fail (not based on entry_idx)
@@ -474,7 +484,7 @@ class FastBacktest:
                 # All M2-based signals: detection happens at M2 candle close.
                 # Slow engine news check is at the M1 candle when M2 closes,
                 # which is entry_time + 2min.
-                signal_close_time = sig.entry_time + timedelta(minutes=2)
+                signal_close_time = sig.entry_time + timedelta(minutes=self.atf_minutes)
                 if signal_close_time > trade_window_end:
                     return None
                 entry_time_for_news = signal_close_time
@@ -543,17 +553,17 @@ class FastBacktest:
         # Collect all valid primary signals and pick earliest by entry_idx
         primary_candidates = []
 
-        rev_sig = self._check_reverse(df_trade_m2, df_pre_context_m2, ibh, ibl, eq, params, df_trade_m1=df_trade_m1)
+        rev_sig = self._check_reverse(df_trade_atf, df_pre_context_atf, ibh, ibl, eq, params, df_trade_m1=df_trade_m1)
         rev_sig = validate_signal(rev_sig)
         if rev_sig is not None:
             primary_candidates.append(rev_sig)
 
-        ocae_sig = self._check_ocae(df_trade_m2, ibh, ibl, eq, trade_start_price, params)
+        ocae_sig = self._check_ocae(df_trade_atf, ibh, ibl, eq, trade_start_price, params)
         ocae_sig = validate_signal(ocae_sig)
         if ocae_sig is not None:
             primary_candidates.append(ocae_sig)
 
-        tcwe_sig = self._check_tcwe(df_trade_m2, ibh, ibl, eq, trade_start_price, params)
+        tcwe_sig = self._check_tcwe(df_trade_atf, ibh, ibl, eq, trade_start_price, params)
         tcwe_sig = validate_signal(tcwe_sig)
         if tcwe_sig is not None:
             primary_candidates.append(tcwe_sig)
@@ -576,7 +586,7 @@ class FastBacktest:
                 #          Reverse enters at entry_time
                 p_time = primary.entry_time
                 if primary.signal_type in ("OCAE", "TCWE"):
-                    p_time = primary.entry_time + timedelta(minutes=2)
+                    p_time = primary.entry_time + timedelta(minutes=self.atf_minutes)
                 # Account for news delay
                 p_delayed = primary.extra.get("news_delayed_entry_time")
                 if p_delayed is not None:
@@ -793,18 +803,18 @@ class FastBacktest:
             (day_df["time"] >= start_trade) & (day_df["time"] <= end_trade)
         ].copy().reset_index(drop=True)
 
-    def _resample_m1_to_m2(self, df_m1: pd.DataFrame) -> pd.DataFrame:
+    def _resample_m1_to_atf(self, df_m1: pd.DataFrame) -> pd.DataFrame:
         """
-        Resample M1 data to M2 for signal detection.
+        Resample M1 data to ATF (analysis timeframe) for signal detection.
 
-        Same logic as MT5Emulator.get_bars("M2", ...):
-        - time: first timestamp in 2-min window
+        Same logic as MT5Emulator.get_bars():
+        - time: first timestamp in ATF window
         - open: first open
         - high: max high
         - low: min low
         - close: last close
 
-        IMPORTANT: Excludes partial M2 bars at the start where the M2 timestamp
+        IMPORTANT: Excludes partial ATF bars at the start where the ATF timestamp
         is before the first M1 bar. This matches MT5Emulator behavior which
         only returns complete bars.
 
@@ -812,7 +822,7 @@ class FastBacktest:
             df_m1: M1 DataFrame with columns: time, open, high, low, close
 
         Returns:
-            M2 DataFrame with same columns
+            ATF DataFrame with same columns
         """
         if df_m1.empty:
             return df_m1
@@ -822,7 +832,6 @@ class FastBacktest:
 
         df = df_m1.set_index("time")
 
-        # Resample to 2-minute bars
         agg_dict = {
             "open": "first",
             "high": "max",
@@ -834,15 +843,13 @@ class FastBacktest:
         if "tick_volume" in df.columns:
             agg_dict["tick_volume"] = "sum"
 
-        m2 = df.resample("2min", label="left", closed="left").agg(agg_dict)
-        m2 = m2.dropna().reset_index()
+        resampled = df.resample(self.atf_freq, label="left", closed="left").agg(agg_dict)
+        resampled = resampled.dropna().reset_index()
 
-        # Filter out partial M2 bars at the start
-        # M2 bar is partial if its timestamp < first M1 bar time
-        # (means the M2 bar doesn't have data for its first minute)
-        m2 = m2[m2["time"] >= first_m1_time].reset_index(drop=True)
+        # Filter out partial ATF bars at the start
+        resampled = resampled[resampled["time"] >= first_m1_time].reset_index(drop=True)
 
-        return m2
+        return resampled
 
     def _apply_spread(self, price: float, direction: str) -> float:
         """
@@ -885,35 +892,35 @@ class FastBacktest:
         else:
             return raw_price - half_spread  # SELL at BID
 
-    def _find_m1_idx_for_m2_time(
-        self, df_m1: pd.DataFrame, m2_time: pd.Timestamp, for_entry: bool = True
+    def _find_m1_idx_for_atf_time(
+        self, df_m1: pd.DataFrame, atf_time: pd.Timestamp, for_entry: bool = True
     ) -> int:
         """
-        Find M1 index that corresponds to M2 candle time.
+        Find M1 index that corresponds to ATF candle time.
 
         For entry (for_entry=True):
-            M2 candle at 09:00 covers 09:00-09:02.
-            Entry happens AFTER M2 closes = at 09:02.
-            Find first M1 candle at or after 09:02.
+            ATF candle at 09:00 covers 09:00-09:00+atf_minutes.
+            Entry happens AFTER ATF closes.
+            Find first M1 candle at or after close time.
 
         For other operations (for_entry=False):
-            Find M1 candle that corresponds to M2 start time.
+            Find M1 candle that corresponds to ATF start time.
 
         Args:
             df_m1: M1 DataFrame
-            m2_time: M2 candle time
-            for_entry: If True, find entry point (after M2 close)
+            atf_time: ATF candle time
+            for_entry: If True, find entry point (after ATF close)
 
         Returns:
             Index in df_m1
         """
         if for_entry:
-            # Entry after M2 candle closes
-            m2_close_time = m2_time + timedelta(minutes=2)
-            mask = df_m1["time"] >= m2_close_time
+            # Entry after ATF candle closes
+            atf_close_time = atf_time + timedelta(minutes=self.atf_minutes)
+            mask = df_m1["time"] >= atf_close_time
         else:
-            # M2 candle start time
-            mask = df_m1["time"] >= m2_time
+            # ATF candle start time
+            mask = df_m1["time"] >= atf_time
 
         idx_arr = df_m1[mask].index
         if len(idx_arr) == 0:
@@ -947,15 +954,17 @@ class FastBacktest:
         buffer = ib_buffer_pct * ib_range
         n = len(df_trade)
 
-        # Build M2 -> first M1 mapping for progressive simulation
-        m2_first_m1: Dict[int, Dict[str, float]] = {}
-        if df_trade_m1 is not None and not df_trade_m1.empty:
+        # Build ATF -> first M1 mapping for progressive simulation (M2 only).
+        # For M5+ candles, first M1 is only 20% of the candle -- too small
+        # for reliable partial sweep detection. Skip and use complete candles only.
+        atf_first_m1: Dict[int, Dict[str, float]] = {}
+        if self.atf_minutes <= 2 and df_trade_m1 is not None and not df_trade_m1.empty:
             for i in range(n):
-                m2_time = df_trade["time"].iat[i]
-                mask = df_trade_m1["time"] == m2_time
+                atf_time = df_trade["time"].iat[i]
+                mask = df_trade_m1["time"] == atf_time
                 if mask.any():
                     idx = mask.idxmax()
-                    m2_first_m1[i] = {
+                    atf_first_m1[i] = {
                         "o": float(df_trade_m1["open"].iat[idx]),
                         "c": float(df_trade_m1["close"].iat[idx]),
                         "h": float(df_trade_m1["high"].iat[idx]),
@@ -981,8 +990,8 @@ class FastBacktest:
             # invalidation permanently stops the sweep scan.
             partial_upper = False
             partial_lower = False
-            if i in m2_first_m1:
-                pm = m2_first_m1[i]
+            if i in atf_first_m1:
+                pm = atf_first_m1[i]
                 # Partial sweep check (first M1 OHLC)
                 if pm["h"] > ibh and pm["o"] <= ibh + buffer and pm["c"] <= ibh + buffer:
                     sweeps.append({"dir": "upper", "idx": i, "ext": pm["h"]})
@@ -1353,11 +1362,11 @@ class FastBacktest:
             return None
 
         # Stage 2: M2 FVG Matching
-        m2_fvgs = fractal_ctx.get("m2_fvgs", []) if fractal_ctx else []
-        atf_minutes = 2  # M2 = 2min candles
+        atf_fvgs = fractal_ctx.get("atf_fvgs", []) if fractal_ctx else []
+        atf_minutes = self.atf_minutes
         matched_fvg = None
 
-        for fvg in m2_fvgs:
+        for fvg in atf_fvgs:
             fvg_confirmed = fvg.formation_time + timedelta(minutes=atf_minutes)
             delay_s = (fvg_confirmed - break_time).total_seconds()
             if delay_s < 0:
@@ -1632,7 +1641,7 @@ class FastBacktest:
         cutoff_time = tw_start + timedelta(minutes=core_cutoff_min)
 
         # Get M2 fractals from fractal_ctx (sorted by confirmed_time)
-        m2_list = fractal_ctx["m2_fractals"] if fractal_ctx else []
+        atf_list = fractal_ctx["atf_fractals"] if fractal_ctx else []
 
         # State tracking
         extension_upper = False
@@ -1641,9 +1650,9 @@ class FastBacktest:
         bos_broken_high = None
 
         # M2 fractal pointer: track last confirmed M2 high/low
-        last_m2_high = None  # (price, confirmed_time, candle_close)
-        last_m2_low = None
-        m2_ptr = 0
+        last_atf_high = None  # (price, confirmed_time, candle_close)
+        last_atf_low = None
+        atf_ptr = 0
 
         for i in range(len(df_trade_m1)):
             t = df_trade_m1["time"].iat[i]
@@ -1652,13 +1661,13 @@ class FastBacktest:
             cl = float(df_trade_m1["close"].iat[i])
 
             # Advance M2 fractal pointer (confirmed_time <= current_time)
-            while m2_ptr < len(m2_list) and m2_list[m2_ptr].confirmed_time <= t:
-                m2f = m2_list[m2_ptr]
-                if m2f.type == "high":
-                    last_m2_high = (m2f.price, m2f.confirmed_time, m2f.candle_close)
+            while atf_ptr < len(atf_list) and atf_list[atf_ptr].confirmed_time <= t:
+                af = atf_list[atf_ptr]
+                if af.type == "high":
+                    last_atf_high = (af.price, af.confirmed_time, af.candle_close)
                 else:
-                    last_m2_low = (m2f.price, m2f.confirmed_time, m2f.candle_close)
-                m2_ptr += 1
+                    last_atf_low = (af.price, af.confirmed_time, af.candle_close)
+                atf_ptr += 1
 
             # Track extensions (whole trade window)
             if hi >= upper_ext:
@@ -1671,13 +1680,13 @@ class FastBacktest:
                 continue
 
             # Bearish BOS -> SHORT: upper extension + close >= upper_ext + close < M2 low
-            if extension_upper and last_m2_low is not None and cl >= upper_ext:
-                if bos_broken_low is None or last_m2_low != bos_broken_low:
-                    if cl < last_m2_low[0]:
-                        bos_broken_low = last_m2_low
+            if extension_upper and last_atf_low is not None and cl >= upper_ext:
+                if bos_broken_low is None or last_atf_low != bos_broken_low:
+                    if cl < last_atf_low[0]:
+                        bos_broken_low = last_atf_low
                         # SL from last M2 high (opposite fractal)
-                        if last_m2_high:
-                            sl_price = last_m2_high[2] if btib_sl_mode == "cisd" else last_m2_high[0]
+                        if last_atf_high:
+                            sl_price = last_atf_high[2] if btib_sl_mode == "cisd" else last_atf_high[0]
                         else:
                             sl_price = ibh
                         # Entry on NEXT candle after BOS
@@ -1692,12 +1701,12 @@ class FastBacktest:
                             }
 
             # Bullish BOS -> LONG: lower extension + close <= lower_ext + close > M2 high
-            if extension_lower and last_m2_high is not None and cl <= lower_ext:
-                if bos_broken_high is None or last_m2_high != bos_broken_high:
-                    if cl > last_m2_high[0]:
-                        bos_broken_high = last_m2_high
-                        if last_m2_low:
-                            sl_price = last_m2_low[2] if btib_sl_mode == "cisd" else last_m2_low[0]
+            if extension_lower and last_atf_high is not None and cl <= lower_ext:
+                if bos_broken_high is None or last_atf_high != bos_broken_high:
+                    if cl > last_atf_high[0]:
+                        bos_broken_high = last_atf_high
+                        if last_atf_low:
+                            sl_price = last_atf_low[2] if btib_sl_mode == "cisd" else last_atf_low[0]
                         else:
                             sl_price = ibl
                         if i + 1 < len(df_trade_m1):
@@ -1777,7 +1786,8 @@ class FastBacktest:
         exit_result = self._simulate_after_entry(
             df_after_bos, entry_idx, direction, entry_price, stop, tp,
             btib_tsl_target, btib_tsl_sl,
-            btib_fractal_ctx, raw_entry_price=raw_entry_price
+            btib_fractal_ctx, raw_entry_price=raw_entry_price,
+            is_btib=True
         )
 
         risk = abs(entry_price - stop)
@@ -1836,17 +1846,17 @@ class FastBacktest:
         # Direct M1 time: news delay or REV_RB limit fill (already on M1 data)
         m1_direct_time = signal.extra.get("news_delayed_entry_time") or signal.extra.get("m1_entry_time")
         if m1_direct_time is not None:
-            m1_entry_idx = self._find_m1_idx_for_m2_time(df_m1, m1_direct_time, for_entry=False)
+            m1_entry_idx = self._find_m1_idx_for_atf_time(df_m1, m1_direct_time, for_entry=False)
         elif signal.entry_time is not None:
             if signal.signal_type == "Reverse":
                 # Reverse enters on OPEN of entry_time candle
-                m1_entry_idx = self._find_m1_idx_for_m2_time(df_m1, signal.entry_time, for_entry=False)
+                m1_entry_idx = self._find_m1_idx_for_atf_time(df_m1, signal.entry_time, for_entry=False)
             else:
                 # OCAE/TCWE/REV_RB enter after signal candle closes
-                m1_entry_idx = self._find_m1_idx_for_m2_time(df_m1, signal.entry_time, for_entry=True)
+                m1_entry_idx = self._find_m1_idx_for_atf_time(df_m1, signal.entry_time, for_entry=True)
         else:
             # Fallback: use entry_idx directly (shouldn't happen)
-            m1_entry_idx = min(signal.entry_idx * 2, len(df_m1) - 1)
+            m1_entry_idx = min(signal.entry_idx * self.atf_minutes, len(df_m1) - 1)
 
         # Resolve per-variation params (XAUUSD has different RR/TSL/STOP per variation)
         variation = signal.signal_type.lower()  # "reverse", "ocae", "tcwe", "rev_rb"
@@ -1914,7 +1924,8 @@ class FastBacktest:
         self, df_trade: pd.DataFrame, start_idx: int, direction: str,
         entry_price: float, stop: float, tp: float, tsl_target: float, tsl_sl: float,
         fractal_ctx: Optional[Dict] = None,
-        raw_entry_price: Optional[float] = None
+        raw_entry_price: Optional[float] = None,
+        is_btib: bool = False
     ) -> Dict[str, Any]:
         """
         Trade exit simulation with organic TSL + fractal BE/TSL.
@@ -1949,6 +1960,13 @@ class FastBacktest:
         tsl_sl_val = 0.0 if tsl_sl is None else float(tsl_sl)
         no_trail = (tsl_target_val <= 0.0)
 
+        # TP check behavior matches slow engine's position.tp:
+        # - Core trades with TSL (use_virtual_tp=True): position.tp=0 from start -> never check TP
+        # - BTIB trades (use_virtual_tp=False): position.tp>0 initially -> check TP
+        #   until first TSL step, which sets position.tp=0 via modify_position(ticket,sl,0.0)
+        # - No-trail trades: position.tp>0 always -> always check TP
+        tp_check_enabled = is_btib  # BTIB has position.tp > 0 until first TSL step
+
         half_spread = SPREAD_POINTS.get(self.symbol, 0.0) / 2
         is_long = direction == "long"
 
@@ -1963,7 +1981,7 @@ class FastBacktest:
         if use_fractals:
             entry_time = df_trade["time"].iat[start_idx]
             h1h4_list = fractal_ctx["h1h4_fractals"]
-            m2_list = fractal_ctx["m2_fractals"]
+            atf_list = fractal_ctx["atf_fractals"]
             be_enabled = fractal_ctx["be_enabled"]
             tsl_enabled = fractal_ctx["tsl_enabled"]
 
@@ -1972,16 +1990,16 @@ class FastBacktest:
             while h1h4_ptr < len(h1h4_list) and h1h4_list[h1h4_ptr].confirmed_time <= entry_time:
                 h1h4_ptr += 1
 
-            m2_ptr = 0
-            last_m2_high = None  # price only
-            last_m2_low = None   # price only
-            while m2_ptr < len(m2_list) and m2_list[m2_ptr].confirmed_time <= entry_time:
-                mf = m2_list[m2_ptr]
+            atf_ptr = 0
+            last_atf_high = None  # price only
+            last_atf_low = None   # price only
+            while atf_ptr < len(atf_list) and atf_list[atf_ptr].confirmed_time <= entry_time:
+                mf = atf_list[atf_ptr]
                 if mf.type == "high":
-                    last_m2_high = mf.price
+                    last_atf_high = mf.price
                 else:
-                    last_m2_low = mf.price
-                m2_ptr += 1
+                    last_atf_low = mf.price
+                atf_ptr += 1
 
             # Build initial active H1/H4 fractals:
             # confirmed before entry, not expired, not pre-swept.
@@ -2069,9 +2087,9 @@ class FastBacktest:
                 candidates.append(fractal_be_sl)
             if fvg_be_sl is not None:
                 candidates.append(fvg_be_sl)
-            if fractal_tsl_active and ((is_long and last_m2_low is not None) or
-                                       (not is_long and last_m2_high is not None)):
-                fractal_tsl_sl = last_m2_low if is_long else last_m2_high
+            if fractal_tsl_active and ((is_long and last_atf_low is not None) or
+                                       (not is_long and last_atf_high is not None)):
+                fractal_tsl_sl = last_atf_low if is_long else last_atf_high
             effective_sl = max(candidates) if is_long else min(candidates)
             if fractal_tsl_sl is not None:
                 effective_sl = max(effective_sl, fractal_tsl_sl) if is_long else min(effective_sl, fractal_tsl_sl)
@@ -2084,24 +2102,11 @@ class FastBacktest:
             hi = float(df_trade["high"].iat[i])
             t = df_trade["time"].iat[i]
 
-            # === Step 1: TP check (no_trail only - actual TP exit) ===
-            if no_trail:
-                if is_long:
-                    if hi >= curr_tp:
-                        tp_r = (curr_tp - entry_price) / risk
-                        return {"exit_reason": "tp", "exit_time": t,
-                                "exit_price": curr_tp, "R": tp_r,
-                                "effective_sl": effective_sl}
-                else:
-                    if lo <= curr_tp:
-                        tp_r = (entry_price - curr_tp) / risk
-                        return {"exit_reason": "tp", "exit_time": t,
-                                "exit_price": curr_tp, "R": tp_r,
-                                "effective_sl": effective_sl}
-
-            # === Step 2: Organic TSL update (trail mode only) ===
+            # === Step 1: Organic TSL update (trail mode only) ===
             # Uses tsl_risk (raw entry based) for step size, matching slow engine's
-            # IBStrategy.update_position_state() which uses tsl_state["entry_price"]
+            # IBStrategy.update_position_state() which uses tsl_state["entry_price"].
+            # Slow engine TSL uses tick.bid which equals OPEN of current candle
+            # (approx close of previous candle), so we use prev_close here.
             organic_sl = curr_stop
             if not no_trail:
                 prev_close = float(df_trade["close"].iat[i - 1])
@@ -2111,15 +2116,18 @@ class FastBacktest:
                         new_stop = curr_stop + tsl_sl_val * tsl_risk
                         curr_stop = max(curr_stop, new_stop)
                         curr_tp = curr_tp + tsl_target_val * tsl_risk
+                        # Slow engine sets position.tp=0 after first TSL step
+                        tp_check_enabled = False
                 else:
                     tsl_price = prev_close - half_spread
                     if tsl_price <= curr_tp:
                         new_stop = curr_stop - tsl_sl_val * tsl_risk
                         curr_stop = min(curr_stop, new_stop)
                         curr_tp = curr_tp - tsl_target_val * tsl_risk
+                        tp_check_enabled = False
                 organic_sl = curr_stop
 
-            # === Step 3: Fractal logic ===
+            # === Step 2: Fractal logic ===
             if use_fractals:
                 # 3a. Advance H1/H4 pointer (newly confirmed fractals)
                 while h1h4_ptr < len(h1h4_list) and h1h4_list[h1h4_ptr].confirmed_time <= t:
@@ -2136,14 +2144,14 @@ class FastBacktest:
                            (f.timeframe == "H4" and f.time >= exp_h4)
                     ]
 
-                # 3c. Advance M2 pointer, update last_m2_high/low
-                while m2_ptr < len(m2_list) and m2_list[m2_ptr].confirmed_time <= t:
-                    mf = m2_list[m2_ptr]
+                # 3c. Advance M2 pointer, update last_atf_high/low
+                while atf_ptr < len(atf_list) and atf_list[atf_ptr].confirmed_time <= t:
+                    mf = atf_list[atf_ptr]
                     if mf.type == "high":
-                        last_m2_high = mf.price
+                        last_atf_high = mf.price
                     else:
-                        last_m2_low = mf.price
-                    m2_ptr += 1
+                        last_atf_low = mf.price
+                    atf_ptr += 1
 
                 # 3d. Check H1/H4 fractal sweeps
                 swept_indices = []
@@ -2171,12 +2179,12 @@ class FastBacktest:
 
                 # 3g. Update fractal TSL SL value (every candle if active)
                 if fractal_tsl_active:
-                    if is_long and last_m2_low is not None:
-                        fractal_tsl_sl = last_m2_low
-                    elif not is_long and last_m2_high is not None:
-                        fractal_tsl_sl = last_m2_high
+                    if is_long and last_atf_low is not None:
+                        fractal_tsl_sl = last_atf_low
+                    elif not is_long and last_atf_high is not None:
+                        fractal_tsl_sl = last_atf_high
 
-            # === Step 3.5: FVG BE logic ===
+            # === Step 2.5: FVG BE logic ===
             if use_fvg_be and fvg_be_sl is None:
                 # Advance FVG pointer (newly confirmed)
                 while fvg_ptr < len(htf_fvgs):
@@ -2204,7 +2212,7 @@ class FastBacktest:
                             fvg_be_sl = entry_price
                             break
 
-            # === Step 4: Compute effective SL ===
+            # === Step 3: Compute effective SL ===
             candidates = [organic_sl]
             if fractal_be_sl is not None:
                 candidates.append(fractal_be_sl)
@@ -2215,25 +2223,38 @@ class FastBacktest:
 
             effective_sl = max(candidates) if is_long else min(candidates)
 
-            # === Step 5: Same-candle SL prevention ===
+            # === Step 4: Same-candle SL prevention ===
             # If SL changed this candle (by organic TSL or fractal), use prev candle's SL
             if abs(effective_sl - effective_sl_prev) > 0.001:
                 check_sl = effective_sl_prev
             else:
                 check_sl = effective_sl
 
-            # === Step 6: SL hit check ===
+            # === Step 5: SL check (priority) + TP check ===
+            # Matches slow engine _check_sltp_hits: SL checked first, TP second.
+            # TP check: no_trail (position.tp>0 always) or tp_check_enabled (BTIB before first TSL step)
+            check_tp = no_trail or tp_check_enabled
             if is_long:
                 if lo <= check_sl:
                     exit_price = check_sl if hi >= check_sl else hi
                     r = (exit_price - entry_price) / risk
                     return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r,
                             "effective_sl": effective_sl}
+                elif check_tp and hi >= curr_tp:
+                    tp_r = (curr_tp - entry_price) / risk
+                    return {"exit_reason": "tp", "exit_time": t,
+                            "exit_price": curr_tp, "R": tp_r,
+                            "effective_sl": effective_sl}
             else:
                 if hi >= check_sl:
                     exit_price = check_sl if lo <= check_sl else lo
                     r = (entry_price - exit_price) / risk
                     return {"exit_reason": "stop", "exit_time": t, "exit_price": exit_price, "R": r,
+                            "effective_sl": effective_sl}
+                elif check_tp and lo <= curr_tp:
+                    tp_r = (entry_price - curr_tp) / risk
+                    return {"exit_reason": "tp", "exit_time": t,
+                            "exit_price": curr_tp, "R": tp_r,
                             "effective_sl": effective_sl}
 
             # Update prev for next candle

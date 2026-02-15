@@ -2,7 +2,7 @@
 """
 Fractal Pre-compute Module for Parameter Optimization.
 
-Pre-calculates H1/H4/M2 fractals and pre-sweep state for all M1 data.
+Pre-calculates H1/H4/ATF fractals and pre-sweep state for all M1 data.
 Fractals depend ONLY on price data, not on strategy params, so they
 can be computed once and reused across millions of param combinations.
 
@@ -27,25 +27,33 @@ from params_optimizer.engine.fast_backtest import FastBacktest
 def precompute_fractal_cache(
     symbol: str,
     m1_data: pd.DataFrame,
+    analysis_tf: str = "2min",
 ) -> Dict[str, Any]:
     """
     Pre-compute fractal cache for all M1 data.
 
     Performs:
-    1. Resample M1 -> H1, H4, M2
+    1. Resample M1 -> H1, H4, ATF (configurable analysis timeframe)
     2. Detect fractals on each timeframe
     3. H4 dedup + sort by confirmed_time
     4. Pre-sweep: mark which fractals were swept by price action
-    5. Sort M2 fractals by confirmed_time
+    5. Sort ATF fractals by confirmed_time
 
     Args:
         symbol: Trading symbol
         m1_data: Full M1 candle data
+        analysis_tf: Analysis timeframe key ("2min", "5min", etc.)
 
     Returns:
-        Dict with h1h4_fractals, m2_fractals, and metadata
+        Dict with h1h4_fractals, atf_fractals, and metadata
     """
     from src.smc.detectors.fractal_detector import detect_fractals
+    from src.utils.strategy_logic import ANALYSIS_TF_CONFIG
+
+    atf_cfg = ANALYSIS_TF_CONFIG[analysis_tf]
+    atf_freq = atf_cfg["resample_freq"]
+    atf_label = atf_cfg["label"]
+    atf_candle_hours = atf_cfg["candle_duration_hours"]
 
     engine = FastBacktest(symbol, m1_data)
 
@@ -53,10 +61,10 @@ def precompute_fractal_cache(
     t0 = time.perf_counter()
     h1_data = engine._resample_full("1h")
     h4_data = engine._resample_full("4h")
-    m2_data = engine._resample_full("2min")
+    atf_data = engine._resample_full(atf_freq)
     t_resample = time.perf_counter() - t0
     print_status(f"Resample: {t_resample:.2f}s "
-                 f"(H1={len(h1_data)}, H4={len(h4_data)}, M2={len(m2_data)} candles)", "INFO")
+                 f"(H1={len(h1_data)}, H4={len(h4_data)}, {atf_label}={len(atf_data)} candles)", "INFO")
 
     # Detect fractals
     t0 = time.perf_counter()
@@ -68,18 +76,18 @@ def precompute_fractal_cache(
     t_h4 = time.perf_counter() - t0
 
     t0 = time.perf_counter()
-    m2_fractals = detect_fractals(m2_data, symbol, "M2", candle_duration_hours=2 / 60)
-    t_m2 = time.perf_counter() - t0
+    atf_fractals = detect_fractals(atf_data, symbol, atf_label, candle_duration_hours=atf_candle_hours)
+    t_atf = time.perf_counter() - t0
 
     print_status(f"Detect H1: {t_h1:.2f}s ({len(h1_fractals)} fractals)", "INFO")
     print_status(f"Detect H4: {t_h4:.2f}s ({len(h4_fractals)} fractals)", "INFO")
-    print_status(f"Detect M2: {t_m2:.2f}s ({len(m2_fractals)} fractals)", "INFO")
+    print_status(f"Detect {atf_label}: {t_atf:.2f}s ({len(atf_fractals)} fractals)", "INFO")
 
     # H4 dedup + sort
     h4_keys = {(f.type, round(f.price, 2)) for f in h4_fractals}
     filtered_h1 = [f for f in h1_fractals if (f.type, round(f.price, 2)) not in h4_keys]
     h1h4_sorted = sorted(filtered_h1 + h4_fractals, key=lambda f: f.confirmed_time)
-    m2_sorted = sorted(m2_fractals, key=lambda f: f.confirmed_time)
+    atf_sorted = sorted(atf_fractals, key=lambda f: f.confirmed_time)
 
     print_status(f"H1H4 combined: {len(h1h4_sorted)} (H1={len(filtered_h1)}, H4={len(h4_fractals)})", "INFO")
 
@@ -108,14 +116,15 @@ def precompute_fractal_cache(
 
     return {
         "h1h4_fractals": h1h4_sorted,
-        "m2_fractals": m2_sorted,
+        "atf_fractals": atf_sorted,
         "htf_fvgs": htf_fvgs,
         "h1_count": len(h1_fractals),
         "h4_count": len(h4_fractals),
-        "m2_count": len(m2_fractals),
+        "atf_count": len(atf_fractals),
         "h1_fvg_count": len(h1_fvgs),
         "h4_fvg_count": len(h4_fvgs),
         "symbol": symbol,
+        "analysis_tf": analysis_tf,
         "m1_candles": len(m1_data),
     }
 
@@ -137,21 +146,28 @@ def load_cache(cache_path: Path) -> Optional[Dict]:
         return pickle.load(f)
 
 
-def get_cache_path(symbol: str) -> Path:
-    """Get path to fractal cache file for symbol."""
-    return Path(__file__).parent / "optimized" / f"{symbol}_fractal_cache.pkl"
+def get_cache_path(symbol: str, analysis_tf: str = "2min") -> Path:
+    """Get path to fractal cache file for symbol and analysis TF."""
+    if analysis_tf == "2min":
+        # Backward-compatible: default M2 uses original filename
+        return Path(__file__).parent / "optimized" / f"{symbol}_fractal_cache.pkl"
+    return Path(__file__).parent / "optimized" / f"{symbol}_{analysis_tf}_fractal_cache.pkl"
 
 
 def main():
     parser = argparse.ArgumentParser(description="Pre-compute fractal cache for optimization")
     parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100"],
                         required=True, help="Symbol to pre-compute fractals for")
+    parser.add_argument("--analysis-tf", type=str, default="2min",
+                        choices=["1min", "2min", "3min", "5min"],
+                        help="Analysis timeframe (default: 2min)")
     parser.add_argument("--force", action="store_true",
                         help="Force re-computation even if cache exists")
     args = parser.parse_args()
 
     symbol = args.symbol
-    cache_path = get_cache_path(symbol)
+    analysis_tf = args.analysis_tf
+    cache_path = get_cache_path(symbol, analysis_tf)
 
     if cache_path.exists() and not args.force:
         print_status(f"Cache already exists: {cache_path}", "WARNING")
@@ -167,9 +183,9 @@ def main():
 
     # Pre-compute cache
     print_status("=" * 50, "HEADER")
-    print_status(f"Pre-computing fractal cache for {symbol}", "HEADER")
+    print_status(f"Pre-computing fractal cache for {symbol} (ATF={analysis_tf})", "HEADER")
     t0 = time.perf_counter()
-    cache = precompute_fractal_cache(symbol, m1_data)
+    cache = precompute_fractal_cache(symbol, m1_data, analysis_tf=analysis_tf)
     t_total = time.perf_counter() - t0
 
     print_status("=" * 50, "HEADER")

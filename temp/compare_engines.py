@@ -78,6 +78,9 @@ def prod_to_flat(nested: dict, variation: str = "Reverse") -> dict:
         flat[f"{prefix}_max_distance_pct"] = vdata.get("MAX_DISTANCE_PCT", flat["max_distance_pct"])
         flat[f"{prefix}_fvg_be_enabled"] = vdata.get("FVG_BE_ENABLED", flat["fvg_be_enabled"])
 
+    # Analysis timeframe
+    flat["analysis_tf"] = nested.get("_analysis_tf", "2min")
+
     # BTIB params
     btib = nested.get("BTIB", {})
     flat["btib_enabled"] = btib.get("BTIB_ENABLED", False)
@@ -116,7 +119,8 @@ def load_m1_data(symbol: str, start_date: datetime, end_date: datetime) -> pd.Da
     return df
 
 
-def run_slow_engine(symbol: str, params: dict, start_date: datetime, end_date: datetime):
+def run_slow_engine(symbol: str, params: dict, start_date: datetime, end_date: datetime,
+                    analysis_tf: str = "2min"):
     """Run slow backtest engine, return trade log."""
     trade_log = run_backtest(
         symbol=symbol,
@@ -129,6 +133,7 @@ def run_slow_engine(symbol: str, params: dict, start_date: datetime, end_date: d
         initial_balance=100000.0,
         generate_charts=False,
         output_name="compare_slow",
+        analysis_tf=analysis_tf,
     )
     return trade_log or []
 
@@ -408,9 +413,15 @@ def main():
             end_date = datetime.strptime(nested_params.pop("_end_date"), "%Y-%m-%d").replace(tzinfo=pytz.UTC)
         if "_symbol" in nested_params:
             args.symbol = nested_params.pop("_symbol")
+        analysis_tf = nested_params.pop("_analysis_tf", "2min")
+        # Remove description metadata key if present
+        nested_params.pop("_description", None)
         print(f"\nComparing engines: {args.symbol} | {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
         print(f"  Params from: {args.params_file}")
+        if analysis_tf != "2min":
+            print(f"  Analysis TF: {analysis_tf}")
     else:
+        analysis_tf = "2min"
         PARAMS_MAP = {
             "GER40": GER40_PARAMS_PROD,
             "XAUUSD": XAUUSD_PARAMS_PROD,
@@ -468,11 +479,13 @@ def main():
 
     # Run slow engine
     print("\nRunning SLOW engine...")
-    slow_trades = run_slow_engine(args.symbol, nested_params, start_date, end_date)
+    slow_trades = run_slow_engine(args.symbol, nested_params, start_date, end_date,
+                                  analysis_tf=analysis_tf)
     print(f"  Slow: {len(slow_trades)} trades")
 
     # Convert to flat params and run fast engine
     flat_params = prod_to_flat(nested_params)
+    flat_params["analysis_tf"] = analysis_tf
     print("\nRunning FAST engine...")
     fast_trades = run_fast_engine(args.symbol, m1_data, flat_params, news_filter)
     print(f"  Fast: {len(fast_trades)} trades")
