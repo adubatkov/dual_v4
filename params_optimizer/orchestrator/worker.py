@@ -26,6 +26,7 @@ _WORKER_SYMBOL: Optional[str] = None
 _WORKER_BACKTEST = None
 _WORKER_IB_CACHE = None
 _WORKER_NEWS_FILTER = None
+_WORKER_FRACTAL_CACHE = None
 
 
 def init_worker_data(
@@ -38,6 +39,7 @@ def init_worker_data(
     news_filter_enabled: bool = True,
     news_before_minutes: int = 2,
     news_after_minutes: int = 2,
+    fractal_cache_path: Optional[Path] = None,
 ) -> None:
     """
     Initialize worker with cached data and FastBacktest.
@@ -54,11 +56,13 @@ def init_worker_data(
         news_filter_enabled: Enable news filter for 5ers compliance (default: True)
         news_before_minutes: Minutes before news to block trades (default: 2)
         news_after_minutes: Minutes after news to block trades (default: 2)
+        fractal_cache_path: Path to pre-computed fractal cache (huge speedup: ~145s -> ~17s/combo)
     """
-    global _WORKER_DATA, _WORKER_SYMBOL, _WORKER_BACKTEST, _WORKER_IB_CACHE, _WORKER_NEWS_FILTER
+    global _WORKER_DATA, _WORKER_SYMBOL, _WORKER_BACKTEST, _WORKER_IB_CACHE, _WORKER_NEWS_FILTER, _WORKER_FRACTAL_CACHE
 
     from params_optimizer.engine.fast_backtest_optimized import FastBacktestOptimized
     from params_optimizer.data.ib_precompute import load_cache
+    import pickle
 
     # Load data
     if data_path.suffix == ".parquet":
@@ -76,6 +80,12 @@ def init_worker_data(
     _WORKER_IB_CACHE = None
     if ib_cache_path and Path(ib_cache_path).exists():
         _WORKER_IB_CACHE = load_cache(Path(ib_cache_path))
+
+    # Load fractal cache (huge speedup: ~145s -> ~17s per combo)
+    _WORKER_FRACTAL_CACHE = None
+    if fractal_cache_path and Path(fractal_cache_path).exists():
+        with open(fractal_cache_path, "rb") as f:
+            _WORKER_FRACTAL_CACHE = pickle.load(f)
 
     # Initialize news filter if enabled
     _WORKER_NEWS_FILTER = None
@@ -103,8 +113,9 @@ def init_worker_data(
     import os
     pid = os.getpid()
     cache_status = "with IB cache" if _WORKER_IB_CACHE else "without IB cache"
+    fractal_status = ", fractal cache" if _WORKER_FRACTAL_CACHE else ""
     news_status = f", news filter ({_WORKER_NEWS_FILTER.event_count} events)" if _WORKER_NEWS_FILTER else ""
-    print(f"[Worker {pid}] Initialized FastBacktestOptimized with {len(_WORKER_DATA):,} candles for {symbol} ({cache_status}{news_status})")
+    print(f"[Worker {pid}] Initialized FastBacktestOptimized with {len(_WORKER_DATA):,} candles for {symbol} ({cache_status}{fractal_status}{news_status})")
 
 
 def process_combination(params_tuple: Tuple) -> Dict[str, Any]:
@@ -144,8 +155,10 @@ def process_combination(params_tuple: Tuple) -> Dict[str, Any]:
     params = grid.from_tuple(params_tuple)
 
     try:
-        # Run fast backtest
-        results = _WORKER_BACKTEST.run_with_params(params)
+        # Run fast backtest (with fractal cache if available for ~8x speedup)
+        results = _WORKER_BACKTEST.run_with_params(
+            params, fractal_cache=_WORKER_FRACTAL_CACHE
+        )
 
         # Add params to results
         results["params"] = params

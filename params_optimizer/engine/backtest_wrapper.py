@@ -88,7 +88,6 @@ class BacktestWrapper:
                 - tsl_sl: TSL move SL to R level
                 - min_sl_pct: Minimum SL percentage
                 - rev_rb_enabled: Reverse rollback enabled
-                - rev_rb_pct: Reverse rollback percentage
                 - ib_buffer_pct: IB buffer percentage
                 - max_distance_pct: Max distance from IB percentage
 
@@ -280,7 +279,6 @@ class BacktestWrapper:
             "IB_BUFFER_PCT": params.get("ib_buffer_pct", 0.0),
             "MAX_DISTANCE_PCT": params.get("max_distance_pct", 1.0),
             "REV_RB_ENABLED": params.get("rev_rb_enabled", False),
-            "REV_RB_PCT": params.get("rev_rb_pct", 0.5),  # FIX: was missing
         }
 
         # Build params dict with all variations

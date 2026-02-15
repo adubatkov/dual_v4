@@ -313,10 +313,20 @@ if __name__ == "__main__":
                 "tsl_target": random.choice([0, 1.0, 1.5]),
                 "tsl_sl": 1.0,
                 "min_sl_pct": 0.001,
-                "rev_rb_enabled": random.choice([True, False]),
-                "rev_rb_pct": 0.5,
                 "ib_buffer_pct": random.choice([0, 0.05, 0.1]),
                 "max_distance_pct": random.choice([0.5, 0.75, 1.0]),
+                "analysis_tf": "2min",
+                "fractal_be_enabled": True,
+                "fractal_tsl_enabled": True,
+                "fvg_be_enabled": False,
+                "rev_rb_enabled": random.choice([True, False]),
+                "btib_enabled": False,
+                "btib_sl_mode": "fractal_2m",
+                "btib_core_cutoff_min": 40,
+                "btib_extension_pct": 1.0,
+                "btib_rr_target": 1.0,
+                "btib_tsl_target": 0.0,
+                "btib_tsl_sl": 0.0,
             }
 
             sample_results.append({

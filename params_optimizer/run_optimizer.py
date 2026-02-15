@@ -82,6 +82,7 @@ def run_optimization(
     output_dir: Path,
     run_dir: str = None,
     grid_mode: str = "standard",
+    max_combos: int = None,
     news_filter_enabled: bool = True,
     news_before_minutes: int = 2,
     news_after_minutes: int = 2,
@@ -94,6 +95,7 @@ def run_optimization(
         resume: Resume from checkpoint
         output_dir: Base output directory
         run_dir: Specific run directory name (for resume)
+        max_combos: Max combinations to test (None = all)
         news_filter_enabled: Enable news filter (default: True for 5ers compliance)
         news_before_minutes: Minutes before news to block trades
         news_after_minutes: Minutes after news to block trades
@@ -133,6 +135,7 @@ def run_optimization(
         symbol=symbol,
         num_workers=workers,
         grid_mode=grid_mode,
+        max_combos=max_combos,
         output_dir=run_output_dir,
         news_filter_enabled=news_filter_enabled,
         news_before_minutes=news_before_minutes,
@@ -336,6 +339,14 @@ Examples:
         help="Specific run directory name (for resume or generate-excel)"
     )
 
+    # Limit combinations
+    parser.add_argument(
+        "--max-combos",
+        type=int,
+        default=None,
+        help="Max combinations to test (default: all). Random sample from full grid."
+    )
+
     # News filter options (5ers compliance)
     parser.add_argument(
         "--no-news-filter",
@@ -391,6 +402,8 @@ Examples:
     print_status(f"Workers: {workers}", "INFO")
     print_status(f"Resume: {resume}", "INFO")
     print_status(f"Base output: {args.output_dir}", "INFO")
+    if args.max_combos:
+        print_status(f"Max combos: {args.max_combos:,}", "INFO")
     print_status(f"News filter: {'enabled' if news_filter_enabled else 'disabled'} ({args.news_before_minutes}min before, {args.news_after_minutes}min after)", "INFO")
 
     run_optimization(
@@ -400,6 +413,7 @@ Examples:
         output_dir=args.output_dir,
         run_dir=args.run_dir,
         grid_mode=args.mode,
+        max_combos=args.max_combos,
         news_filter_enabled=news_filter_enabled,
         news_before_minutes=args.news_before_minutes,
         news_after_minutes=args.news_after_minutes,

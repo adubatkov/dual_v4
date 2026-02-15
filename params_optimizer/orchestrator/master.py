@@ -156,28 +156,37 @@ class OptimizerMaster:
             self._results = []
             self.variation_agg.clear()
 
-        # Filter out completed combinations
-        remaining = self.grid.filter_completed(all_combinations, self._completed)
-        print_status(f"Remaining combinations: {len(remaining):,}", "INFO")
+        # Set checkpoint metadata
+        self.checkpoint.set_metadata(self.symbol, total_combinations)
+
+        # Shuffle ALL combinations first (seed=42 for reproducibility)
+        # This ensures the same subset is selected regardless of resume state
+        all_shuffled = self.grid.shuffle(all_combinations, seed=42)
+
+        # Limit to target subset BEFORE filtering completed
+        # This ensures resumed runs continue the SAME target set
+        if self.config.max_combos and len(all_shuffled) > self.config.max_combos:
+            target_combos = all_shuffled[:self.config.max_combos]
+            print_status(f"Target: {self.config.max_combos:,} combinations (--max-combos)", "INFO")
+        else:
+            target_combos = all_shuffled
+
+        # Filter out completed combinations from the target set
+        remaining = self.grid.filter_completed(target_combos, self._completed)
+        print_status(f"Remaining combinations: {len(remaining):,} (of {len(target_combos):,} target)", "INFO")
 
         if len(remaining) == 0:
             print_status("All combinations already processed!", "SUCCESS")
             return self._finalize_results()
 
-        # Set checkpoint metadata
-        self.checkpoint.set_metadata(self.symbol, total_combinations)
-
-        # Shuffle for random order testing
-        remaining = self.grid.shuffle(remaining, seed=42)
-
         # Convert to tuples for multiprocessing
         remaining_tuples = [self.grid.to_tuple(p) for p in remaining]
 
-        # Estimate time
+        # Estimate time (realistic: ~42s/combo single-process on Xeon E5-2650)
         time_est = self.grid.estimate_time(
             len(remaining),
             self.config.num_workers,
-            seconds_per_combo=5.0
+            seconds_per_combo=42.0
         )
         print_status(f"Estimated time: ~{time_est} with {self.config.num_workers} workers", "INFO")
 
@@ -199,15 +208,24 @@ class OptimizerMaster:
         processed = 0
         checkpoint_count = 0
 
-        # Create worker pool with IB cache
+        # Create worker pool with IB cache and fractal cache
         print_status(f"Creating pool with {self.config.num_workers} workers...", "INFO")
         if self.ib_cache:
             print_status("Workers will use pre-computed IB cache", "INFO")
         if self.config.news_filter_enabled:
             print_status("Workers will use news filter (5ers compliance)", "INFO")
 
-        # Get IB cache path (workers will load it themselves to avoid pickle/copy overhead)
+        # Get cache paths (workers load themselves to avoid pickle/copy overhead)
         ib_cache_path = get_cache_path(self.symbol) if self.ib_cache else None
+
+        # Get fractal cache path (~8x speedup: ~145s -> ~17s per combo)
+        from params_optimizer.data.fractal_precompute import get_cache_path as get_fractal_cache_path
+        fractal_cache_path = get_fractal_cache_path(self.symbol)
+        if fractal_cache_path.exists():
+            print_status("Workers will use pre-computed fractal cache", "INFO")
+        else:
+            fractal_cache_path = None
+            print_status("Fractal cache not found - fractals computed per combo (slow)", "WARNING")
 
         with Pool(
             processes=self.config.num_workers,
@@ -222,6 +240,7 @@ class OptimizerMaster:
                 self.config.news_filter_enabled,  # Pass news filter flag
                 self.config.news_before_minutes,  # Minutes before news to block
                 self.config.news_after_minutes,   # Minutes after news to block
+                fractal_cache_path,  # Fractal cache for ~8x speedup
             )
         ) as pool:
             print_status("Worker pool ready", "SUCCESS")

@@ -63,10 +63,7 @@ def process_params(params_tuple: Tuple) -> Dict[str, Any]:
     Process single parameter combination using cached data.
 
     Args:
-        params_tuple: Tuple of parameter values in order:
-            (ib_start, ib_end, ib_timezone, ib_wait_minutes, trade_window_minutes,
-             rr_target, stop_mode, tsl_target, tsl_sl, min_sl_pct,
-             rev_rb_enabled, rev_rb_pct, ib_buffer_pct, max_distance_pct)
+        params_tuple: Tuple of 24 parameter values matching ParameterGrid.PARAM_KEYS order.
 
     Returns:
         Dict with backtest results including the original params
@@ -89,40 +86,51 @@ def process_params(params_tuple: Tuple) -> Dict[str, Any]:
     return results
 
 
+# Must match ParameterGrid.PARAM_KEYS exactly (24 keys)
+_PARAM_NAMES = [
+    "ib_start",
+    "ib_end",
+    "ib_timezone",
+    "ib_wait_minutes",
+    "trade_window_minutes",
+    "rr_target",
+    "stop_mode",
+    "tsl_target",
+    "tsl_sl",
+    "min_sl_pct",
+    "ib_buffer_pct",
+    "max_distance_pct",
+    "analysis_tf",
+    "fractal_be_enabled",
+    "fractal_tsl_enabled",
+    "fvg_be_enabled",
+    "rev_rb_enabled",
+    "btib_enabled",
+    "btib_sl_mode",
+    "btib_core_cutoff_min",
+    "btib_extension_pct",
+    "btib_rr_target",
+    "btib_tsl_target",
+    "btib_tsl_sl",
+]
+
+
 def tuple_to_dict(params_tuple: Tuple) -> Dict[str, Any]:
     """
     Convert parameter tuple to dict.
 
     Args:
-        params_tuple: Tuple of parameter values
+        params_tuple: Tuple of parameter values (24 values)
 
     Returns:
         Dict with named parameters
     """
-    # Define parameter order (must match parameter_grid.py)
-    param_names = [
-        "ib_start",
-        "ib_end",
-        "ib_timezone",
-        "ib_wait_minutes",
-        "trade_window_minutes",
-        "rr_target",
-        "stop_mode",
-        "tsl_target",
-        "tsl_sl",
-        "min_sl_pct",
-        "rev_rb_enabled",
-        "rev_rb_pct",
-        "ib_buffer_pct",
-        "max_distance_pct",
-    ]
-
-    if len(params_tuple) != len(param_names):
+    if len(params_tuple) != len(_PARAM_NAMES):
         raise ValueError(
-            f"Expected {len(param_names)} params, got {len(params_tuple)}"
+            f"Expected {len(_PARAM_NAMES)} params, got {len(params_tuple)}"
         )
 
-    return dict(zip(param_names, params_tuple))
+    return dict(zip(_PARAM_NAMES, params_tuple))
 
 
 def dict_to_tuple(params: Dict[str, Any]) -> Tuple:
@@ -133,26 +141,9 @@ def dict_to_tuple(params: Dict[str, Any]) -> Tuple:
         params: Dict with named parameters
 
     Returns:
-        Tuple of parameter values
+        Tuple of parameter values (24 values)
     """
-    param_names = [
-        "ib_start",
-        "ib_end",
-        "ib_timezone",
-        "ib_wait_minutes",
-        "trade_window_minutes",
-        "rr_target",
-        "stop_mode",
-        "tsl_target",
-        "tsl_sl",
-        "min_sl_pct",
-        "rev_rb_enabled",
-        "rev_rb_pct",
-        "ib_buffer_pct",
-        "max_distance_pct",
-    ]
-
-    return tuple(params[name] for name in param_names)
+    return tuple(params[name] for name in _PARAM_NAMES)
 
 
 def process_params_dict(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -189,22 +180,32 @@ if __name__ == "__main__":
 
     print_status(f"Worker initialized with {len(_WORKER_DATA['m1_data']):,} candles", "SUCCESS")
 
-    # Test with V2 params
+    # Test with PROD params (24 values matching PARAM_KEYS)
     test_params = (
-        "08:00",      # ib_start
-        "09:00",      # ib_end
+        "08:00",          # ib_start
+        "09:00",          # ib_end
         "Europe/Berlin",  # ib_timezone
-        15,           # ib_wait_minutes
-        60,           # trade_window_minutes
-        1.0,          # rr_target
-        "ib_start",   # stop_mode
-        0.0,          # tsl_target
-        0.5,          # tsl_sl
-        0.001,        # min_sl_pct
-        False,        # rev_rb_enabled
-        0.5,          # rev_rb_pct
-        0.01,         # ib_buffer_pct
-        0.5,          # max_distance_pct
+        15,               # ib_wait_minutes
+        60,               # trade_window_minutes
+        1.0,              # rr_target
+        "ib_start",       # stop_mode
+        1.0,              # tsl_target
+        0.5,              # tsl_sl
+        0.0015,           # min_sl_pct
+        0.10,             # ib_buffer_pct
+        1.0,              # max_distance_pct
+        "2min",           # analysis_tf
+        True,             # fractal_be_enabled
+        True,             # fractal_tsl_enabled
+        False,            # fvg_be_enabled
+        False,            # rev_rb_enabled
+        False,            # btib_enabled
+        "fractal_2m",     # btib_sl_mode
+        40,               # btib_core_cutoff_min
+        1.0,              # btib_extension_pct
+        1.0,              # btib_rr_target
+        0.0,              # btib_tsl_target
+        0.0,              # btib_tsl_sl
     )
 
     import time

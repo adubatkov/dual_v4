@@ -28,7 +28,7 @@ class ParameterGrid:
     """
 
     # Fixed keys order for tuple conversion (must be consistent).
-    # 25 keys: 3 IB session + 22 grid params.
+    # 24 keys: 3 IB session + 21 grid params.
     # NOTE: Changing this order breaks checkpoint compatibility.
     PARAM_KEYS = [
         "ib_start",
@@ -48,7 +48,6 @@ class ParameterGrid:
         "fractal_tsl_enabled",
         "fvg_be_enabled",
         "rev_rb_enabled",
-        "rev_rb_pct",
         "btib_enabled",
         "btib_sl_mode",
         "btib_core_cutoff_min",
@@ -81,8 +80,8 @@ class ParameterGrid:
         Generate all valid parameter combinations.
 
         Smart filtering rules:
+        - TSL_TARGET <= RR_TARGET + 1 (skip unreachable TSL targets)
         - TSL_SL: placeholder when TSL_TARGET=0; filter TSL_SL > TSL_TARGET
-        - REV_RB_PCT: placeholder when REV_RB_ENABLED=False
         - BTIB sub-params: placeholder when BTIB_ENABLED=False
         - BTIB_TSL_SL: placeholder when BTIB_TSL_TARGET=0
 
@@ -124,6 +123,11 @@ class ParameterGrid:
                 rev_rb_enabled, btib_enabled,
             ) in base_combos:
 
+                # --- Filter: TSL_TARGET <= RR_TARGET + 1 ---
+                # TSL can't exceed RR+1 (first step is at RR, so max useful is RR+1)
+                if tsl_target > 0 and tsl_target > rr_target + 1:
+                    continue
+
                 # --- Conditional: TSL_SL ---
                 if tsl_target == 0.0 or tsl_target == 0:
                     tsl_sl_values = [grid["TSL_SL"][0]]
@@ -131,12 +135,6 @@ class ParameterGrid:
                     tsl_sl_values = [v for v in grid["TSL_SL"] if v <= tsl_target]
                     if not tsl_sl_values:
                         tsl_sl_values = [min(grid["TSL_SL"])]
-
-                # --- Conditional: REV_RB_PCT ---
-                if not rev_rb_enabled:
-                    rev_rb_pct_values = [grid["REV_RB_PCT"][0]]
-                else:
-                    rev_rb_pct_values = grid["REV_RB_PCT"]
 
                 # --- Conditional: BTIB sub-params ---
                 if not btib_enabled:
@@ -156,51 +154,49 @@ class ParameterGrid:
 
                 # Generate conditional combinations
                 for tsl_sl in tsl_sl_values:
-                    for rev_rb_pct in rev_rb_pct_values:
-                        for btib_combo in itertools.product(
-                            btib_sl_modes, btib_cutoffs, btib_extensions,
-                            btib_rr_targets, btib_tsl_targets,
-                        ):
-                            (btib_sl_mode, btib_cutoff, btib_extension,
-                             btib_rr, btib_tsl_target_val) = btib_combo
+                    for btib_combo in itertools.product(
+                        btib_sl_modes, btib_cutoffs, btib_extensions,
+                        btib_rr_targets, btib_tsl_targets,
+                    ):
+                        (btib_sl_mode, btib_cutoff, btib_extension,
+                         btib_rr, btib_tsl_target_val) = btib_combo
 
-                            # Conditional: BTIB_TSL_SL
-                            if btib_tsl_target_val == 0 or btib_tsl_target_val == 0.0:
-                                btib_tsl_sl_vals = [btib_tsl_sls[0]]
-                            else:
-                                btib_tsl_sl_vals = [v for v in btib_tsl_sls if v <= btib_tsl_target_val]
-                                if not btib_tsl_sl_vals:
-                                    btib_tsl_sl_vals = [min(btib_tsl_sls)]
+                        # Conditional: BTIB_TSL_SL
+                        if btib_tsl_target_val == 0 or btib_tsl_target_val == 0.0:
+                            btib_tsl_sl_vals = [btib_tsl_sls[0]]
+                        else:
+                            btib_tsl_sl_vals = [v for v in btib_tsl_sls if v <= btib_tsl_target_val]
+                            if not btib_tsl_sl_vals:
+                                btib_tsl_sl_vals = [min(btib_tsl_sls)]
 
-                            for btib_tsl_sl_val in btib_tsl_sl_vals:
-                                params = {
-                                    "ib_start": ib_start,
-                                    "ib_end": ib_end,
-                                    "ib_timezone": ib_tz,
-                                    "ib_wait_minutes": ib_wait,
-                                    "trade_window_minutes": trade_window,
-                                    "rr_target": rr_target,
-                                    "stop_mode": stop_mode,
-                                    "tsl_target": tsl_target,
-                                    "tsl_sl": tsl_sl,
-                                    "min_sl_pct": min_sl_pct,
-                                    "ib_buffer_pct": ib_buffer_pct,
-                                    "max_distance_pct": max_distance_pct,
-                                    "analysis_tf": analysis_tf,
-                                    "fractal_be_enabled": fractal_be,
-                                    "fractal_tsl_enabled": fractal_tsl,
-                                    "fvg_be_enabled": fvg_be,
-                                    "rev_rb_enabled": rev_rb_enabled,
-                                    "rev_rb_pct": rev_rb_pct,
-                                    "btib_enabled": btib_enabled,
-                                    "btib_sl_mode": btib_sl_mode,
-                                    "btib_core_cutoff_min": btib_cutoff,
-                                    "btib_extension_pct": btib_extension,
-                                    "btib_rr_target": btib_rr,
-                                    "btib_tsl_target": btib_tsl_target_val,
-                                    "btib_tsl_sl": btib_tsl_sl_val,
-                                }
-                                combinations.append(params)
+                        for btib_tsl_sl_val in btib_tsl_sl_vals:
+                            params = {
+                                "ib_start": ib_start,
+                                "ib_end": ib_end,
+                                "ib_timezone": ib_tz,
+                                "ib_wait_minutes": ib_wait,
+                                "trade_window_minutes": trade_window,
+                                "rr_target": rr_target,
+                                "stop_mode": stop_mode,
+                                "tsl_target": tsl_target,
+                                "tsl_sl": tsl_sl,
+                                "min_sl_pct": min_sl_pct,
+                                "ib_buffer_pct": ib_buffer_pct,
+                                "max_distance_pct": max_distance_pct,
+                                "analysis_tf": analysis_tf,
+                                "fractal_be_enabled": fractal_be,
+                                "fractal_tsl_enabled": fractal_tsl,
+                                "fvg_be_enabled": fvg_be,
+                                "rev_rb_enabled": rev_rb_enabled,
+                                "btib_enabled": btib_enabled,
+                                "btib_sl_mode": btib_sl_mode,
+                                "btib_core_cutoff_min": btib_cutoff,
+                                "btib_extension_pct": btib_extension,
+                                "btib_rr_target": btib_rr,
+                                "btib_tsl_target": btib_tsl_target_val,
+                                "btib_tsl_sl": btib_tsl_sl_val,
+                            }
+                            combinations.append(params)
 
         self._combinations = combinations
         self._total_count = len(combinations)

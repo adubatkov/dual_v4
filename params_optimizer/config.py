@@ -158,7 +158,7 @@ class OptimizerConfig:
 
     # Parallelization (from JSON: parallelization.num_workers, parallelization.combinations_per_chunk)
     num_workers: int = field(default_factory=lambda: _get_json_default("parallelization", "num_workers", None) or 90)
-    combinations_per_chunk: int = field(default_factory=lambda: _get_json_default("parallelization", "combinations_per_chunk", 10))
+    combinations_per_chunk: int = field(default_factory=lambda: _get_json_default("parallelization", "combinations_per_chunk", 1))
 
     # Checkpoint (from JSON: checkpoint.interval, checkpoint.file)
     checkpoint_interval: int = field(default_factory=lambda: _get_json_default("checkpoint", "interval", 100))
@@ -176,6 +176,9 @@ class OptimizerConfig:
 
     # Grid mode (standard / features / btib)
     grid_mode: str = "standard"
+
+    # Max combinations to test (None = all)
+    max_combos: Optional[int] = None
 
     # News filter - 5ers compliance (from JSON: news_filter.*)
     news_filter_enabled: bool = field(default_factory=lambda: _get_json_default("news_filter", "enabled", True))
@@ -259,13 +262,12 @@ GER40_GRID = {
     "IB_BUFFER_PCT": [0.05, 0.10, 0.15, 0.20, 0.25],
     "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0, 1.25],
     "ANALYSIS_TF": ["2min"],
-    "FRACTAL_BE_ENABLED": [True],
-    "FRACTAL_TSL_ENABLED": [True],
-    "FVG_BE_ENABLED": [False],
+    "FRACTAL_BE_ENABLED": [True, False],
+    "FRACTAL_TSL_ENABLED": [True, False],
+    "FVG_BE_ENABLED": [True, False],
     "REV_RB_ENABLED": [True, False],
-    "REV_RB_PCT": [0.5],
-    "BTIB_ENABLED": [False],
-    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_ENABLED": [True, False],
+    "BTIB_SL_MODE": ["fractal_2m", "cisd"],
     "BTIB_CORE_CUTOFF_MIN": [40],
     "BTIB_EXTENSION_PCT": [1.0],
     "BTIB_RR_TARGET": [1.0],
@@ -284,13 +286,12 @@ XAUUSD_GRID = {
     "IB_BUFFER_PCT": [0.0, 0.025, 0.05, 0.075, 0.10],
     "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0],
     "ANALYSIS_TF": ["2min"],
-    "FRACTAL_BE_ENABLED": [True],
-    "FRACTAL_TSL_ENABLED": [True],
-    "FVG_BE_ENABLED": [False],
+    "FRACTAL_BE_ENABLED": [True, False],
+    "FRACTAL_TSL_ENABLED": [True, False],
+    "FVG_BE_ENABLED": [True, False],
     "REV_RB_ENABLED": [True, False],
-    "REV_RB_PCT": [0.5],
     "BTIB_ENABLED": [True, False],
-    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_SL_MODE": ["fractal_2m", "cisd"],
     "BTIB_CORE_CUTOFF_MIN": [40],
     "BTIB_EXTENSION_PCT": [1.0],
     "BTIB_RR_TARGET": [1.0],
@@ -309,13 +310,12 @@ NAS100_GRID = {
     "IB_BUFFER_PCT": [0.05, 0.10, 0.15, 0.20, 0.25],
     "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0, 1.25],
     "ANALYSIS_TF": ["2min"],
-    "FRACTAL_BE_ENABLED": [True],
-    "FRACTAL_TSL_ENABLED": [True],
-    "FVG_BE_ENABLED": [False],
+    "FRACTAL_BE_ENABLED": [True, False],
+    "FRACTAL_TSL_ENABLED": [True, False],
+    "FVG_BE_ENABLED": [True, False],
     "REV_RB_ENABLED": [True, False],
-    "REV_RB_PCT": [0.5],
-    "BTIB_ENABLED": [False],
-    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_ENABLED": [True, False],
+    "BTIB_SL_MODE": ["fractal_2m", "cisd"],
     "BTIB_CORE_CUTOFF_MIN": [40],
     "BTIB_EXTENSION_PCT": [1.0],
     "BTIB_RR_TARGET": [1.0],
@@ -334,13 +334,12 @@ UK100_GRID = {
     "IB_BUFFER_PCT": [0.05, 0.10, 0.15, 0.20, 0.25],
     "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0, 1.25],
     "ANALYSIS_TF": ["2min"],
-    "FRACTAL_BE_ENABLED": [True],
-    "FRACTAL_TSL_ENABLED": [True],
-    "FVG_BE_ENABLED": [False],
+    "FRACTAL_BE_ENABLED": [True, False],
+    "FRACTAL_TSL_ENABLED": [True, False],
+    "FVG_BE_ENABLED": [True, False],
     "REV_RB_ENABLED": [True, False],
-    "REV_RB_PCT": [0.5],
-    "BTIB_ENABLED": [False],
-    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_ENABLED": [True, False],
+    "BTIB_SL_MODE": ["fractal_2m", "cisd"],
     "BTIB_CORE_CUTOFF_MIN": [40],
     "BTIB_EXTENSION_PCT": [1.0],
     "BTIB_RR_TARGET": [1.0],
@@ -408,7 +407,6 @@ def _get_prod_defaults(symbol: str) -> Dict[str, List]:
         "FRACTAL_TSL_ENABLED": [True],
         "FVG_BE_ENABLED": [False],
         "REV_RB_ENABLED": [False],
-        "REV_RB_PCT": [0.5],
         "BTIB_ENABLED": [False],
         "BTIB_SL_MODE": ["fractal_2m"],
         "BTIB_CORE_CUTOFF_MIN": [40],
@@ -548,7 +546,7 @@ def estimate_combinations(symbol: str = "GER40", mode: str = "standard") -> int:
     Estimate total number of parameter combinations for a symbol.
 
     This is an approximation. Actual count from ParameterGrid.generate_all()
-    may differ due to smart filtering (TSL_SL, REV_RB_PCT, BTIB sub-params).
+    may differ due to smart filtering (TSL_SL <= TSL_TARGET, TSL_TARGET <= RR_TARGET+1, BTIB sub-params).
     """
     grid = get_grid_for_symbol(symbol, mode)
     ib_configs = len(IB_TIME_CONFIGS.get(symbol, []))
