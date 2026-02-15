@@ -174,6 +174,9 @@ class OptimizerConfig:
     risk_pct: float = field(default_factory=lambda: _get_json_default("backtest", "risk_pct", 1.0))
     max_margin_pct: float = field(default_factory=lambda: _get_json_default("backtest", "max_margin_pct", 40.0))
 
+    # Grid mode (standard / features / btib)
+    grid_mode: str = "standard"
+
     # News filter - 5ers compliance (from JSON: news_filter.*)
     news_filter_enabled: bool = field(default_factory=lambda: _get_json_default("news_filter", "enabled", True))
     news_before_minutes: int = field(default_factory=lambda: _get_json_default("news_filter", "before_minutes", 2))
@@ -206,16 +209,16 @@ def frange(start: float, stop: float, step: float, inclusive: bool = True, ndigi
 
 
 # ================================
-# PARAMETER GRIDS
+# PARAMETER GRIDS (Per-Asset)
 # ================================
 #
+# Each asset has its own grid because MIN_SL_PCT, IB_TIME_CONFIGS,
+# and sweep ranges differ per symbol.
+#
 # Grid modes:
-#   "standard" - ~65K combinations, good for quick tests
-#   "expanded" - ~2.5M combinations, for exhaustive AWS optimization
-#
-# Change GRID_MODE to switch between them.
-#
-GRID_MODE = "standard"  # "standard" or "expanded"
+#   "standard"  - Core IB/RR/TSL/STOP sweep per asset
+#   "features"  - Feature switch sweep, PROD defaults for rest
+#   "btib"      - BTIB parameter sweep, PROD defaults for rest
 
 
 # IB Time Configurations: (start, end, timezone)
@@ -242,74 +245,224 @@ IB_TIME_CONFIGS = {
     ],
 }
 
-# # ----------------
-# # STANDARD GRIDS (~65K combinations)
-# # ----------------
-# _STANDARD_GRIDS = {
-#     "IB_WAIT_MINUTES": [0, 15, 30],
-#     "TRADE_WINDOW_MINUTES": [40, 60, 90, 120, 150, 180],
-#     "RR_TARGET": frange(0.5, 2.0, 0.25),  # 7 values
-#     "STOP_MODE": ["ib_start", "eq"],
-#     "TSL_TARGET": [0.0, 0.5, 1.0, 1.5, 2.0],  # 5 values, 0.0 = disabled
-#     "TSL_SL": [0.5, 1.0, 1.5],
-#     "MIN_SL_PCT": [0.001, 0.0015],
-#     "REV_RB_ENABLED": [True, False],
-#     "REV_RB_PCT": [0.25, 0.5, 0.75, 1.0],
-#     "IB_BUFFER_PCT": [0.0, 0.01, 0.05, 0.075, 0.10, 0.125, 0.15],  # 7 values
-#     "MAX_DISTANCE_PCT": [0.50, 0.65, 0.80, 1.0],  # 4 values
-# }
-
 # ----------------
-# STANDARD GRIDS (~20K combinations, ~2 hours on 8-core PC)
+# PER-ASSET STANDARD GRIDS
 # ----------------
-_STANDARD_GRIDS = {
-    "IB_WAIT_MINUTES": [0, 15],              # 3 values
-    "TRADE_WINDOW_MINUTES": [60, 90, 120],       # 3 values
-    "RR_TARGET": frange(0.5, 2.0, 0.5),          # 4 values: [0.5, 1.0, 1.5, 2.0]
-    "STOP_MODE": ["ib_start", "eq"],             # 2 values
-    "TSL_TARGET": [0, 0.5, 1.0, 1.5],               # 3 values
-    "TSL_SL": [0.5, 1.0],                        # 2 values
-    "MIN_SL_PCT": [0.001],                       # 1 value
-    "REV_RB_ENABLED": [True, False],             # 2 values
-    "REV_RB_PCT": [0.5],                         # 1 value
-    "IB_BUFFER_PCT": frange(0.05, 0.25, 0.05),   # 5 values: [0.05, 0.10, 0.15, 0.20, 0.25]
-    "MAX_DISTANCE_PCT": frange(0.5, 1.0, 0.25), # 4 values: [0.5, 0.75, 1.0, 1.25]
-}
-
-
-# ----------------
-# EXPANDED GRIDS (~2.5M combinations)
-# For exhaustive AWS optimization with 96 CPUs
-# ----------------
-_EXPANDED_GRIDS = {
-    "IB_WAIT_MINUTES": [0, 10, 15, 20],
-    "TRADE_WINDOW_MINUTES": [40, 60, 90, 120, 150, 180, 210, 240],
-    "RR_TARGET": frange(0.5, 2.0, 0.25),
+GER40_GRID = {
+    "IB_WAIT_MINUTES": [0, 15],
+    "TRADE_WINDOW_MINUTES": [60, 90, 120],
+    "RR_TARGET": [0.5, 1.0, 1.5, 2.0],
     "STOP_MODE": ["ib_start", "eq"],
-    "TSL_TARGET": [0.0, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0],
-    "TSL_SL": [0.5, 0.75, 1.0, 1.25, 1.5, 2.0],
-    "MIN_SL_PCT": [0.0015],  # 0.0015 (GER40) / 0.001 (XAUUSD)
+    "TSL_TARGET": [0, 0.5, 1.0, 1.5],
+    "TSL_SL": [0.5, 1.0],
+    "MIN_SL_PCT": [0.0015],
+    "IB_BUFFER_PCT": [0.05, 0.10, 0.15, 0.20, 0.25],
+    "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0, 1.25],
+    "ANALYSIS_TF": ["2min"],
+    "FRACTAL_BE_ENABLED": [True],
+    "FRACTAL_TSL_ENABLED": [True],
+    "FVG_BE_ENABLED": [False],
     "REV_RB_ENABLED": [True, False],
-    "REV_RB_PCT": [1.0],
-    "IB_BUFFER_PCT": frange(0.0, 0.20, 0.05),
-    "MAX_DISTANCE_PCT": frange(0.5, 1.5, 0.25),
+    "REV_RB_PCT": [0.5],
+    "BTIB_ENABLED": [False],
+    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_CORE_CUTOFF_MIN": [40],
+    "BTIB_EXTENSION_PCT": [1.0],
+    "BTIB_RR_TARGET": [1.0],
+    "BTIB_TSL_TARGET": [0.0],
+    "BTIB_TSL_SL": [0.0],
 }
 
-# Select active grids based on mode
-_ACTIVE_GRIDS = _EXPANDED_GRIDS if GRID_MODE == "expanded" else _STANDARD_GRIDS
+XAUUSD_GRID = {
+    "IB_WAIT_MINUTES": [0, 15, 20],
+    "TRADE_WINDOW_MINUTES": [90, 120, 180, 240],
+    "RR_TARGET": [0.5, 0.75, 1.0, 1.25, 1.5],
+    "STOP_MODE": ["ib_start", "eq"],
+    "TSL_TARGET": [0, 0.5, 1.0, 1.5],
+    "TSL_SL": [0.5, 1.0, 1.5],
+    "MIN_SL_PCT": [0.001],
+    "IB_BUFFER_PCT": [0.0, 0.025, 0.05, 0.075, 0.10],
+    "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0],
+    "ANALYSIS_TF": ["2min"],
+    "FRACTAL_BE_ENABLED": [True],
+    "FRACTAL_TSL_ENABLED": [True],
+    "FVG_BE_ENABLED": [False],
+    "REV_RB_ENABLED": [True, False],
+    "REV_RB_PCT": [0.5],
+    "BTIB_ENABLED": [True, False],
+    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_CORE_CUTOFF_MIN": [40],
+    "BTIB_EXTENSION_PCT": [1.0],
+    "BTIB_RR_TARGET": [1.0],
+    "BTIB_TSL_TARGET": [0.0],
+    "BTIB_TSL_SL": [0.0],
+}
 
-# Export individual lists for backward compatibility
-IB_WAIT_MINUTES_LIST: List[int] = _ACTIVE_GRIDS["IB_WAIT_MINUTES"]
-TRADE_WINDOW_MINUTES_LIST: List[int] = _ACTIVE_GRIDS["TRADE_WINDOW_MINUTES"]
-RR_TARGET_LIST: List[float] = _ACTIVE_GRIDS["RR_TARGET"]
-STOP_MODE_LIST: List[str] = _ACTIVE_GRIDS["STOP_MODE"]
-TSL_TARGET_LIST: List[float] = _ACTIVE_GRIDS["TSL_TARGET"]
-TSL_SL_LIST: List[float] = _ACTIVE_GRIDS["TSL_SL"]
-MIN_SL_PCT_LIST: List[float] = _ACTIVE_GRIDS["MIN_SL_PCT"]
-REV_RB_ENABLED_LIST: List[bool] = _ACTIVE_GRIDS["REV_RB_ENABLED"]
-REV_RB_PCT_LIST: List[float] = _ACTIVE_GRIDS["REV_RB_PCT"]
-IB_BUFFER_PCT_LIST: List[float] = _ACTIVE_GRIDS["IB_BUFFER_PCT"]
-MAX_DISTANCE_PCT_LIST: List[float] = _ACTIVE_GRIDS["MAX_DISTANCE_PCT"]
+NAS100_GRID = {
+    "IB_WAIT_MINUTES": [0, 15],
+    "TRADE_WINDOW_MINUTES": [60, 90, 120],
+    "RR_TARGET": [0.5, 1.0, 1.5, 2.0],
+    "STOP_MODE": ["ib_start", "eq"],
+    "TSL_TARGET": [0, 0.5, 1.0, 1.5],
+    "TSL_SL": [0.5, 1.0],
+    "MIN_SL_PCT": [0.0015],
+    "IB_BUFFER_PCT": [0.05, 0.10, 0.15, 0.20, 0.25],
+    "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0, 1.25],
+    "ANALYSIS_TF": ["2min"],
+    "FRACTAL_BE_ENABLED": [True],
+    "FRACTAL_TSL_ENABLED": [True],
+    "FVG_BE_ENABLED": [False],
+    "REV_RB_ENABLED": [True, False],
+    "REV_RB_PCT": [0.5],
+    "BTIB_ENABLED": [False],
+    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_CORE_CUTOFF_MIN": [40],
+    "BTIB_EXTENSION_PCT": [1.0],
+    "BTIB_RR_TARGET": [1.0],
+    "BTIB_TSL_TARGET": [0.0],
+    "BTIB_TSL_SL": [0.0],
+}
+
+UK100_GRID = {
+    "IB_WAIT_MINUTES": [0, 15],
+    "TRADE_WINDOW_MINUTES": [60, 90, 120],
+    "RR_TARGET": [0.5, 1.0, 1.5, 2.0],
+    "STOP_MODE": ["ib_start", "eq"],
+    "TSL_TARGET": [0, 0.5, 1.0, 1.5],
+    "TSL_SL": [0.5, 1.0],
+    "MIN_SL_PCT": [0.0015],
+    "IB_BUFFER_PCT": [0.05, 0.10, 0.15, 0.20, 0.25],
+    "MAX_DISTANCE_PCT": [0.5, 0.75, 1.0, 1.25],
+    "ANALYSIS_TF": ["2min"],
+    "FRACTAL_BE_ENABLED": [True],
+    "FRACTAL_TSL_ENABLED": [True],
+    "FVG_BE_ENABLED": [False],
+    "REV_RB_ENABLED": [True, False],
+    "REV_RB_PCT": [0.5],
+    "BTIB_ENABLED": [False],
+    "BTIB_SL_MODE": ["fractal_2m"],
+    "BTIB_CORE_CUTOFF_MIN": [40],
+    "BTIB_EXTENSION_PCT": [1.0],
+    "BTIB_RR_TARGET": [1.0],
+    "BTIB_TSL_TARGET": [0.0],
+    "BTIB_TSL_SL": [0.0],
+}
+
+# Per-asset standard grid map
+_STANDARD_GRIDS: Dict[str, Dict[str, List]] = {
+    "GER40": GER40_GRID,
+    "XAUUSD": XAUUSD_GRID,
+    "NAS100": NAS100_GRID,
+    "UK100": UK100_GRID,
+}
+
+
+# ----------------
+# FEATURES SWEEP GRID
+# Fix IB/RR/TSL at PROD values, sweep only feature switches.
+# ~48 combos per symbol (2 * 2 * 2 * 2 * 3 IB configs)
+# ----------------
+_FEATURES_GRID = {
+    "ANALYSIS_TF": ["2min", "5min"],
+    "FRACTAL_BE_ENABLED": [True, False],
+    "FRACTAL_TSL_ENABLED": [True, False],
+    "FVG_BE_ENABLED": [True, False],
+}
+
+
+# ----------------
+# BTIB SWEEP GRID
+# Fix core params at PROD values, sweep only BTIB params.
+# ~2.5K combos per symbol (after smart filtering)
+# ----------------
+_BTIB_GRID = {
+    "BTIB_ENABLED": [True],
+    "BTIB_SL_MODE": ["fractal_2m", "cisd"],
+    "BTIB_CORE_CUTOFF_MIN": [30, 40, 50, 60],
+    "BTIB_EXTENSION_PCT": [0.5, 1.0, 1.5],
+    "BTIB_RR_TARGET": [0.5, 1.0, 1.5],
+    "BTIB_TSL_TARGET": [0, 0.5, 1.0],
+    "BTIB_TSL_SL": [0, 0.5, 1.0],
+}
+
+
+def _get_prod_defaults(symbol: str) -> Dict[str, List]:
+    """
+    Get PROD defaults for a symbol (single-value lists).
+
+    Used by features/btib modes to fix non-swept params at PROD values.
+    Values sourced from strategy_logic.py *_PARAMS_PROD.
+    """
+    defaults = {
+        "IB_WAIT_MINUTES": [0],
+        "TRADE_WINDOW_MINUTES": [120],
+        "RR_TARGET": [1.0],
+        "STOP_MODE": ["ib_start"],
+        "TSL_TARGET": [1.0],
+        "TSL_SL": [0.5],
+        "MIN_SL_PCT": [0.0015],
+        "IB_BUFFER_PCT": [0.10],
+        "MAX_DISTANCE_PCT": [0.5],
+        "ANALYSIS_TF": ["2min"],
+        "FRACTAL_BE_ENABLED": [True],
+        "FRACTAL_TSL_ENABLED": [True],
+        "FVG_BE_ENABLED": [False],
+        "REV_RB_ENABLED": [False],
+        "REV_RB_PCT": [0.5],
+        "BTIB_ENABLED": [False],
+        "BTIB_SL_MODE": ["fractal_2m"],
+        "BTIB_CORE_CUTOFF_MIN": [40],
+        "BTIB_EXTENSION_PCT": [1.0],
+        "BTIB_RR_TARGET": [1.0],
+        "BTIB_TSL_TARGET": [0.0],
+        "BTIB_TSL_SL": [0.0],
+    }
+
+    # Per-symbol overrides
+    overrides = {
+        "XAUUSD": {
+            "IB_WAIT_MINUTES": [20],
+            "TRADE_WINDOW_MINUTES": [240],
+            "MIN_SL_PCT": [0.001],
+            "IB_BUFFER_PCT": [0.05],
+            "BTIB_ENABLED": [True],
+        },
+    }
+
+    if symbol in overrides:
+        defaults.update(overrides[symbol])
+
+    return defaults
+
+
+def get_grid_for_symbol(symbol: str, mode: str = "standard") -> Dict[str, List]:
+    """
+    Get parameter grid for a symbol and mode.
+
+    Args:
+        symbol: Trading symbol (GER40, XAUUSD, NAS100, UK100)
+        mode: Grid mode - "standard", "features", or "btib"
+
+    Returns:
+        Dict mapping parameter names (UPPERCASE) to lists of values to sweep
+    """
+    if mode == "standard":
+        if symbol not in _STANDARD_GRIDS:
+            raise ValueError(f"Unknown symbol: {symbol}. Supported: {list(_STANDARD_GRIDS.keys())}")
+        return _STANDARD_GRIDS[symbol].copy()
+
+    elif mode == "features":
+        grid = _get_prod_defaults(symbol)
+        grid.update(_FEATURES_GRID)
+        return grid
+
+    elif mode == "btib":
+        grid = _get_prod_defaults(symbol)
+        grid.update(_BTIB_GRID)
+        return grid
+
+    else:
+        raise ValueError(f"Unknown mode: {mode}. Supported: standard, features, btib")
 
 
 # ================================
@@ -390,57 +543,48 @@ def print_progress_bar(current: int, total: int, prefix: str = '', suffix: str =
         print()
 
 
-def estimate_combinations(symbol: str = "GER40") -> int:
-    """Estimate total number of parameter combinations for a symbol."""
+def estimate_combinations(symbol: str = "GER40", mode: str = "standard") -> int:
+    """
+    Estimate total number of parameter combinations for a symbol.
+
+    This is an approximation. Actual count from ParameterGrid.generate_all()
+    may differ due to smart filtering (TSL_SL, REV_RB_PCT, BTIB sub-params).
+    """
+    grid = get_grid_for_symbol(symbol, mode)
     ib_configs = len(IB_TIME_CONFIGS.get(symbol, []))
 
-    # Base combinations (no REV_RB conditional)
-    base = (
-        ib_configs *
-        len(IB_WAIT_MINUTES_LIST) *
-        len(TRADE_WINDOW_MINUTES_LIST) *
-        len(RR_TARGET_LIST) *
-        len(STOP_MODE_LIST) *
-        len(TSL_TARGET_LIST) *
-        len(TSL_SL_LIST) *
-        len(MIN_SL_PCT_LIST) *
-        len(IB_BUFFER_PCT_LIST) *
-        len(MAX_DISTANCE_PCT_LIST)
-    )
+    # Naive product of all grid dimensions (upper bound)
+    total = ib_configs
+    for key, values in grid.items():
+        total *= len(values)
 
-    # REV_RB adds combinations when enabled
-    # When REV_RB=False: 1 combination (no PCT needed)
-    # When REV_RB=True: len(REV_RB_PCT_LIST) combinations
-    rev_rb_factor = 1 + len(REV_RB_PCT_LIST)
-
-    return base * rev_rb_factor
+    return total
 
 
 if __name__ == "__main__":
-    # Test: show configuration
     print("Parameter Optimizer Configuration")
     print("=" * 60)
 
-    print(f"\nGRID MODE: {GRID_MODE}")
-    for sym in SYMBOL_CONFIGS:
-        print(f"Estimated combinations ({sym}): {estimate_combinations(sym):,}")
+    for mode in ["standard", "features", "btib"]:
+        print(f"\nMode: {mode}")
+        print("-" * 40)
+        for sym in SYMBOL_CONFIGS:
+            grid = get_grid_for_symbol(sym, mode)
+            est = estimate_combinations(sym, mode)
+            swept = sum(1 for v in grid.values() if len(v) > 1)
+            print(f"  {sym}: ~{est:,} combos ({swept} params swept)")
 
+    print("\n\nPer-asset grid details (standard mode):")
+    print("=" * 60)
     for sym in SYMBOL_CONFIGS:
-        print(f"\n{sym} Symbol Config:")
-        cfg = SYMBOL_CONFIGS[sym]
-        print(f"  Spread: {cfg.spread_points} points")
-        print(f"  Digits: {cfg.digits}")
-        print(f"  Timezone: {cfg.timezone}")
+        grid = get_grid_for_symbol(sym, "standard")
+        print(f"\n{sym}:")
+        for key, values in grid.items():
+            if len(values) > 1:
+                print(f"  {key}: {values} ({len(values)} values)")
+            else:
+                print(f"  {key}: {values[0]} (fixed)")
 
-        print(f"\n{sym} IB Time Configs:")
+        print(f"\n  IB Time Configs:")
         for start, end, tz in IB_TIME_CONFIGS[sym]:
-            print(f"  {start}-{end} {tz}")
-
-    print("\nParameter Grid Values:")
-    print(f"  IB_WAIT: {IB_WAIT_MINUTES_LIST} ({len(IB_WAIT_MINUTES_LIST)} values)")
-    print(f"  TRADE_WINDOW: {TRADE_WINDOW_MINUTES_LIST} ({len(TRADE_WINDOW_MINUTES_LIST)} values)")
-    print(f"  RR_TARGET: {len(RR_TARGET_LIST)} values ({RR_TARGET_LIST[0]}..{RR_TARGET_LIST[-1]})")
-    print(f"  TSL_TARGET: {len(TSL_TARGET_LIST)} values ({TSL_TARGET_LIST[0]}..{TSL_TARGET_LIST[-1]})")
-    print(f"  TSL_SL: {len(TSL_SL_LIST)} values")
-    print(f"  IB_BUFFER_PCT: {len(IB_BUFFER_PCT_LIST)} values")
-    print(f"  MAX_DISTANCE_PCT: {len(MAX_DISTANCE_PCT_LIST)} values")
+            print(f"    {start}-{end} {tz}")

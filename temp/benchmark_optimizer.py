@@ -49,7 +49,8 @@ def benchmark_single_threaded(
 
     Returns dict with timing stats.
     """
-    from params_optimizer.engine.fast_backtest import FastBacktest
+    from params_optimizer.engine.fast_backtest_optimized import FastBacktestOptimized
+    from params_optimizer.data.ib_precompute import load_cache as load_ib_cache
 
     # Load data
     data_path = DATA_PATHS_OPTIMIZED[symbol]
@@ -61,10 +62,17 @@ def benchmark_single_threaded(
     t_load = time.perf_counter() - t0
     print_status(f"Loaded {len(m1_data):,} candles in {t_load:.1f}s", "SUCCESS")
 
-    # Create engine
-    engine = FastBacktest(symbol, m1_data)
+    # Load IB cache if available
+    ib_cache = None
+    ib_cache_path = get_ib_cache_path(symbol)
+    if ib_cache_path.exists():
+        ib_cache = load_ib_cache(ib_cache_path)
+        print_status(f"IB cache loaded: {len(ib_cache)} configs", "SUCCESS")
+
+    # Create engine (FastBacktestOptimized: ~1.3-1.6x faster)
+    engine = FastBacktestOptimized(symbol, m1_data, ib_cache=ib_cache)
     mem_after_init = measure_memory_mb()
-    print_status(f"Engine initialized. Memory: {mem_after_init:.0f} MB", "INFO")
+    print_status(f"FastBacktestOptimized initialized. Memory: {mem_after_init:.0f} MB", "INFO")
 
     # Load fractal cache if available
     fractal_cache = None
@@ -138,17 +146,23 @@ _BENCH_ENGINE = None
 _BENCH_FRACTAL_CACHE = None
 
 
-def _init_bench_worker(symbol: str, data_path: str, fractal_cache_path: str = None):
+def _init_bench_worker(symbol: str, data_path: str, fractal_cache_path: str = None, ib_cache_path: str = None):
     """Initialize worker for benchmark."""
     global _BENCH_ENGINE, _BENCH_FRACTAL_CACHE
 
-    from params_optimizer.engine.fast_backtest import FastBacktest
+    from params_optimizer.engine.fast_backtest_optimized import FastBacktestOptimized
+    from params_optimizer.data.ib_precompute import load_cache as load_ib_cache
 
     m1_data = pd.read_parquet(data_path)
     if m1_data["time"].dt.tz is None:
         m1_data["time"] = m1_data["time"].dt.tz_localize("UTC")
 
-    _BENCH_ENGINE = FastBacktest(symbol, m1_data)
+    # Load IB cache in worker
+    ib_cache = None
+    if ib_cache_path and Path(ib_cache_path).exists():
+        ib_cache = load_ib_cache(Path(ib_cache_path))
+
+    _BENCH_ENGINE = FastBacktestOptimized(symbol, m1_data, ib_cache=ib_cache)
 
     if fractal_cache_path and Path(fractal_cache_path).exists():
         with open(fractal_cache_path, "rb") as f:
@@ -156,7 +170,9 @@ def _init_bench_worker(symbol: str, data_path: str, fractal_cache_path: str = No
 
     pid = os.getpid()
     mem = psutil.Process(pid).memory_info().rss / (1024 * 1024)
-    print(f"[Worker {pid}] Initialized: {len(m1_data):,} candles, {mem:.0f} MB")
+    engine_type = "FastBacktestOptimized"
+    cache_info = f", IB cache: {'yes' if ib_cache else 'no'}"
+    print(f"[Worker {pid}] {engine_type}: {len(m1_data):,} candles, {mem:.0f} MB{cache_info}")
 
 
 def _bench_process(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -180,6 +196,7 @@ def benchmark_parallel(
     """
     data_path = str(DATA_PATHS_OPTIMIZED[symbol])
     fc_path = str(fractal_cache_path) if fractal_cache_path and fractal_cache_path.exists() else None
+    ib_path = str(get_ib_cache_path(symbol)) if get_ib_cache_path(symbol).exists() else None
 
     print_status(f"Starting parallel benchmark: {len(combinations)} combos, {num_workers} workers", "HEADER")
 
@@ -188,7 +205,7 @@ def benchmark_parallel(
     with Pool(
         processes=num_workers,
         initializer=_init_bench_worker,
-        initargs=(symbol, data_path, fc_path),
+        initargs=(symbol, data_path, fc_path, ib_path),
     ) as pool:
         results = list(pool.imap_unordered(_bench_process, combinations, chunksize=5))
 
@@ -227,6 +244,8 @@ def main():
                         help="Skip single-threaded benchmark")
     parser.add_argument("--skip-parallel", action="store_true",
                         help="Skip parallel benchmark")
+    parser.add_argument("--mode", choices=["standard", "features", "btib"],
+                        default="standard", help="Grid mode (default: standard)")
     args = parser.parse_args()
 
     symbol = args.symbol
@@ -248,8 +267,8 @@ def main():
         fractal_cache_path = None
 
     # Generate random combinations
-    print_status(f"Generating {num_combos} random combinations for {symbol}...", "INFO")
-    grid = ParameterGrid(symbol)
+    print_status(f"Generating {num_combos} random combinations for {symbol} (mode={args.mode})...", "INFO")
+    grid = ParameterGrid(symbol, mode=args.mode)
     all_combos = grid.generate_all()
     print_status(f"Total grid: {len(all_combos):,} combinations", "INFO")
 

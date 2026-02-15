@@ -81,6 +81,7 @@ def run_optimization(
     resume: bool,
     output_dir: Path,
     run_dir: str = None,
+    grid_mode: str = "standard",
     news_filter_enabled: bool = True,
     news_before_minutes: int = 2,
     news_after_minutes: int = 2,
@@ -111,7 +112,7 @@ def run_optimization(
         sys.exit(1)
 
     # Calculate number of combinations
-    grid = ParameterGrid(symbol)
+    grid = ParameterGrid(symbol, mode=grid_mode)
     num_combos = len(grid.generate_all())
 
     # Create run-specific subdirectory
@@ -131,6 +132,7 @@ def run_optimization(
     config = OptimizerConfig(
         symbol=symbol,
         num_workers=workers,
+        grid_mode=grid_mode,
         output_dir=run_output_dir,
         news_filter_enabled=news_filter_enabled,
         news_before_minutes=news_before_minutes,
@@ -291,12 +293,20 @@ Examples:
         help="Generate Excel report from existing parquet results"
     )
 
+    # Grid mode
+    parser.add_argument(
+        "--mode",
+        choices=["standard", "features", "btib"],
+        default="standard",
+        help="Grid mode: standard (core sweep), features (feature switches), btib (BTIB params)"
+    )
+
     # Options
     parser.add_argument(
         "--workers",
         type=int,
         default=None,
-        help=f"Number of parallel workers (default: CPU count - 6 = {max(1, cpu_count() - 6)})"
+        help="Number of parallel workers (default: auto-calculated from RAM)"
     )
     parser.add_argument(
         "--resume",
@@ -367,7 +377,8 @@ Examples:
     # Default action: run optimization
     workers = args.workers
     if workers is None:
-        workers = max(1, cpu_count() - 6)
+        from params_optimizer.orchestrator.master import calculate_safe_workers
+        workers = calculate_safe_workers(args.symbol)
 
     # If run_dir specified, always resume
     resume = args.run_dir is not None or not args.no_resume
@@ -376,6 +387,7 @@ Examples:
     news_filter_enabled = not args.no_news_filter
 
     print_status(f"Starting optimization for {args.symbol}", "HEADER")
+    print_status(f"Mode: {args.mode}", "INFO")
     print_status(f"Workers: {workers}", "INFO")
     print_status(f"Resume: {resume}", "INFO")
     print_status(f"Base output: {args.output_dir}", "INFO")
@@ -387,6 +399,7 @@ Examples:
         resume=resume,
         output_dir=args.output_dir,
         run_dir=args.run_dir,
+        grid_mode=args.mode,
         news_filter_enabled=news_filter_enabled,
         news_before_minutes=args.news_before_minutes,
         news_after_minutes=args.news_after_minutes,

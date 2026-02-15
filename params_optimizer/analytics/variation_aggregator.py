@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 
 
-VARIATIONS = ["OCAE", "TCWE", "Reverse", "REV_RB"]
+VARIATIONS = ["OCAE", "TCWE", "Reverse", "REV_RB", "BTIB"]
 
 
 @dataclass

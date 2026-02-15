@@ -401,7 +401,7 @@ class CheckpointManager:
         }
 
         # Add empty variation metrics
-        variations = ["ocae", "tcwe", "reverse", "rev_rb"]
+        variations = ["ocae", "tcwe", "reverse", "rev_rb", "btib"]
         var_metrics = [
             "total_r", "trades", "wins", "losses", "winrate",
             "sharpe_ratio", "sortino_ratio", "profit_factor",

@@ -8,6 +8,7 @@ Enhanced with:
 - Memory monitoring
 """
 
+import gc
 import os
 import sys
 import time
@@ -70,7 +71,7 @@ class OptimizerMaster:
             )
 
         # Initialize components
-        self.grid = ParameterGrid(self.symbol)
+        self.grid = ParameterGrid(self.symbol, mode=config.grid_mode)
         self.checkpoint = CheckpointManager(
             config.output_dir,
             config.checkpoint_file,
@@ -259,6 +260,7 @@ class OptimizerMaster:
                         self.variation_agg,
                     )
                     checkpoint_count = 0
+                    gc.collect()
 
         # Final checkpoint - SYNC to ensure completion
         self.checkpoint.wait_for_pending()  # Wait for any async saves
@@ -449,11 +451,35 @@ class OptimizerMaster:
         return result
 
 
+def calculate_safe_workers(symbol: str, available_ram_gb: float = None) -> int:
+    """
+    Calculate safe number of workers based on available RAM.
+
+    Per-worker memory from benchmarks:
+        GER40: ~500MB, XAUUSD: ~620MB, NAS100: ~615MB, UK100: ~530MB
+    """
+    per_worker_mb = {"GER40": 500, "XAUUSD": 620, "NAS100": 615, "UK100": 530}
+
+    if available_ram_gb is None:
+        available_ram_gb = psutil.virtual_memory().total / (1024 ** 3)
+
+    reserve_gb = 3  # OS + master process
+    usable_mb = (available_ram_gb - reserve_gb) * 1024
+    worker_mb = per_worker_mb.get(symbol, 600)
+
+    max_by_ram = int(usable_mb / worker_mb)
+    max_by_cpu = max(1, cpu_count() - 4)
+
+    safe = min(max_by_ram, max_by_cpu)
+    return max(1, safe)
+
+
 def run_optimization(
     symbol: str,
     num_workers: Optional[int] = None,
     resume: bool = True,
     output_dir: Optional[Path] = None,
+    grid_mode: str = "standard",
     news_filter_enabled: bool = True,
     news_before_minutes: int = 2,
     news_after_minutes: int = 2,
@@ -474,11 +500,12 @@ def run_optimization(
         Ranked results DataFrame
     """
     if num_workers is None:
-        num_workers = max(1, cpu_count() - 6)
+        num_workers = calculate_safe_workers(symbol)
 
     config = OptimizerConfig(
         symbol=symbol,
         num_workers=num_workers,
+        grid_mode=grid_mode,
         output_dir=output_dir or Path(__file__).parent.parent / "output",
         news_filter_enabled=news_filter_enabled,
         news_before_minutes=news_before_minutes,

@@ -2388,7 +2388,7 @@ class FastBacktest:
                        profit_factor, max_drawdown, calmar, avg_r, avg_r_wins,
                        avg_r_losses, max_consec_wins, max_consec_losses
         """
-        variations = ["OCAE", "TCWE", "Reverse", "REV_RB"]
+        variations = ["OCAE", "TCWE", "Reverse", "REV_RB", "BTIB"]
         result = {}
 
         for var in variations:
