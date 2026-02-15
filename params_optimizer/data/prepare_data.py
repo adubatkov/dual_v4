@@ -152,6 +152,30 @@ def filter_trading_hours_xauusd(df: pd.DataFrame) -> pd.DataFrame:
     return df_filtered
 
 
+def filter_trading_hours_uk100(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter UK100 data to trading hours only.
+
+    Keeps only candles between 07:00-23:00 Europe/London.
+    """
+    print_status("Filtering UK100 trading hours (07:00-23:00 London)", "INFO")
+
+    config = TRADING_HOURS["UK100"]
+    tz = pytz.timezone(config["timezone"])
+    start_hour = config["start_hour"]
+    end_hour = config["end_hour"]
+
+    df = df.copy()
+    df["local_time"] = df["time"].dt.tz_convert(tz)
+    df["hour"] = df["local_time"].dt.hour
+
+    mask = (df["hour"] >= start_hour) & (df["hour"] < end_hour)
+    df_filtered = df[mask].drop(columns=["local_time", "hour"])
+
+    print_status(f"Filtered from {len(df):,} to {len(df_filtered):,} candles ({len(df_filtered)/len(df)*100:.1f}%)", "SUCCESS")
+    return df_filtered
+
+
 def prepare_optimized_data(
     symbol: str,
     output_path: Optional[Path] = None,
@@ -173,7 +197,7 @@ def prepare_optimized_data(
         Path to created Parquet file
     """
     if symbol not in DATA_PATHS_RAW:
-        raise ValueError(f"Unknown symbol: {symbol}. Must be GER40 or XAUUSD")
+        raise ValueError(f"Unknown symbol: {symbol}. Supported: {list(DATA_PATHS_RAW.keys())}")
 
     # Determine paths
     raw_path = DATA_PATHS_RAW[symbol]
@@ -201,6 +225,10 @@ def prepare_optimized_data(
         df = filter_trading_hours_ger40(df)
     elif symbol == "XAUUSD":
         df = filter_trading_hours_xauusd(df)
+    elif symbol == "NAS100":
+        df = filter_trading_hours_xauusd(df)  # 24/5, weekends only
+    elif symbol == "UK100":
+        df = filter_trading_hours_uk100(df)
 
     # Save as Parquet
     print_status(f"Saving to {output_path}", "INFO")
@@ -223,14 +251,14 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Prepare optimized data for parameter optimization")
-    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "all"], default="all",
-                        help="Symbol to prepare (default: all)")
+    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100", "all"],
+                        default="all", help="Symbol to prepare (default: all)")
     parser.add_argument("--force", action="store_true",
                         help="Overwrite existing files")
 
     args = parser.parse_args()
 
-    symbols = ["GER40", "XAUUSD"] if args.symbol == "all" else [args.symbol]
+    symbols = list(DATA_PATHS_RAW.keys()) if args.symbol == "all" else [args.symbol]
 
     for sym in symbols:
         try:

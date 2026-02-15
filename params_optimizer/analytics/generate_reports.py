@@ -225,7 +225,7 @@ def generate_all_reports(symbol: str, output_dir: Path) -> None:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate optimization reports")
-    parser.add_argument("--symbol", choices=["GER40", "XAUUSD"], required=True,
+    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100"], required=True,
                         help="Symbol to generate reports for")
     parser.add_argument("--output-dir", type=Path, default=None,
                         help="Output directory (default: params_optimizer/output)")

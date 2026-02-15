@@ -176,11 +176,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Check available data")
-    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "all"], default="all")
+    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100", "all"], default="all")
 
     args = parser.parse_args()
 
-    symbols = ["GER40", "XAUUSD"] if args.symbol == "all" else [args.symbol]
+    symbols = list(DATA_PATHS_OPTIMIZED.keys()) if args.symbol == "all" else [args.symbol]
 
     print("Data Status")
     print("=" * 60)

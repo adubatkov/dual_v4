@@ -236,7 +236,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Test worker initialization")
-    parser.add_argument("--symbol", choices=["GER40", "XAUUSD"], required=True)
+    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100"], required=True)
     parser.add_argument("--data-path", type=Path, required=True)
 
     args = parser.parse_args()

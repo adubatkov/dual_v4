@@ -157,7 +157,7 @@ def get_cache_path(symbol: str) -> Path:
 
 def main():
     parser = argparse.ArgumentParser(description="Pre-compute IB cache for optimization")
-    parser.add_argument("--symbol", choices=["GER40", "XAUUSD"], required=True,
+    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100"], required=True,
                         help="Symbol to pre-compute IB for")
     parser.add_argument("--force", action="store_true",
                         help="Force re-computation even if cache exists")

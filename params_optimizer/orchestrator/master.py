@@ -493,7 +493,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Run parameter optimization")
-    parser.add_argument("--symbol", choices=["GER40", "XAUUSD"], required=True)
+    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100"], required=True)
     parser.add_argument("--workers", type=int, default=None,
                        help="Number of workers (default: CPU count - 6)")
     parser.add_argument("--no-resume", action="store_true",

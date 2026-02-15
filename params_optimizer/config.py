@@ -68,6 +68,30 @@ SYMBOL_CONFIGS: Dict[str, SymbolConfig] = {
         trade_contract_size=100.0,
         timezone="Asia/Tokyo",
     ),
+    "NAS100": SymbolConfig(
+        name="NAS100",
+        spread_points=1.5,
+        digits=1,
+        volume_step=0.1,
+        volume_min=0.1,
+        volume_max=50.0,
+        trade_tick_size=0.1,
+        trade_tick_value=0.1,
+        trade_contract_size=1.0,
+        timezone="US/Eastern",
+    ),
+    "UK100": SymbolConfig(
+        name="UK100",
+        spread_points=1.0,
+        digits=1,
+        volume_step=0.1,
+        volume_min=0.1,
+        volume_max=50.0,
+        trade_tick_size=0.1,
+        trade_tick_value=0.1,
+        trade_contract_size=1.0,
+        timezone="Europe/London",
+    ),
 }
 
 
@@ -81,12 +105,16 @@ DATA_BASE_PATH = Path(__file__).parent.parent / "data"
 DATA_PATHS_RAW = {
     "GER40": DATA_BASE_PATH / "GER40 1m 01_01_2023-04_11_2025",
     "XAUUSD": DATA_BASE_PATH / "XAUUSD 1m 01_01_2023-04_11_2025",
+    "NAS100": DATA_BASE_PATH / "NAS100_2023-2026_forexcom",
+    "UK100": DATA_BASE_PATH / "UK100_2023-2026_forexcom",
 }
 
 # Optimized Parquet data paths (created by prepare_data.py)
 DATA_PATHS_OPTIMIZED = {
     "GER40": DATA_BASE_PATH / "optimized" / "GER40_m1.parquet",
     "XAUUSD": DATA_BASE_PATH / "optimized" / "XAUUSD_m1.parquet",
+    "NAS100": DATA_BASE_PATH / "optimized" / "NAS100_m1.parquet",
+    "UK100": DATA_BASE_PATH / "optimized" / "UK100_m1.parquet",
 }
 
 # Default output directory
@@ -202,6 +230,16 @@ IB_TIME_CONFIGS = {
         ("09:00", "10:00", "Asia/Tokyo"),
         ("10:00", "10:30", "Asia/Tokyo"),
     ],
+    "NAS100": [
+        ("08:00", "08:30", "Europe/Berlin"),
+        ("08:00", "09:00", "Europe/Berlin"),
+        ("09:00", "09:30", "Europe/Berlin"),
+    ],
+    "UK100": [
+        ("08:00", "08:30", "Europe/Berlin"),
+        ("08:00", "09:00", "Europe/Berlin"),
+        ("09:00", "09:30", "Europe/Berlin"),
+    ],
 }
 
 # # ----------------
@@ -299,6 +337,16 @@ TRADING_HOURS = {
         "filter_weekends": True,
         "timezone": "Asia/Tokyo",
     },
+    "NAS100": {
+        # NAS100 trades extended hours, filter weekends only
+        "filter_weekends": True,
+        "timezone": "US/Eastern",
+    },
+    "UK100": {
+        "start_hour": 7,   # 07:00 local
+        "end_hour": 23,    # 23:00 local
+        "timezone": "Europe/London",
+    },
 }
 
 
@@ -374,10 +422,10 @@ if __name__ == "__main__":
     print("=" * 60)
 
     print(f"\nGRID MODE: {GRID_MODE}")
-    print(f"Estimated combinations (GER40): {estimate_combinations('GER40'):,}")
-    print(f"Estimated combinations (XAUUSD): {estimate_combinations('XAUUSD'):,}")
+    for sym in SYMBOL_CONFIGS:
+        print(f"Estimated combinations ({sym}): {estimate_combinations(sym):,}")
 
-    for sym in ["GER40", "XAUUSD"]:
+    for sym in SYMBOL_CONFIGS:
         print(f"\n{sym} Symbol Config:")
         cfg = SYMBOL_CONFIGS[sym]
         print(f"  Spread: {cfg.spread_points} points")

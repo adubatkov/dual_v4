@@ -64,7 +64,7 @@ class ParameterGrid:
         self.symbol = symbol
 
         if symbol not in IB_TIME_CONFIGS:
-            raise ValueError(f"Unknown symbol: {symbol}. Must be GER40 or XAUUSD")
+            raise ValueError(f"Unknown symbol: {symbol}. Supported: {list(IB_TIME_CONFIGS.keys())}")
 
         self.ib_configs = IB_TIME_CONFIGS[symbol]
         self._combinations: Optional[List[Dict[str, Any]]] = None
@@ -298,11 +298,11 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Print parameter grid info")
-    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "all"], default="all")
+    parser.add_argument("--symbol", choices=["GER40", "XAUUSD", "NAS100", "UK100", "all"], default="all")
 
     args = parser.parse_args()
 
-    symbols = ["GER40", "XAUUSD"] if args.symbol == "all" else [args.symbol]
+    symbols = list(IB_TIME_CONFIGS.keys()) if args.symbol == "all" else [args.symbol]
 
     for sym in symbols:
         print_grid_info(sym)

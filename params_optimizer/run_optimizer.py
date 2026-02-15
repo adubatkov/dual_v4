@@ -269,7 +269,7 @@ Examples:
     # Required
     parser.add_argument(
         "--symbol",
-        choices=["GER40", "XAUUSD"],
+        choices=["GER40", "XAUUSD", "NAS100", "UK100"],
         required=True,
         help="Trading symbol to optimize"
     )
