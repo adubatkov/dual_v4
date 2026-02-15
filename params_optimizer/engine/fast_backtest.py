@@ -1971,14 +1971,19 @@ class FastBacktest:
         is_long = direction == "long"
 
         # --- Fractal state initialization ---
-        use_fractals = fractal_ctx is not None
+        # Guard: only activate fractal hot loop when features are actually enabled.
+        # fractal_ctx is always non-None when fractal_cache is loaded (optimizer),
+        # but the feature flags inside determine whether to run the expensive per-candle logic.
+        use_h1h4_fractals = (fractal_ctx is not None and
+            (fractal_ctx.get("be_enabled") or fractal_ctx.get("tsl_enabled")))
+        use_fvg_be = (fractal_ctx is not None and fractal_ctx.get("fvg_be_enabled", False))
+        use_fractals = use_h1h4_fractals or use_fvg_be
         fractal_be_sl = None    # entry_price when BE activated (None = inactive)
         fractal_tsl_active = False
         fractal_tsl_sl = None   # current M2 fractal SL level
         fvg_be_sl = None        # entry_price when FVG BE activated (None = inactive)
-        use_fvg_be = use_fractals and fractal_ctx.get("fvg_be_enabled", False)
 
-        if use_fractals:
+        if use_h1h4_fractals:
             entry_time = df_trade["time"].iat[start_idx]
             h1h4_list = fractal_ctx["h1h4_fractals"]
             atf_list = fractal_ctx["atf_fractals"]
@@ -2041,38 +2046,45 @@ class FastBacktest:
                 if tsl_enabled and not fractal_tsl_active:
                     fractal_tsl_active = True
 
-                # Remove swept fractals
-                for idx in sorted(swept_on_entry, reverse=True):
-                    active_fractals.pop(idx)
+                # Remove swept fractals (batch removal)
+                if len(swept_on_entry) == 1:
+                    active_fractals.pop(swept_on_entry[0])
+                else:
+                    swept_set = set(swept_on_entry)
+                    active_fractals = [f for j, f in enumerate(active_fractals) if j not in swept_set]
 
-            # --- FVG BE state initialization (inside use_fractals block) ---
-            if use_fvg_be:
-                htf_fvgs = fractal_ctx["htf_fvgs"]
-                fvg_ptr = 0
-                active_fvg_list = []
+        # --- FVG BE state initialization (outside h1h4 block, needs its own entry_time) ---
+        if use_fvg_be:
+            if not use_h1h4_fractals:
+                entry_time = df_trade["time"].iat[start_idx]
+                entry_hi = float(df_trade["high"].iat[start_idx])
+                entry_lo = float(df_trade["low"].iat[start_idx])
+            htf_fvgs = fractal_ctx["htf_fvgs"]
+            fvg_ptr = 0
+            active_fvg_list = []
 
-                # Advance pointer: activate FVGs confirmed <= entry_time
-                while fvg_ptr < len(htf_fvgs):
-                    fvg = htf_fvgs[fvg_ptr]
-                    confirm_hours = 1.0 if fvg.timeframe == "H1" else 4.0
-                    ct = fvg.formation_time + timedelta(hours=confirm_hours)
-                    if ct <= entry_time:
-                        # Include if not mitigated, or mitigated strictly after entry
-                        if fvg.fill_time is None or fvg.fill_time > entry_time:
-                            active_fvg_list.append(fvg)
-                        fvg_ptr += 1
-                    else:
-                        break
+            # Advance pointer: activate FVGs confirmed <= entry_time
+            while fvg_ptr < len(htf_fvgs):
+                fvg = htf_fvgs[fvg_ptr]
+                confirm_hours = 1.0 if fvg.timeframe == "H1" else 4.0
+                ct = fvg.formation_time + timedelta(hours=confirm_hours)
+                if ct <= entry_time:
+                    # Include if not mitigated, or mitigated strictly after entry
+                    if fvg.fill_time is None or fvg.fill_time > entry_time:
+                        active_fvg_list.append(fvg)
+                    fvg_ptr += 1
+                else:
+                    break
 
-                # Entry-candle FVG BE check
-                if fvg_be_sl is None:
-                    sl_negative = (is_long and curr_stop < entry_price) or \
-                                  (not is_long and curr_stop > entry_price)
-                    if sl_negative:
-                        for fvg in active_fvg_list:
-                            if entry_lo <= fvg.high and entry_hi >= fvg.low:
-                                fvg_be_sl = entry_price
-                                break
+            # Entry-candle FVG BE check
+            if fvg_be_sl is None:
+                sl_negative = (is_long and curr_stop < entry_price) or \
+                              (not is_long and curr_stop > entry_price)
+                if sl_negative:
+                    for fvg in active_fvg_list:
+                        if entry_lo <= fvg.high and entry_hi >= fvg.low:
+                            fvg_be_sl = entry_price
+                            break
 
         # Track effective SL for same-candle prevention
         effective_sl = curr_stop
@@ -2081,7 +2093,7 @@ class FastBacktest:
         # If fractal BE activated on entry candle, update effective_sl
         # (same-candle prevention: entry candle SL check uses original stop,
         # but effective_sl_prev is set for the NEXT candle)
-        if use_fractals:
+        if use_h1h4_fractals or use_fvg_be:
             candidates = [curr_stop]
             if fractal_be_sl is not None:
                 candidates.append(fractal_be_sl)
@@ -2097,9 +2109,20 @@ class FastBacktest:
             # Update it to effective_sl so the NEXT candle uses the BE-modified SL
             effective_sl_prev = effective_sl
 
+        # Pre-extract numpy arrays for numeric columns (avoids .iat overhead)
+        # NOTE: time column stays as Series -- .values strips tz info (datetime64[ns])
+        # which breaks fractal timestamp comparisons that need tz-aware Timestamps.
+        _lows = df_trade["low"].values
+        _highs = df_trade["high"].values
+        _closes = df_trade["close"].values
+
+        # Pre-compute constant timedeltas for fractal expiry (avoid construction per candle)
+        _td_48h = timedelta(hours=48)
+        _td_96h = timedelta(hours=96)
+
         for i in range(start_idx + 1, len(df_trade)):
-            lo = float(df_trade["low"].iat[i])
-            hi = float(df_trade["high"].iat[i])
+            lo = float(_lows[i])
+            hi = float(_highs[i])
             t = df_trade["time"].iat[i]
 
             # === Step 1: Organic TSL update (trail mode only) ===
@@ -2109,7 +2132,7 @@ class FastBacktest:
             # (approx close of previous candle), so we use prev_close here.
             organic_sl = curr_stop
             if not no_trail:
-                prev_close = float(df_trade["close"].iat[i - 1])
+                prev_close = float(_closes[i - 1])
                 if is_long:
                     tsl_price = prev_close + half_spread
                     if tsl_price >= curr_tp:
@@ -2128,7 +2151,7 @@ class FastBacktest:
                 organic_sl = curr_stop
 
             # === Step 2: Fractal logic ===
-            if use_fractals:
+            if use_h1h4_fractals:
                 # 3a. Advance H1/H4 pointer (newly confirmed fractals)
                 while h1h4_ptr < len(h1h4_list) and h1h4_list[h1h4_ptr].confirmed_time <= t:
                     active_fractals.append(h1h4_list[h1h4_ptr])
@@ -2136,8 +2159,8 @@ class FastBacktest:
 
                 # 3b. Expire stale H1/H4 fractals
                 if active_fractals:
-                    exp_h1 = t - timedelta(hours=48)
-                    exp_h4 = t - timedelta(hours=96)
+                    exp_h1 = t - _td_48h
+                    exp_h4 = t - _td_96h
                     active_fractals = [
                         f for f in active_fractals
                         if (f.timeframe == "H1" and f.time >= exp_h1) or
@@ -2173,9 +2196,12 @@ class FastBacktest:
                     if tsl_enabled and not fractal_tsl_active:
                         fractal_tsl_active = True
 
-                    # Remove swept fractals
-                    for idx in sorted(swept_indices, reverse=True):
-                        active_fractals.pop(idx)
+                    # Remove swept fractals (batch removal avoids O(n) per pop)
+                    if len(swept_indices) == 1:
+                        active_fractals.pop(swept_indices[0])
+                    else:
+                        swept_set = set(swept_indices)
+                        active_fractals = [f for j, f in enumerate(active_fractals) if j not in swept_set]
 
                 # 3g. Update fractal TSL SL value (every candle if active)
                 if fractal_tsl_active:
@@ -2213,22 +2239,28 @@ class FastBacktest:
                             break
 
             # === Step 3: Compute effective SL ===
-            candidates = [organic_sl]
-            if fractal_be_sl is not None:
-                candidates.append(fractal_be_sl)
-            if fractal_tsl_sl is not None:
-                candidates.append(fractal_tsl_sl)
-            if fvg_be_sl is not None:
-                candidates.append(fvg_be_sl)
+            if use_fractals:
+                candidates = [organic_sl]
+                if fractal_be_sl is not None:
+                    candidates.append(fractal_be_sl)
+                if fractal_tsl_sl is not None:
+                    candidates.append(fractal_tsl_sl)
+                if fvg_be_sl is not None:
+                    candidates.append(fvg_be_sl)
+                effective_sl = max(candidates) if is_long else min(candidates)
 
-            effective_sl = max(candidates) if is_long else min(candidates)
-
-            # === Step 4: Same-candle SL prevention ===
-            # If SL changed this candle (by organic TSL or fractal), use prev candle's SL
-            if abs(effective_sl - effective_sl_prev) > 0.001:
-                check_sl = effective_sl_prev
+                # === Step 4: Same-candle SL prevention ===
+                if abs(effective_sl - effective_sl_prev) > 0.001:
+                    check_sl = effective_sl_prev
+                else:
+                    check_sl = effective_sl
             else:
-                check_sl = effective_sl
+                # No fractal features: effective SL = organic SL (no candidates list needed)
+                effective_sl = organic_sl
+                if abs(effective_sl - effective_sl_prev) > 0.001:
+                    check_sl = effective_sl_prev
+                else:
+                    check_sl = effective_sl
 
             # === Step 5: SL check (priority) + TP check ===
             # Matches slow engine _check_sltp_hits: SL checked first, TP second.

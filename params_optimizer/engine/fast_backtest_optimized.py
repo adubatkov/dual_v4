@@ -14,7 +14,7 @@ import pytz
 from datetime import datetime, time, timedelta
 from typing import Optional, Dict, Any, Tuple, List
 
-from .fast_backtest import FastBacktest, Signal, SPREAD_POINTS
+from .fast_backtest import FastBacktest, Signal, SPREAD_POINTS, ANALYSIS_TF_CONFIG
 
 # Type checking import for NewsFilter
 from typing import TYPE_CHECKING
@@ -46,6 +46,10 @@ class FastBacktestOptimized(FastBacktest):
         # Pre-computed timezone date caches (populated on demand)
         self._tz_date_cache: Dict[str, pd.Series] = {}
 
+        # Pre-computed day groups cache: {timezone: [(day_date, day_df_sorted), ...]}
+        # Eliminates per-combo groupby+sort overhead (~0.5-1s per combo on 917K rows)
+        self._day_groups_cache: Dict[str, List[Tuple]] = {}
+
     def _get_tz_dates_vectorized(self, timezone_str: str) -> pd.Series:
         """
         Get pre-computed dates for timezone using vectorized operations.
@@ -69,11 +73,14 @@ class FastBacktestOptimized(FastBacktest):
 
         return dates
 
-    def run_with_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def run_with_params(
+        self, params: Dict[str, Any], fractal_cache: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         """
         Run backtest with given parameters. Optimized version.
 
-        Only optimizes timezone conversion - all other logic inherited from parent.
+        Optimizes timezone conversion via vectorized caching.
+        All other logic (ATF, fractals, signals) inherited from parent.
         """
         try:
             timezone_str = params.get("ib_timezone", "Europe/Berlin")
@@ -81,14 +88,59 @@ class FastBacktestOptimized(FastBacktest):
             # OPTIMIZATION: Use vectorized timezone conversion instead of apply+lambda
             self.m1_data["ib_date"] = self._get_tz_dates_vectorized(timezone_str)
 
+            # Resolve analysis timeframe configuration
+            analysis_tf = params.get("analysis_tf", "2min")
+            atf_cfg = ANALYSIS_TF_CONFIG[analysis_tf]
+            self.atf_freq = atf_cfg["resample_freq"]
+            self.atf_label = atf_cfg["label"]
+            self.atf_minutes = atf_cfg["minutes"]
+            self.atf_candle_hours = atf_cfg["candle_duration_hours"]
+
+            # Use pre-computed fractal cache if available, otherwise compute
+            be_enabled = params.get("fractal_be_enabled", False)
+            tsl_enabled = params.get("fractal_tsl_enabled", False)
+            fvg_be_enabled = params.get("fvg_be_enabled", False)
+            btib_enabled = params.get("btib_enabled", False)
+            rev_rb_enabled = params.get("rev_rb_enabled", False)
+            # Need fractal_ctx for: fractal BE/TSL, FVG BE, BTIB BOS, REV_RB
+            any_fractal_feature = (be_enabled or tsl_enabled or fvg_be_enabled
+                                   or btib_enabled or rev_rb_enabled)
+
+            if fractal_cache is not None and any_fractal_feature:
+                fractal_ctx = {
+                    "h1h4_fractals": fractal_cache["h1h4_fractals"],
+                    "atf_fractals": fractal_cache.get("atf_fractals", fractal_cache.get("m2_fractals", [])),
+                    "be_enabled": be_enabled,
+                    "tsl_enabled": tsl_enabled,
+                    "fvg_be_enabled": fvg_be_enabled,
+                    "htf_fvgs": fractal_cache.get("htf_fvgs", []),
+                    "atf_fvgs": fractal_cache.get("atf_fvgs", fractal_cache.get("m2_fvgs", [])),
+                }
+            elif fractal_cache is not None:
+                # Cache available but no fractal features enabled -- skip entirely
+                fractal_ctx = None
+            else:
+                fractal_ctx = self._precompute_fractals(params)
+
             trades = []
 
-            # Process day-by-day (same as parent)
-            for day_date, day_df in self.m1_data.groupby("ib_date"):
-                day_df = day_df.sort_values("time").reset_index(drop=True)
-                trade = self._process_day(day_df, day_date, params)
-                if trade:
-                    trades.append(trade)
+            # Process day-by-day using cached day groups
+            # Cache key is timezone string -- groupby+sort done once, reused for all combos
+            if timezone_str not in self._day_groups_cache:
+                day_groups = []
+                for day_date, day_df in self.m1_data.groupby("ib_date"):
+                    day_groups.append(
+                        (day_date, day_df.sort_values("time").reset_index(drop=True))
+                    )
+                self._day_groups_cache[timezone_str] = day_groups
+
+            for day_date, day_df in self._day_groups_cache[timezone_str]:
+                result = self._process_day(day_df, day_date, params, fractal_ctx)
+                if result:
+                    if isinstance(result, list):
+                        trades.extend(result)
+                    else:
+                        trades.append(result)
 
             return self._calculate_metrics(trades, params)
 
